@@ -1,0 +1,341 @@
+{
+  "category": "payment_processing",
+  "description": "A fictional customer was charged twice for one logical payment.",
+  "diagnostic_invariants": [
+    {
+      "description": "Duplicate rows must retain the same customer relationship.",
+      "fields": [
+        "payments.customer_id"
+      ],
+      "must_preserve": true,
+      "name": "customer_equality",
+      "type": "equality"
+    },
+    {
+      "description": "Duplicate rows must retain the same account relationship.",
+      "fields": [
+        "payments.account_id"
+      ],
+      "must_preserve": true,
+      "name": "account_equality",
+      "type": "equality"
+    },
+    {
+      "description": "The two successful records must remain recognizable as one logical payment.",
+      "fields": [
+        "payments.customer_id",
+        "payments.account_id",
+        "payments.request_id",
+        "payments.amount"
+      ],
+      "must_preserve": true,
+      "name": "payment_duplicate",
+      "type": "duplicates"
+    },
+    {
+      "description": "Payment rows must correlate with request and retry logs.",
+      "fields": [
+        "payments.request_id",
+        "logs.request_id"
+      ],
+      "must_preserve": true,
+      "name": "request_correlation",
+      "type": "cross_source_identity"
+    },
+    {
+      "description": "The two problematic amounts must remain equal.",
+      "fields": [
+        "payments.amount"
+      ],
+      "must_preserve": true,
+      "name": "amount_equality",
+      "type": "numeric_equality"
+    },
+    {
+      "description": "Initial processing must precede the timeout, retry, and duplicate insert.",
+      "fields": [
+        "payments.created_at",
+        "logs.timestamp"
+      ],
+      "must_preserve": true,
+      "name": "timestamp_order",
+      "type": "ordering"
+    },
+    {
+      "description": "The 2.767-second gap between duplicate records is diagnostic.",
+      "fields": [
+        "payments.created_at"
+      ],
+      "must_preserve": true,
+      "name": "duplicate_interval",
+      "type": "temporal_interval"
+    },
+    {
+      "description": "Both duplicate rows and surrounding rows must remain present.",
+      "fields": [
+        "payments.payment_id"
+      ],
+      "must_preserve": true,
+      "name": "payment_row_count",
+      "type": "row_cardinality"
+    },
+    {
+      "description": "Literal identity values are unnecessary for this diagnosis.",
+      "fields": [
+        "customers.name",
+        "customers.ssn",
+        "customers.email",
+        "customers.customer_id"
+      ],
+      "must_preserve": false,
+      "name": "literal_customer_identity",
+      "type": "string_format"
+    },
+    {
+      "description": "The literal account identifier is unnecessary for this diagnosis.",
+      "fields": [
+        "accounts.account_id"
+      ],
+      "must_preserve": false,
+      "name": "literal_account_identity",
+      "type": "string_format"
+    }
+  ],
+  "difficulty": "easy",
+  "expected_evidence": [
+    {
+      "description": "Two successful payments share customer, account, request, and amount.",
+      "references": [
+        "payments.customer_id",
+        "payments.account_id",
+        "payments.request_id",
+        "payments.amount",
+        "payments.status"
+      ]
+    },
+    {
+      "description": "The second payment follows the first by 2.767 seconds.",
+      "references": [
+        "payments.created_at"
+      ]
+    },
+    {
+      "description": "Logs show a timeout-triggered retry and no idempotency check on either insert.",
+      "references": [
+        "logs.request_id",
+        "logs.timestamp",
+        "logs.idempotency_check"
+      ]
+    }
+  ],
+  "ground_truth_root_cause": "A client retried after an upstream timeout, and the payment worker processed the same request twice because it did not enforce an idempotency check.",
+  "incident_id": "incident_001_duplicate_payment",
+  "log_evidence": [
+    {
+      "attributes": {
+        "attempt": 1,
+        "customer_id": "SYN-CUST-935349",
+        "request_id": "SYN-REQ-897589"
+      },
+      "level": "INFO",
+      "message": "Payment request accepted",
+      "service": "payment-api",
+      "timestamp": "2030-04-12T09:15:02.100Z"
+    },
+    {
+      "attributes": {
+        "idempotency_check": false,
+        "payment_id": "SYN-PAY-DUPLICATE-A",
+        "request_id": "SYN-REQ-897589"
+      },
+      "level": "INFO",
+      "message": "Payment inserted",
+      "service": "payment-worker",
+      "timestamp": "2030-04-12T09:15:02.120Z"
+    },
+    {
+      "attributes": {
+        "attempt": 2,
+        "request_id": "SYN-REQ-897589"
+      },
+      "level": "WARN",
+      "message": "Upstream timeout caused client retry",
+      "service": "payment-api",
+      "timestamp": "2030-04-12T09:15:04.800Z"
+    },
+    {
+      "attributes": {
+        "idempotency_check": false,
+        "payment_id": "SYN-PAY-DUPLICATE-B",
+        "request_id": "SYN-REQ-897589"
+      },
+      "level": "INFO",
+      "message": "Retry inserted as a new payment",
+      "service": "payment-worker",
+      "timestamp": "2030-04-12T09:15:04.887Z"
+    },
+    {
+      "attributes": {
+        "attempt": 1,
+        "request_id": "SYN-REQ-NORMAL-AFTER"
+      },
+      "level": "INFO",
+      "message": "Unrelated payment inserted",
+      "service": "payment-worker",
+      "timestamp": "2030-04-12T09:16:10.000Z"
+    }
+  ],
+  "metadata": {
+    "benchmark_version": "0.1",
+    "fictionality_notice": "All people, identifiers, events, and systems are fictional synthetic test data.",
+    "schema_version": "0.1",
+    "seed": 1001,
+    "synthetic": true
+  },
+  "sensitive_fields": [
+    {
+      "classification": "direct_identifier",
+      "path": "customers.name",
+      "policy": "remove_or_pseudonymize",
+      "rationale": "Identity is not diagnostic."
+    },
+    {
+      "classification": "highly_sensitive_identifier",
+      "path": "customers.ssn",
+      "policy": "remove_or_pseudonymize",
+      "rationale": "Value is wholly synthetic and not diagnostic."
+    },
+    {
+      "classification": "contact_identifier",
+      "path": "customers.email",
+      "policy": "remove_or_pseudonymize",
+      "rationale": "Contact address is not diagnostic."
+    },
+    {
+      "classification": "customer_identifier",
+      "path": "customers.customer_id",
+      "policy": "consistent_pseudonym",
+      "rationale": "Joinability is diagnostic; the literal ID is not."
+    },
+    {
+      "classification": "customer_identifier",
+      "path": "accounts.customer_id",
+      "policy": "consistent_pseudonym",
+      "rationale": "This copy must remain joinable to the customer record."
+    },
+    {
+      "classification": "account_identifier",
+      "path": "accounts.account_id",
+      "policy": "consistent_pseudonym",
+      "rationale": "Account equality is diagnostic; the literal ID is not."
+    },
+    {
+      "classification": "customer_identifier",
+      "path": "payments.customer_id",
+      "policy": "consistent_pseudonym",
+      "rationale": "Customer equality across payment rows is diagnostic."
+    },
+    {
+      "classification": "account_identifier",
+      "path": "payments.account_id",
+      "policy": "consistent_pseudonym",
+      "rationale": "Account equality across payment rows is diagnostic."
+    },
+    {
+      "classification": "customer_identifier",
+      "path": "logs.customer_id",
+      "policy": "consistent_pseudonym",
+      "rationale": "Cross-source identity may be diagnostic."
+    },
+    {
+      "classification": "operational_identifier",
+      "path": "payments.request_id",
+      "policy": "consistent_pseudonym",
+      "rationale": "The request value is replaceable but its correlation must survive."
+    },
+    {
+      "classification": "operational_identifier",
+      "path": "logs.request_id",
+      "policy": "consistent_pseudonym",
+      "rationale": "The request value is replaceable but its correlation must survive."
+    },
+    {
+      "classification": "operational_identifier",
+      "path": "payments.payment_id",
+      "policy": "pseudonymize_independently",
+      "rationale": "Payment-row distinction matters; literal values do not."
+    },
+    {
+      "classification": "operational_identifier",
+      "path": "logs.payment_id",
+      "policy": "pseudonymize_independently",
+      "rationale": "Log-to-row correlation matters; literal values do not."
+    }
+  ],
+  "structured_evidence": {
+    "accounts": [
+      {
+        "account_id": "SYN-ACCT-161474",
+        "customer_id": "SYN-CUST-935349"
+      },
+      {
+        "account_id": "SYN-ACCT-REFERENCE",
+        "customer_id": "SYN-CUST-REFERENCE"
+      }
+    ],
+    "customers": [
+      {
+        "customer_id": "SYN-CUST-935349",
+        "email": "avery.example@example.invalid",
+        "name": "Avery Example (Fictional)",
+        "ssn": "000-12-3456"
+      },
+      {
+        "customer_id": "SYN-CUST-REFERENCE",
+        "email": "morgan.sample@example.invalid",
+        "name": "Morgan Sample (Fictional)",
+        "ssn": "000-98-7654"
+      }
+    ],
+    "payments": [
+      {
+        "account_id": "SYN-ACCT-REFERENCE",
+        "amount": "19.95",
+        "created_at": "2030-04-12T09:14:40.000Z",
+        "customer_id": "SYN-CUST-REFERENCE",
+        "payment_id": "SYN-PAY-NORMAL-BEFORE",
+        "request_id": "SYN-REQ-NORMAL-BEFORE",
+        "status": "succeeded"
+      },
+      {
+        "account_id": "SYN-ACCT-161474",
+        "amount": "84.20",
+        "created_at": "2030-04-12T09:15:02.120Z",
+        "customer_id": "SYN-CUST-935349",
+        "payment_id": "SYN-PAY-DUPLICATE-A",
+        "request_id": "SYN-REQ-897589",
+        "status": "succeeded"
+      },
+      {
+        "account_id": "SYN-ACCT-161474",
+        "amount": "84.20",
+        "created_at": "2030-04-12T09:15:04.887Z",
+        "customer_id": "SYN-CUST-935349",
+        "payment_id": "SYN-PAY-DUPLICATE-B",
+        "request_id": "SYN-REQ-897589",
+        "status": "succeeded"
+      },
+      {
+        "account_id": "SYN-ACCT-REFERENCE",
+        "amount": "7.50",
+        "created_at": "2030-04-12T09:16:10.000Z",
+        "customer_id": "SYN-CUST-REFERENCE",
+        "payment_id": "SYN-PAY-NORMAL-AFTER",
+        "request_id": "SYN-REQ-NORMAL-AFTER",
+        "status": "succeeded"
+      }
+    ]
+  },
+  "title": "Incident 001 \u2014 Duplicate Payment",
+  "troubleshooting_question": "Why was this customer charged twice?"
+}

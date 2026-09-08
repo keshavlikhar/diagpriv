@@ -1,0 +1,2 @@
+"""Canonical synthetic incident fixtures."""
+
