@@ -37,7 +37,13 @@ SeedScope = Literal["development_and_validation", "development_only", "validatio
 class PilotDefinition:
     pilot_id: str
     provider: str
-    condition: Literal["raw", "redaction-v1", "hmac-v1", "tokenization-v1"]
+    condition: Literal[
+        "raw",
+        "redaction-v1",
+        "hmac-v1",
+        "tokenization-v1",
+        "format-preserving-v1",
+    ]
     prompt_version: str
     prompt_sha256: str
     taxonomy_version: str
@@ -125,6 +131,7 @@ class PilotDefinition:
             "redaction-v1",
             "hmac-v1",
             "tokenization-v1",
+            "format-preserving-v1",
         }:
             raise ValueError(f"Unsupported pilot condition: {self.condition}")
         if self.condition == "hmac-v1":

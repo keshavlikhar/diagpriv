@@ -14,7 +14,7 @@ run requires both explicit human approval and the `--execute` flag.
 | Item | Value |
 |---|---|
 | Prompt | `raw-rca-v2` |
-| Prompt SHA-256 | `744f1f62b6db7e0655d52692b929c3a2a9c3d86f8beaaefb76526ab0b2ea8a2d` |
+| Prompt template SHA-256 | `744f1f62b6db7e0655d52692b929c3a2a9c3d86f8beaaefb76526ab0b2ea8a2d` |
 | Taxonomy | `rca-taxonomy-v2` |
 | Scorer | `raw-rca-scorer-v2` |
 | Initial model | `gpt-5.6-luna` |
@@ -26,6 +26,20 @@ The provider rejected the originally intended `temperature=0` parameter. The
 request therefore omits temperature entirely, while manifests retain the
 intended value and the reason for omission. Do not substitute another decoding
 parameter silently.
+
+The historical manifest/config field named `prompt_sha256` is specifically the
+SHA-256 of the frozen UTF-8 `raw_rca_v2.txt` **template before**
+`{{MODEL_VIEW_JSON}}` is replaced. It is identical across observations using
+that template and must not be interpreted as a digest of the fully rendered
+provider request. Renaming the persisted field now would be backward
+incompatible with frozen results; documentation therefore refers to it as the
+prompt-template hash while preserving the field and its meaning.
+
+A future, versioned manifest schema may add a separate
+`rendered_request_sha256` (or `model_input_sha256`) computed over the exact
+provider-bound prompt. Such a field would strengthen per-observation provenance
+without changing or retroactively augmenting historical records. It has not
+been added in the current schema.
 
 The prompt exposes the complete fixed taxonomy but no family-specific answer.
 The required canonical dimensions are:
@@ -62,6 +76,10 @@ the existence of an override as routine authorization.
   intentional identity preservation.
 - `hmac-v1`: external-key HMAC pseudonyms at sensitive annotated paths;
   annotation-defined shared or path-specific namespaces.
+- `tokenization-v1`: short deterministic ordinal tokens from an ephemeral,
+  candidate-population-local mapping.
+- `format-preserving-v1`: deterministic same-pattern pseudonyms from an
+  ephemeral mapping with explicit collision resolution.
 
 All conditions use the same v2 prompt, taxonomy, scorer, model configuration,
 and evidence methodology for matched comparisons. Oracle labels, invariant
@@ -117,42 +135,22 @@ record.
    digest.
 10. Freeze the result before any protocol discussion or code change.
 
-## Current HMAC development plan
+## Completed development comparisons
 
-The prepared configuration is `experiments/hmac_v1_development.toml`. It permits
-only development seeds 1000–1004, one call per seed, and has empty validation
-and held-out lists.
+The following five-seed observations are frozen and must not be invoked again
+under their completed experiment IDs:
 
-Safe dry run:
+| Condition | Exact RCA |
+|---|---:|
+| Raw v2 | 5/5 |
+| Redaction v1 | 4/5 |
+| HMAC v1 | 5/5 |
+| Tokenization v1 | 5/5 |
+| Format-preserving v1 | 4/5 |
 
-```bash
-uv run python -m diagpriv.evaluation.cli run-pilot \
-  --config experiments/hmac_v1_development.toml \
-  --results results/hmac_v1_development_gpt_5_6_luna_medium.jsonl
-```
-
-Future approved execution command:
-
-```bash
-uv run python -m diagpriv.evaluation.cli run-pilot \
-  --config experiments/hmac_v1_development.toml \
-  --results results/hmac_v1_development_gpt_5_6_luna_medium.jsonl \
-  --execute
-```
-
-That command additionally requires externally supplied `OPENAI_API_KEY` and
-`DIAGPRIV_HMAC_KEY_HEX`. At the current checkpoint it must not be executed.
-
-After a future approved run:
-
-```bash
-uv run python -m diagpriv.evaluation.cli summarize \
-  --results results/hmac_v1_development_gpt_5_6_luna_medium.jsonl \
-  --pricing experiments/pricing/openai_gpt_5_6_luna_2026-07-30.toml
-
-uv run python -m diagpriv.evaluation.cli inspect \
-  --results results/hmac_v1_development_gpt_5_6_luna_medium.jsonl
-```
+These are development observations only. No HMAC, tokenization, or
+format-preserving validation observation exists, and none of these conditions
+has been used on held-out seeds.
 
 ## Interpretation limits
 
