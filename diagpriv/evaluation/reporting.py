@@ -261,6 +261,11 @@ def inspection_records(path: Path) -> list[dict[str, object]]:
                 "prompt_sha256": manifest.prompt_sha256,
                 "taxonomy_version": manifest.taxonomy_version,
                 "scorer_version": manifest.scorer_version,
+                **(
+                    {"transformation_key_id": manifest.transformation_key_id}
+                    if manifest.transformation_key_id is not None
+                    else {}
+                ),
                 "response_id": manifest.response_id,
                 "provider_timestamp": manifest.provider_timestamp,
                 "provider_response_status": manifest.provider_response_status,

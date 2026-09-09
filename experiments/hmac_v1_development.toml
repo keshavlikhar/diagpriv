@@ -1,0 +1,33 @@
+[pilot]
+pilot_id = "hmac-v1-development"
+provider = "openai-responses"
+condition = "hmac-v1"
+prompt_version = "raw-rca-v2"
+prompt_sha256 = "744f1f62b6db7e0655d52692b929c3a2a9c3d86f8beaaefb76526ab0b2ea8a2d"
+taxonomy_version = "rca-taxonomy-v2"
+scorer_version = "raw-rca-scorer-v2"
+seed_scope = "development_only"
+development_seeds = [1000, 1001, 1002, 1003, 1004]
+validation_seeds = []
+held_out_seeds = []
+calls_per_seed = 1
+
+[model]
+requested_model = "gpt-5.6-luna"
+version_metadata_environment_variable = "DIAGPRIV_MODEL_VERSION_METADATA"
+reasoning_effort = "medium"
+
+[decoding]
+max_output_tokens = 4096
+
+[temperature_protocol_correction]
+intended = 0.0
+effective = "omitted"
+omission_reason = "Live OpenAI Responses API requests returned HTTP 400 because gpt-5.6-luna does not support the temperature parameter with this configuration."
+
+[transformation]
+key_environment_variable = "DIAGPRIV_HMAC_KEY_HEX"
+key_id = "hmac-v1-synthetic-experiment-key-001"
+
+[pricing]
+snapshot = "pricing/openai_gpt_5_6_luna_2026-07-30.toml"

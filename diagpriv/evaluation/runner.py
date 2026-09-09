@@ -1,10 +1,11 @@
-"""Provider-independent orchestration for one raw RCA baseline run."""
+"""Provider-independent orchestration for one RCA experiment run."""
 
 from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from pathlib import Path
+from typing import Literal
 
 from diagbench.generators.incident_001 import (
     DEVELOPMENT_SEEDS,
@@ -33,6 +34,7 @@ from diagpriv.evaluation.scoring import score_response
 from diagpriv.evaluation.scoring_v2 import SCORER_VERSION as SCORER_VERSION_V2
 from diagpriv.evaluation.scoring_v2 import score_response_v2
 from diagpriv.evaluation.taxonomy_v2 import TAXONOMY_VERSION as TAXONOMY_VERSION_V2
+from diagpriv.transformations import hmac_incident, redact_incident
 
 SCORER_VERSION_V1 = "raw-rca-scorer-v1"
 TAXONOMY_VERSION_V1 = "rca-taxonomy-v1"
@@ -49,6 +51,7 @@ class RawRunConfig:
     model: str
     model_version: str | None
     reasoning_effort: str | None = None
+    condition: Literal["raw", "redaction-v1", "hmac-v1"] = "raw"
     decoding_settings: dict[str, float | int | str | bool | None] = field(
         default_factory=lambda: {"temperature": 0.0}
     )
@@ -57,6 +60,8 @@ class RawRunConfig:
     prompt_version: str = PROMPT_VERSION_V1
     allow_held_out: bool = False
     timestamp: str | None = None
+    hmac_key: bytes | None = field(default=None, repr=False, compare=False)
+    transformation_key_id: str | None = None
 
 
 def pilot_seed_plan(
@@ -105,8 +110,20 @@ def run_raw_experiment(
         raise ValueError(f"Unsupported raw RCA prompt version: {config.prompt_version}")
 
     incident = generate_incident_001(config.seed)
+    if config.condition == "raw":
+        model_view = incident.model_view()
+    elif config.condition == "redaction-v1":
+        model_view = redact_incident(incident)
+    elif config.condition == "hmac-v1":
+        if config.hmac_key is None:
+            raise ValueError("hmac-v1 requires an external HMAC key")
+        if not config.transformation_key_id:
+            raise ValueError("hmac-v1 requires a non-secret experimental key ID")
+        model_view = hmac_incident(incident, key=config.hmac_key)
+    else:
+        raise ValueError(f"Unsupported evaluation condition: {config.condition}")
 
-    prompt = prompt_builder(incident.model_view())
+    prompt = prompt_builder(model_view)
     invocation = provider.invoke(
         ModelRequest(
             prompt=prompt,
@@ -137,7 +154,7 @@ def run_raw_experiment(
         incident_family="incident_001",
         seed=config.seed,
         split=split,
-        condition="raw",
+        condition=config.condition,
         requested_model=config.model,
         provider_returned_model=invocation.provider_returned_model,
         model_version_metadata=config.model_version,
@@ -149,6 +166,7 @@ def run_raw_experiment(
         prompt_sha256=prompt_sha256,
         taxonomy_version=taxonomy_version,
         scorer_version=scorer_version,
+        transformation_key_id=config.transformation_key_id,
         decoding_settings=dict(config.decoding_settings),
         timestamp=config.timestamp or datetime.now(UTC).isoformat(),
         response_id=invocation.response_id,

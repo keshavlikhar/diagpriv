@@ -1,4 +1,4 @@
-"""Append-only experiment manifests for reproducible raw-baseline runs."""
+"""Append-only experiment manifests for reproducible RCA runs."""
 
 from __future__ import annotations
 
@@ -20,7 +20,7 @@ class ExperimentManifest:
     incident_family: str
     seed: int
     split: str
-    condition: Literal["raw"]
+    condition: Literal["raw", "redaction-v1", "hmac-v1"]
     requested_model: str
     provider_returned_model: str | None
     model_version_metadata: str | None
@@ -32,6 +32,7 @@ class ExperimentManifest:
     prompt_sha256: str
     taxonomy_version: str
     scorer_version: str
+    transformation_key_id: str | None
     decoding_settings: dict[str, float | int | str | bool | None]
     timestamp: str
     response_id: str | None
@@ -49,7 +50,7 @@ class ExperimentManifest:
     score: RCAScore | RCAScoreV2 | None
 
     def to_dict(self) -> dict[str, object]:
-        return {
+        data: dict[str, object] = {
             "manifest_schema_version": "raw-rca-manifest-v5",
             "experiment_id": self.experiment_id,
             "benchmark_version": self.benchmark_version,
@@ -88,6 +89,9 @@ class ExperimentManifest:
             "response": self.response.to_dict(),
             "score": _score_to_dict(self.score),
         }
+        if self.transformation_key_id is not None:
+            data["transformation_key_id"] = self.transformation_key_id
+        return data
 
     def to_json(self, *, indent: int | None = 2) -> str:
         return json.dumps(self.to_dict(), indent=indent, sort_keys=True) + "\n"
@@ -135,6 +139,7 @@ class ExperimentManifest:
             prompt_sha256=data["prompt_sha256"],
             taxonomy_version=taxonomy_version,
             scorer_version=scorer_version,
+            transformation_key_id=data.get("transformation_key_id"),
             decoding_settings=data["decoding_settings"],
             timestamp=data["timestamp"],
             response_id=data.get("response_id"),

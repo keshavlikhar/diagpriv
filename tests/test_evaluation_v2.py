@@ -8,6 +8,7 @@ import pytest
 
 from diagbench.generators.incident_001 import generate_incident_001
 from diagbench.schema import Incident
+from diagpriv.evaluation.cli import build_parser
 from diagpriv.evaluation.manifest import ExperimentManifest
 from diagpriv.evaluation.pilot import PilotDefinition
 from diagpriv.evaluation.prompt import PROMPT_SHA256 as PROMPT_SHA256_V1
@@ -38,6 +39,7 @@ from diagpriv.evaluation.taxonomy_v2 import (
 )
 
 ROOT = Path(__file__).parents[1]
+VALIDATION_CONFIG = ROOT / "experiments" / "raw_pilot_v2_validation.toml"
 
 
 def _expected_ids(seed: int = 1001) -> tuple[str, ...]:
@@ -314,3 +316,103 @@ def test_v2_luna_pilot_is_development_only_and_omits_temperature() -> None:
     assert "temperature" not in definition.decoding_settings
     assert definition.intended_temperature == 0.0
     assert definition.effective_temperature is None
+
+
+def test_v2_validation_pilot_is_exactly_the_approved_validation_scope() -> None:
+    definition = PilotDefinition.load(VALIDATION_CONFIG)
+    assert definition.pilot_id == "raw-pilot-v2-validation"
+    assert definition.seed_scope == "validation_only"
+    assert definition.development_seeds == ()
+    assert definition.validation_seeds == tuple(range(2000, 2010))
+    assert definition.held_out_seeds == ()
+    assert definition.calls_per_seed == 1
+    assert definition.condition == "raw"
+    assert definition.requested_model == "gpt-5.6-luna"
+    assert definition.reasoning_effort == "medium"
+    assert "temperature" not in definition.decoding_settings
+    assert definition.intended_temperature == 0.0
+    assert definition.effective_temperature is None
+    assert definition.prompt_version == "raw-rca-v2"
+    assert definition.prompt_sha256 == PROMPT_SHA256_V2
+    assert definition.taxonomy_version == "rca-taxonomy-v2"
+    assert definition.scorer_version == "raw-rca-scorer-v2"
+
+
+@pytest.mark.parametrize(
+    ("original", "changed", "message"),
+    [
+        (
+            "development_seeds = []",
+            "development_seeds = [1000]",
+            "Validation-only pilot cannot contain development seeds",
+        ),
+        (
+            "held_out_seeds = []",
+            "held_out_seeds = [20000]",
+            "must not contain held-out seeds",
+        ),
+        (
+            "validation_seeds = [2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009]",
+            "validation_seeds = [1000]",
+            "validation_seeds contains a non-validation seed",
+        ),
+    ],
+)
+def test_v2_validation_config_rejects_out_of_scope_seeds(
+    tmp_path: Path, original: str, changed: str, message: str
+) -> None:
+    config = tmp_path / "invalid-validation.toml"
+    config.write_text(
+        VALIDATION_CONFIG.read_text(encoding="utf-8").replace(original, changed),
+        encoding="utf-8",
+    )
+    with pytest.raises(ValueError, match=message):
+        PilotDefinition.load(config)
+
+
+@pytest.mark.parametrize(
+    ("original", "changed"),
+    [
+        (
+            'taxonomy_version = "rca-taxonomy-v2"',
+            'taxonomy_version = "rca-taxonomy-v1"',
+        ),
+        (
+            'scorer_version = "raw-rca-scorer-v2"',
+            'scorer_version = "raw-rca-scorer-v1"',
+        ),
+    ],
+)
+def test_v2_validation_config_rejects_protocol_version_mismatch(
+    tmp_path: Path, original: str, changed: str
+) -> None:
+    config = tmp_path / "invalid-protocol.toml"
+    config.write_text(
+        VALIDATION_CONFIG.read_text(encoding="utf-8").replace(original, changed),
+        encoding="utf-8",
+    )
+    with pytest.raises(ValueError, match="do not match a frozen protocol"):
+        PilotDefinition.load(config)
+
+
+def test_v2_validation_command_is_pending_without_execute(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    results = tmp_path / "must-not-exist.jsonl"
+    args = build_parser().parse_args(
+        [
+            "run-pilot",
+            "--config",
+            str(VALIDATION_CONFIG),
+            "--results",
+            str(results),
+        ]
+    )
+    args.handler(args)
+    pending = json.loads(capsys.readouterr().out)
+    assert pending["execution"] == "pending"
+    assert pending["pilot"]["seed_scope"] == "validation_only"
+    assert pending["pilot"]["development_seeds"] == []
+    assert pending["pilot"]["validation_seeds"] == list(range(2000, 2010))
+    assert pending["pilot"]["held_out_seeds"] == []
+    assert not results.exists()

@@ -12,6 +12,7 @@ from diagpriv.evaluation.pricing import PricingSnapshot
 from diagpriv.evaluation.providers import OpenAIResponsesProvider
 from diagpriv.evaluation.reporting import inspection_json, summarize_path
 from diagpriv.evaluation.runner import RawRunConfig, run_raw_experiment
+from diagpriv.transformations import parse_hmac_key_hex
 
 
 def _openai_provider(
@@ -31,6 +32,21 @@ def _openai_provider(
     return provider, model_version
 
 
+def _external_hmac_key(definition: PilotDefinition) -> bytes | None:
+    if definition.condition != "hmac-v1":
+        return None
+    variable = definition.hmac_key_environment_variable
+    if variable is None:
+        raise SystemExit("hmac-v1 key environment variable is not configured")
+    value = os.environ.get(variable)
+    if value is None:
+        raise SystemExit(f"Required environment variable is not set: {variable}")
+    try:
+        return parse_hmac_key_hex(value)
+    except ValueError as error:
+        raise SystemExit(f"Invalid HMAC key in {variable}: {error}") from error
+
+
 def _run_pilot(args: argparse.Namespace) -> None:
     definition = PilotDefinition.load(args.config)
     if not args.execute:
@@ -42,6 +58,7 @@ def _run_pilot(args: argparse.Namespace) -> None:
             )
         )
         return
+    hmac_key = _external_hmac_key(definition)
     provider, model_version = _openai_provider(definition)
 
     for seed in (*definition.development_seeds, *definition.validation_seeds):
@@ -57,12 +74,15 @@ def _run_pilot(args: argparse.Namespace) -> None:
                     model=definition.requested_model,
                     model_version=model_version,
                     reasoning_effort=definition.reasoning_effort,
+                    condition=definition.condition,
                     decoding_settings=dict(definition.decoding_settings),
                     intended_temperature=definition.intended_temperature,
                     temperature_omission_reason=(
                         definition.temperature_omission_reason
                     ),
                     prompt_version=definition.prompt_version,
+                    hmac_key=hmac_key,
+                    transformation_key_id=definition.hmac_key_id,
                 ),
                 provider,
                 result_path=args.results,
@@ -98,6 +118,7 @@ def _run_diagnostic(args: argparse.Namespace) -> None:
             "Diagnostic results path already exists; refusing to call provider"
         )
 
+    hmac_key = _external_hmac_key(definition)
     provider, model_version = _openai_provider(definition)
     manifest = run_raw_experiment(
         RawRunConfig(
@@ -106,10 +127,13 @@ def _run_diagnostic(args: argparse.Namespace) -> None:
             model=definition.requested_model,
             model_version=model_version,
             reasoning_effort=definition.reasoning_effort,
+            condition=definition.condition,
             decoding_settings=dict(definition.decoding_settings),
             intended_temperature=definition.intended_temperature,
             temperature_omission_reason=definition.temperature_omission_reason,
             prompt_version=definition.prompt_version,
+            hmac_key=hmac_key,
+            transformation_key_id=definition.hmac_key_id,
         ),
         provider,
         result_path=args.results,

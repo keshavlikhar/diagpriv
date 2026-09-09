@@ -17,19 +17,32 @@ from diagpriv.evaluation.prompt_v2 import (
     PROMPT_VERSION as PROMPT_VERSION_V2,
 )
 
-FROZEN_PROMPT_HASHES = {
-    PROMPT_VERSION_V1: PROMPT_SHA256_V1,
-    PROMPT_VERSION_V2: PROMPT_SHA256_V2,
+FROZEN_PROTOCOLS = {
+    PROMPT_VERSION_V1: (
+        PROMPT_SHA256_V1,
+        "rca-taxonomy-v1",
+        "raw-rca-scorer-v1",
+    ),
+    PROMPT_VERSION_V2: (
+        PROMPT_SHA256_V2,
+        "rca-taxonomy-v2",
+        "raw-rca-scorer-v2",
+    ),
 }
+
+SeedScope = Literal["development_and_validation", "development_only", "validation_only"]
 
 
 @dataclass(frozen=True, slots=True)
 class PilotDefinition:
     pilot_id: str
     provider: str
-    condition: Literal["raw"]
+    condition: Literal["raw", "redaction-v1", "hmac-v1"]
     prompt_version: str
     prompt_sha256: str
+    taxonomy_version: str
+    scorer_version: str
+    seed_scope: SeedScope
     development_seeds: tuple[int, ...]
     validation_seeds: tuple[int, ...]
     held_out_seeds: tuple[int, ...]
@@ -42,6 +55,8 @@ class PilotDefinition:
     effective_temperature: float | None
     temperature_omission_reason: str | None
     pricing_snapshot_path: Path
+    hmac_key_environment_variable: str | None
+    hmac_key_id: str | None
 
     @classmethod
     def load(cls, path: Path) -> Self:
@@ -49,6 +64,12 @@ class PilotDefinition:
         pilot = data["pilot"]
         model = data["model"]
         pricing = data["pricing"]
+        transformation = data.get("transformation", {})
+        if not isinstance(transformation, dict):
+            raise ValueError("transformation must be a table")
+        protocol = FROZEN_PROTOCOLS.get(pilot["prompt_version"])
+        default_taxonomy = None if protocol is None else protocol[1]
+        default_scorer = None if protocol is None else protocol[2]
         temperature_correction = data.get("temperature_protocol_correction")
         intended_temperature = None
         effective_temperature = _optional_temperature(
@@ -73,6 +94,9 @@ class PilotDefinition:
             condition=pilot["condition"],
             prompt_version=pilot["prompt_version"],
             prompt_sha256=pilot["prompt_sha256"],
+            taxonomy_version=pilot.get("taxonomy_version", default_taxonomy),
+            scorer_version=pilot.get("scorer_version", default_scorer),
+            seed_scope=pilot.get("seed_scope", "development_and_validation"),
             development_seeds=tuple(pilot["development_seeds"]),
             validation_seeds=tuple(pilot["validation_seeds"]),
             held_out_seeds=tuple(pilot["held_out_seeds"]),
@@ -87,15 +111,32 @@ class PilotDefinition:
             effective_temperature=effective_temperature,
             temperature_omission_reason=temperature_omission_reason,
             pricing_snapshot_path=path.parent / pricing["snapshot"],
+            hmac_key_environment_variable=transformation.get(
+                "key_environment_variable"
+            ),
+            hmac_key_id=transformation.get("key_id"),
         )
         definition.validate()
         return definition
 
     def validate(self) -> None:
-        if self.condition != "raw":
-            raise ValueError("The v0.1 pilot supports only the raw condition")
-        if FROZEN_PROMPT_HASHES.get(self.prompt_version) != self.prompt_sha256:
-            raise ValueError("Pilot prompt version or hash does not match frozen raw prompt")
+        if self.condition not in {"raw", "redaction-v1", "hmac-v1"}:
+            raise ValueError(f"Unsupported pilot condition: {self.condition}")
+        if self.condition == "hmac-v1":
+            if not self.hmac_key_environment_variable:
+                raise ValueError("hmac-v1 requires a key environment variable name")
+            if not self.hmac_key_id:
+                raise ValueError("hmac-v1 requires a non-secret experimental key ID")
+        elif self.hmac_key_environment_variable is not None or self.hmac_key_id is not None:
+            raise ValueError("HMAC key configuration is valid only for hmac-v1")
+        if FROZEN_PROTOCOLS.get(self.prompt_version) != (
+            self.prompt_sha256,
+            self.taxonomy_version,
+            self.scorer_version,
+        ):
+            raise ValueError(
+                "Pilot prompt, hash, taxonomy, and scorer do not match a frozen protocol"
+            )
         if self.calls_per_seed < 1:
             raise ValueError("calls_per_seed must be positive")
         if self.effective_temperature != _optional_temperature(
@@ -107,8 +148,20 @@ class PilotDefinition:
                 raise ValueError("Corrected temperature must be omitted from decoding")
             if not self.temperature_omission_reason:
                 raise ValueError("Corrected temperature requires an omission reason")
+        if self.seed_scope not in {
+            "development_and_validation",
+            "development_only",
+            "validation_only",
+        }:
+            raise ValueError(f"Unsupported pilot seed scope: {self.seed_scope}")
         if self.held_out_seeds:
-            raise ValueError("The first pilot must not contain held-out seeds")
+            raise ValueError("Pilot must not contain held-out seeds")
+        if self.seed_scope == "development_only" and self.validation_seeds:
+            raise ValueError("Development-only pilot cannot contain validation seeds")
+        if self.seed_scope == "validation_only" and self.development_seeds:
+            raise ValueError("Validation-only pilot cannot contain development seeds")
+        if self.seed_scope == "validation_only" and not self.validation_seeds:
+            raise ValueError("Validation-only pilot must contain validation seeds")
         if any(seed_split(seed) != "development" for seed in self.development_seeds):
             raise ValueError("Pilot development_seeds contains a non-development seed")
         if any(seed_split(seed) != "validation" for seed in self.validation_seeds):
@@ -121,12 +174,15 @@ class PilotDefinition:
             raise ValueError("Pilot pricing snapshot does not exist")
 
     def to_dict(self) -> dict[str, Any]:
-        return {
+        data: dict[str, Any] = {
             "pilot_id": self.pilot_id,
             "provider": self.provider,
             "condition": self.condition,
             "prompt_version": self.prompt_version,
             "prompt_sha256": self.prompt_sha256,
+            "taxonomy_version": self.taxonomy_version,
+            "scorer_version": self.scorer_version,
+            "seed_scope": self.seed_scope,
             "development_seeds": list(self.development_seeds),
             "validation_seeds": list(self.validation_seeds),
             "held_out_seeds": list(self.held_out_seeds),
@@ -147,6 +203,13 @@ class PilotDefinition:
             },
             "pricing_snapshot_path": str(self.pricing_snapshot_path),
         }
+        if self.condition == "hmac-v1":
+            data["transformation"] = {
+                "version": "hmac-v1",
+                "key_environment_variable": self.hmac_key_environment_variable,
+                "key_id": self.hmac_key_id,
+            }
+        return data
 
 
 def _optional_temperature(value: object) -> float | None:
