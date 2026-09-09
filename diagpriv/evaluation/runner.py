@@ -35,6 +35,7 @@ from diagpriv.evaluation.scoring_v2 import SCORER_VERSION as SCORER_VERSION_V2
 from diagpriv.evaluation.scoring_v2 import score_response_v2
 from diagpriv.evaluation.taxonomy_v2 import TAXONOMY_VERSION as TAXONOMY_VERSION_V2
 from diagpriv.transformations import (
+    format_preserving_incident,
     hmac_incident,
     hmac_key_fingerprint,
     redact_incident,
@@ -57,7 +58,11 @@ class RawRunConfig:
     model_version: str | None
     reasoning_effort: str | None = None
     condition: Literal[
-        "raw", "redaction-v1", "hmac-v1", "tokenization-v1"
+        "raw",
+        "redaction-v1",
+        "hmac-v1",
+        "tokenization-v1",
+        "format-preserving-v1",
     ] = "raw"
     decoding_settings: dict[str, float | int | str | bool | None] = field(
         default_factory=lambda: {"temperature": 0.0}
@@ -131,6 +136,8 @@ def run_raw_experiment(
         model_view = hmac_incident(incident, key=config.hmac_key)
     elif config.condition == "tokenization-v1":
         model_view = tokenize_incident(incident)
+    elif config.condition == "format-preserving-v1":
+        model_view = format_preserving_incident(incident)
     else:
         raise ValueError(f"Unsupported evaluation condition: {config.condition}")
 

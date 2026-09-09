@@ -156,5 +156,6 @@ protocol explicitly defines them.
 - Invariant evaluation is an offline audit, not automated transformation
   selection.
 - The provider adapter uses the Python standard library and one vendor only.
-- No task-aware DiagPriv selection, deterministic tokenization, format
-  preservation, or MCP/product layer exists.
+- Deterministic tokenization and format-preserving pseudonymization exist only
+  as fixed experimental baselines. No task-aware DiagPriv selection or
+  MCP/product layer exists.

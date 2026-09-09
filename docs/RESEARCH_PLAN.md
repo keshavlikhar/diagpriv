@@ -51,37 +51,34 @@ idempotency causing two successful effects. All data is fictional and synthetic.
 4. **Raw pilots:** development and validation observations completed and frozen.
 5. **Naive redaction:** `redaction-v1` implemented, invariant-audited, and run on
    development seeds only.
-6. **HMAC baseline:** `hmac-v1` implemented and invariant-tested offline. Its
-   provider experiment has not been run.
+6. **HMAC baseline:** `hmac-v1` implemented, invariant-tested, and run on the
+   five development seeds, producing 5/5 exact RCA.
+7. **Deterministic tokenization:** `tokenization-v1` implemented,
+   invariant-tested, and run on the five development seeds, producing 5/5 exact
+   RCA.
+8. **Format-preserving pseudonymization:** `format-preserving-v1` implemented,
+   invariant-tested, and run on the five development seeds, producing 4/5 exact
+   RCA. The only error was component localization; the protocol was not changed.
 
 ## Roadmap and decision gates
 
-### 1. HMAC development pilot
+### 1. Format-dependent incident family
 
-- Human-review the offline transform, namespace policy, threat model, key
-  procedure, and exact development configuration.
-- Provision one external experimental key without committing it.
-- Execute seeds 1000–1004 once only after explicit approval.
-- Freeze the JSONL and digest before interpreting or changing later methods.
-- Decide whether results justify a separately approved validation comparison.
+- Add an incident family where format is genuinely diagnostic before claiming
+  utility from format preservation.
+- Predeclare the necessary structural property, such as truncation,
+  leading-zero loss, separator corruption, malformed identifier shape,
+  fixed-width mismatch, or a structural/check-digit violation.
+- Validate that the evidence requires that property and does not reveal the
+  answer through wording or labels.
+- Compare redaction, HMAC, tokenization, and format-preserving pseudonymization
+  under the same frozen RCA protocol and a documented exposure model.
 
-### 2. Deterministic tokenization baseline
+The current 4/5 format-preserving result is a development observation on an
+incident that does not require format. It cannot establish incremental utility
+over ordinary relationship-preserving pseudonymization.
 
-- Define a versioned token vocabulary and collision/namespace behavior.
-- Specify whether a lookup service or local mapping is part of the threat model.
-- Measure equality, inequality, cardinality, and cross-source preservation.
-- Complete offline tests and review before any provider call.
-
-### 3. Format-preserving methods
-
-- Add incident families where format is truly diagnostic before claiming a need
-  for format preservation.
-- Define exactly which syntactic properties survive and what additional
-  attribute leakage they create.
-- Compare against redaction, HMAC, and deterministic tokenization under a
-  documented exposure model.
-
-### 4. DiagPriv task-aware selection
+### 2. DiagPriv task-aware selection
 
 - Define a transformation policy that selects the minimum structural properties
   required by the troubleshooting task.
@@ -90,7 +87,7 @@ idempotency causing two successful effects. All data is fictional and synthetic.
   sensitive plaintext or oracle labels to the model.
 - Compare with fixed baselines before making superiority claims.
 
-### 5. Harder and broader incident families
+### 3. Harder and broader incident families
 
 - Add multiple mechanisms, outcomes, triggers, subsequent actions, and affected
   components using the fixed taxonomy where it remains conceptually valid.
@@ -101,7 +98,7 @@ idempotency causing two successful effects. All data is fictional and synthetic.
 - Avoid families whose wording, service names, IDs, or data shape reveal the
   canonical answer.
 
-### 6. Multi-model and repeated-call evaluation
+### 4. Multi-model and repeated-call evaluation
 
 - Preselect models, model/version metadata, reasoning settings, call counts, and
   failure policy.
@@ -110,8 +107,10 @@ idempotency causing two successful effects. All data is fictional and synthetic.
   five- and ten-seed pilots are not inferential sample sizes.
 - Evaluate response validity, exact RCA, each causal dimension, evidence quality,
   latency/token cost, and defined privacy-exposure metrics.
+- Treat component ownership as a potentially model-sensitive dimension and
+  measure its stability separately from outcome, trigger, action, and mechanism.
 
-### 7. Protocol freeze and held-out evaluation
+### 5. Protocol freeze and held-out evaluation
 
 - Freeze benchmark generators, transformations, prompts, taxonomy, scorer,
   models, repetitions, analysis code, exclusion rules, and statistical plan.
@@ -120,7 +119,7 @@ idempotency causing two successful effects. All data is fictional and synthetic.
 - Never use the retired 10000–10999 range.
 - Report all attempted held-out calls and do not repair cases post hoc.
 
-### 8. Paper preparation
+### 6. Paper preparation
 
 - Produce a reproducible artifact manifest and data dictionary.
 - Report negative results, failure records, deviations, and confidence intervals.

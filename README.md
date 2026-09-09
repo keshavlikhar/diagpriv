@@ -18,11 +18,14 @@ observations, not proof of that hypothesis or evidence of production validity.
 | Raw, `raw-rca-v2` | Development 1000–1004 | Frozen | 5/5 exact RCA; 5/5 overall |
 | Raw, `raw-rca-v2` | Validation 2000–2009 | Frozen | 10/10 exact RCA; 9/10 overall |
 | `redaction-v1` | Development 1000–1004 | Frozen | 4/5 exact RCA; 4/5 overall |
-| `hmac-v1` | Development 1000–1004 | Offline only | Implemented and invariant-tested; no provider run |
+| `hmac-v1` | Development 1000–1004 | Frozen | 5/5 exact RCA |
+| `tokenization-v1` | Development 1000–1004 | Frozen | 5/5 exact RCA |
+| `format-preserving-v1` | Development 1000–1004 | Frozen | 4/5 exact RCA |
 
-The active handoff point is the offline `hmac-v1` checkpoint. Do not run its
-provider experiment, run redaction on validation, or inspect held-out seeds
-without explicit research approval.
+The active handoff point is the reviewed `format-preserving-v1` development
+checkpoint. These small development results are observations, not general
+conclusions. Do not rerun completed experiments, run a privacy condition on
+validation, or inspect held-out seeds without explicit research approval.
 
 See [CURRENT_STATUS](docs/CURRENT_STATUS.md) for immutable artifact hashes and
 known limitations, and [RESEARCH_PLAN](docs/RESEARCH_PLAN.md) for the roadmap.
@@ -72,6 +75,8 @@ uv run python -m diagbench.generators.incident_001 --seed 1001
 - [Research questions](docs/research_questions.md)
 - [Naive redaction specification](docs/redaction_v1.md)
 - [HMAC baseline specification](docs/hmac_v1.md)
+- [Tokenization baseline specification](docs/tokenization_v1.md)
+- [Format-preserving baseline specification](docs/format_preserving_v1.md)
 
 ## Safety and scope
 
