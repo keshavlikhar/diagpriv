@@ -4,6 +4,7 @@ from diagpriv.transformations.hmac_v1 import (
     HMAC_KEY_ENVIRONMENT_VARIABLE,
     TRANSFORMATION_VERSION as HMAC_TRANSFORMATION_VERSION,
     hmac_incident,
+    hmac_key_fingerprint,
     hmac_token,
     parse_hmac_key_hex,
 )
@@ -22,6 +23,7 @@ __all__ = [
     "REDACTION_TRANSFORMATION_VERSION",
     "TRANSFORMATION_VERSION",
     "hmac_incident",
+    "hmac_key_fingerprint",
     "hmac_token",
     "parse_hmac_key_hex",
     "redact_incident",

@@ -266,6 +266,15 @@ def inspection_records(path: Path) -> list[dict[str, object]]:
                     if manifest.transformation_key_id is not None
                     else {}
                 ),
+                **(
+                    {
+                        "transformation_key_fingerprint": (
+                            manifest.transformation_key_fingerprint
+                        )
+                    }
+                    if manifest.transformation_key_fingerprint is not None
+                    else {}
+                ),
                 "response_id": manifest.response_id,
                 "provider_timestamp": manifest.provider_timestamp,
                 "provider_response_status": manifest.provider_response_status,

@@ -10,10 +10,12 @@ from diagbench.generators.incident_001 import generate_incident_001
 from diagbench.schema import ModelView
 from diagbench.schema.models import JSONValue
 from diagpriv.evaluation.cli import build_parser
+from diagpriv.evaluation.manifest import ExperimentManifest
 from diagpriv.evaluation.pilot import PilotDefinition
 from diagpriv.evaluation.prompt import PROMPT_SHA256 as PROMPT_SHA256_V1
 from diagpriv.evaluation.prompt_v2 import PROMPT_SHA256 as PROMPT_SHA256_V2
 from diagpriv.evaluation.providers import FakeProvider
+from diagpriv.evaluation.reporting import inspection_records
 from diagpriv.evaluation.runner import RawRunConfig, run_raw_experiment
 from diagpriv.invariants import evaluate_invariants
 from diagpriv.transformations import TRANSFORMATION_VERSION as PACKAGE_VERSION
@@ -21,6 +23,7 @@ from diagpriv.transformations.hmac_v1 import (
     HMAC_KEY_ENVIRONMENT_VARIABLE,
     TRANSFORMATION_VERSION,
     hmac_incident,
+    hmac_key_fingerprint,
     hmac_token,
     parse_hmac_key_hex,
 )
@@ -29,6 +32,9 @@ from diagpriv.transformations.redaction_v1 import redact_incident
 ROOT = Path(__file__).parents[1]
 CONFIG = ROOT / "experiments" / "hmac_v1_development.toml"
 PUBLIC_TEST_KEY = bytes(range(32))
+PUBLIC_TEST_KEY_FINGERPRINT = (
+    "630dcd2966c4336691125448bbb25b4ff412a49c732db2c8abc1b8581bd710dd"
+)
 
 
 def _path_values(model_view: ModelView, path: str) -> tuple[JSONValue, ...]:
@@ -236,6 +242,22 @@ def test_hmac_v1_public_test_vector_and_fixed_nonformat_token() -> None:
     assert "SYN-REQ" not in token
 
 
+def test_hmac_key_fingerprint_is_sha256_of_actual_32_byte_key() -> None:
+    assert hmac_key_fingerprint(PUBLIC_TEST_KEY) == PUBLIC_TEST_KEY_FINGERPRINT
+    assert hmac_key_fingerprint(bytes(reversed(range(32)))) != (
+        PUBLIC_TEST_KEY_FINGERPRINT
+    )
+
+
+@pytest.mark.parametrize("invalid", [b"", b"short", b"x" * 31, b"x" * 33])
+def test_hmac_key_fingerprint_rejects_invalid_keys_without_echoing_them(
+    invalid: bytes,
+) -> None:
+    with pytest.raises(ValueError) as caught:
+        hmac_key_fingerprint(invalid)
+    assert repr(invalid) not in str(caught.value)
+
+
 @pytest.mark.parametrize("seed", range(1000, 1005))
 def test_hmac_v1_has_expected_incident_001_invariant_profile(seed: int) -> None:
     incident = generate_incident_001(seed)
@@ -321,10 +343,45 @@ def test_hmac_key_never_enters_prompt_manifest_result_or_repr(tmp_path: Path) ->
     )
     assert "HMAC1_" in provider.requests[0].prompt
     assert manifest.transformation_key_id == "public-test-key-only"
+    assert manifest.transformation_key_fingerprint == PUBLIC_TEST_KEY_FINGERPRINT
     assert manifest.to_dict()["transformation_key_id"] == "public-test-key-only"
+    assert (
+        manifest.to_dict()["transformation_key_fingerprint"]
+        == PUBLIC_TEST_KEY_FINGERPRINT
+    )
+    assert PUBLIC_TEST_KEY_FINGERPRINT in result_path.read_text(encoding="utf-8")
+    assert ExperimentManifest.from_json(manifest.to_json()) == manifest
+    inspected = inspection_records(result_path)
+    assert inspected[0]["transformation_key_id"] == "public-test-key-only"
+    assert (
+        inspected[0]["transformation_key_fingerprint"]
+        == PUBLIC_TEST_KEY_FINGERPRINT
+    )
     for annotation in incident.sensitive_fields:
         for value in _path_values(incident.model_view(), annotation.path):
             assert str(value) not in provider.requests[0].prompt
+
+
+@pytest.mark.parametrize("condition", ["raw", "redaction-v1"])
+def test_non_hmac_results_do_not_gain_key_fingerprint_metadata(
+    condition: str,
+) -> None:
+    manifest = run_raw_experiment(
+        RawRunConfig(
+            experiment_id=f"{condition}-fingerprint-absence-test",
+            seed=1001,
+            model="offline-fixture",
+            model_version="1",
+            condition=condition,  # type: ignore[arg-type]
+            decoding_settings={"max_output_tokens": 4096},
+            prompt_version="raw-rca-v2",
+        ),
+        FakeProvider(raw_output="{}"),
+    )
+    assert manifest.transformation_key_id is None
+    assert manifest.transformation_key_fingerprint is None
+    assert "transformation_key_id" not in manifest.to_dict()
+    assert "transformation_key_fingerprint" not in manifest.to_dict()
 
 
 @pytest.mark.parametrize(

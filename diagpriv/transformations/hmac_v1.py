@@ -30,6 +30,12 @@ def parse_hmac_key_hex(value: str) -> bytes:
     return key
 
 
+def hmac_key_fingerprint(key: bytes) -> str:
+    """Return the non-secret SHA-256 audit fingerprint for an experimental key."""
+    _validate_key(key)
+    return hashlib.sha256(key).hexdigest()
+
+
 def hmac_token(value: JSONPrimitive, *, key: bytes, namespace: str) -> str:
     """Return a domain-separated HMAC-SHA-256 pseudonym for one scalar."""
     _validate_key(key)

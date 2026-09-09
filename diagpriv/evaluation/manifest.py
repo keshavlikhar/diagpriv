@@ -33,6 +33,7 @@ class ExperimentManifest:
     taxonomy_version: str
     scorer_version: str
     transformation_key_id: str | None
+    transformation_key_fingerprint: str | None
     decoding_settings: dict[str, float | int | str | bool | None]
     timestamp: str
     response_id: str | None
@@ -91,6 +92,10 @@ class ExperimentManifest:
         }
         if self.transformation_key_id is not None:
             data["transformation_key_id"] = self.transformation_key_id
+        if self.transformation_key_fingerprint is not None:
+            data["transformation_key_fingerprint"] = (
+                self.transformation_key_fingerprint
+            )
         return data
 
     def to_json(self, *, indent: int | None = 2) -> str:
@@ -140,6 +145,9 @@ class ExperimentManifest:
             taxonomy_version=taxonomy_version,
             scorer_version=scorer_version,
             transformation_key_id=data.get("transformation_key_id"),
+            transformation_key_fingerprint=data.get(
+                "transformation_key_fingerprint"
+            ),
             decoding_settings=data["decoding_settings"],
             timestamp=data["timestamp"],
             response_id=data.get("response_id"),

@@ -34,7 +34,11 @@ from diagpriv.evaluation.scoring import score_response
 from diagpriv.evaluation.scoring_v2 import SCORER_VERSION as SCORER_VERSION_V2
 from diagpriv.evaluation.scoring_v2 import score_response_v2
 from diagpriv.evaluation.taxonomy_v2 import TAXONOMY_VERSION as TAXONOMY_VERSION_V2
-from diagpriv.transformations import hmac_incident, redact_incident
+from diagpriv.transformations import (
+    hmac_incident,
+    hmac_key_fingerprint,
+    redact_incident,
+)
 
 SCORER_VERSION_V1 = "raw-rca-scorer-v1"
 TAXONOMY_VERSION_V1 = "rca-taxonomy-v1"
@@ -110,6 +114,7 @@ def run_raw_experiment(
         raise ValueError(f"Unsupported raw RCA prompt version: {config.prompt_version}")
 
     incident = generate_incident_001(config.seed)
+    transformation_key_fingerprint: str | None = None
     if config.condition == "raw":
         model_view = incident.model_view()
     elif config.condition == "redaction-v1":
@@ -119,6 +124,7 @@ def run_raw_experiment(
             raise ValueError("hmac-v1 requires an external HMAC key")
         if not config.transformation_key_id:
             raise ValueError("hmac-v1 requires a non-secret experimental key ID")
+        transformation_key_fingerprint = hmac_key_fingerprint(config.hmac_key)
         model_view = hmac_incident(incident, key=config.hmac_key)
     else:
         raise ValueError(f"Unsupported evaluation condition: {config.condition}")
@@ -167,6 +173,7 @@ def run_raw_experiment(
         taxonomy_version=taxonomy_version,
         scorer_version=scorer_version,
         transformation_key_id=config.transformation_key_id,
+        transformation_key_fingerprint=transformation_key_fingerprint,
         decoding_settings=dict(config.decoding_settings),
         timestamp=config.timestamp or datetime.now(UTC).isoformat(),
         response_id=invocation.response_id,
