@@ -20,7 +20,7 @@ class ExperimentManifest:
     incident_family: str
     seed: int
     split: str
-    condition: Literal["raw", "redaction-v1", "hmac-v1"]
+    condition: Literal["raw", "redaction-v1", "hmac-v1", "tokenization-v1"]
     requested_model: str
     provider_returned_model: str | None
     model_version_metadata: str | None
