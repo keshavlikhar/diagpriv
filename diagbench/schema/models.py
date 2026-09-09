@@ -155,6 +155,24 @@ class StructuredRootCause:
 
 
 @dataclass(frozen=True, slots=True)
+class ComponentMapping:
+    """Oracle-only mapping from a canonical role to visible service names."""
+
+    canonical_role: str
+    visible_names: tuple[str, ...]
+
+    def to_dict(self) -> dict[str, JSONValue]:
+        return {
+            "canonical_role": self.canonical_role,
+            "visible_names": list(self.visible_names),
+        }
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> Self:
+        return cls(data["canonical_role"], tuple(data["visible_names"]))
+
+
+@dataclass(frozen=True, slots=True)
 class ModelView:
     """The complete and exclusive representation an evaluated model may receive."""
 
@@ -201,6 +219,7 @@ class Incident:
     description: str
     troubleshooting_question: str
     ground_truth: StructuredRootCause
+    component_mappings: tuple[ComponentMapping, ...]
     structured_evidence: dict[str, list[dict[str, JSONValue]]]
     log_evidence: tuple[LogEntry, ...]
     sensitive_fields: tuple[SensitiveField, ...]
@@ -254,6 +273,7 @@ class Incident:
             "description": self.description,
             "troubleshooting_question": self.troubleshooting_question,
             "ground_truth": self.ground_truth.to_dict(),
+            "component_mappings": [item.to_dict() for item in self.component_mappings],
             "structured_evidence": self.structured_evidence,
             "log_evidence": [entry.to_dict() for entry in self.log_evidence],
             "sensitive_fields": [asdict(field) for field in self.sensitive_fields],
@@ -279,6 +299,9 @@ class Incident:
             description=data["description"],
             troubleshooting_question=data["troubleshooting_question"],
             ground_truth=StructuredRootCause.from_dict(data["ground_truth"]),
+            component_mappings=tuple(
+                ComponentMapping.from_dict(item) for item in data["component_mappings"]
+            ),
             structured_evidence=data["structured_evidence"],
             log_evidence=tuple(LogEntry.from_dict(item) for item in data["log_evidence"]),
             sensitive_fields=tuple(

@@ -1,0 +1,19 @@
+Investigate the supplied operational evidence and identify the most likely root cause of the reported incident. Base your diagnosis only on the supplied evidence.
+
+Return exactly one JSON object with these fields:
+
+{
+  "observed_outcome": "concise_snake_case_label",
+  "trigger": "concise_snake_case_label",
+  "failure_mechanism": "concise_snake_case_label",
+  "affected_component": "canonical role or service name visible in the evidence",
+  "supporting_evidence": ["evidence_id", "evidence_id"],
+  "explanation": "brief evidence-based explanation",
+  "confidence": 0.0
+}
+
+Use a confidence value from 0.0 to 1.0. Every supporting-evidence value must be an evidence_id present in the supplied evidence. Do not add markdown fences or text outside the JSON object.
+
+Operational evidence:
+{{MODEL_VIEW_JSON}}
+

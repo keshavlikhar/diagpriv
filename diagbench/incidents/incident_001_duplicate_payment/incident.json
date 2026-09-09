@@ -1,5 +1,13 @@
 {
   "category": "duplicate_payment",
+  "component_mappings": [
+    {
+      "canonical_role": "payment_worker",
+      "visible_names": [
+        "ledger-writer"
+      ]
+    }
+  ],
   "description": "A repeated logical operation produced two successful payment records.",
   "diagnostic_invariants": [
     {

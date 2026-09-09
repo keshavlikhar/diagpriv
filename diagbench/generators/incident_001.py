@@ -8,6 +8,7 @@ from pathlib import Path
 import random
 
 from diagbench.schema import (
+    ComponentMapping,
     DiagnosticInvariant,
     EvidenceReference,
     ExpectedEvidence,
@@ -523,6 +524,9 @@ def generate_incident_001(seed: int = DEFAULT_SEED) -> Incident:
                 "A caller repeated one logical request after a response timeout, and "
                 "the payment worker persisted both arrivals as separate payments."
             ),
+        ),
+        component_mappings=(
+            ComponentMapping("payment_worker", (worker_service,)),
         ),
         structured_evidence=structured_evidence,
         log_evidence=tuple(logs),

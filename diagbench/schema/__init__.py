@@ -1,6 +1,7 @@
 """JSON-compatible DiagBench schema types."""
 
 from diagbench.schema.models import (
+    ComponentMapping,
     DiagnosticInvariant,
     EvidenceReference,
     ExpectedEvidence,
@@ -13,6 +14,7 @@ from diagbench.schema.models import (
 
 __all__ = [
     "DiagnosticInvariant",
+    "ComponentMapping",
     "EvidenceReference",
     "ExpectedEvidence",
     "Incident",

@@ -11,7 +11,9 @@ DiagBench v0.2 turns Incident 001 into a bounded synthetic incident family and
 strictly separates research-oracle annotations from the evidence visible to a
 future evaluated model. The repository provides structured RCA ground truth,
 element-scoped diagnostic invariants, deterministic generation, explicit seed
-splits, research documentation, and experimental-validity tests.
+splits, research documentation, and experimental-validity tests. Evaluation
+Protocol v0.1 adds a provider-independent, offline-testable raw RCA baseline
+harness; it does not invoke a real model by default.
 
 ## What DiagPriv is not yet
 
@@ -44,6 +46,8 @@ The generator command writes the canonical development JSON fixture in
 - `docs/` records the research charter, questions, and benchmark contract.
 - `diagbench/` defines schemas, synthetic incidents, and deterministic generators.
 - `diagpriv/` reserves small modules for future transformations and evaluation.
+- `diagpriv/evaluation/` contains the raw prompt, response parser, deterministic
+  scorer, provider contract, runner, and append-only manifest support.
 - `tests/` checks schema round trips and benchmark integrity.
 - `experiments/` and `results/` are reserved for later empirical work.
 
