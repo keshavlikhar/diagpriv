@@ -17,10 +17,11 @@ python -m diagbench.generators.incident_001 --seed 1001
 ```
 
 Other seeds vary bounded nuisance properties while retaining the structured root
-cause. Development seeds are 1000–1999, validation seeds are 2000–2999, and
-held-out evaluation seeds are 10000–10999.
+cause. Development seeds are 1000–1999 and validation seeds are 2000–2999. The
+old 10000–10999 range is retired because it was mechanically audited before any
+LLM evaluation. Final held-out evaluation seeds are 20000–20999 and must not be
+generated during development.
 
 Version 0.2 removes direct answer wording and diagnostic labels from the model
 view, but the incident family has not yet been validated with human or LLM
 diagnosticians and should not be treated as representative of production systems.
-

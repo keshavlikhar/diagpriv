@@ -13,7 +13,7 @@ from diagbench.generators.incident_001 import (
     seed_split,
 )
 from diagpriv.evaluation.manifest import ExperimentManifest, append_manifest
-from diagpriv.evaluation.prompt import PROMPT_VERSION, build_prompt
+from diagpriv.evaluation.prompt import PROMPT_SHA256, PROMPT_VERSION, build_prompt
 from diagpriv.evaluation.providers import ModelProvider, ModelRequest
 from diagpriv.evaluation.response import ParsedResponse, parse_response
 from diagpriv.evaluation.scoring import score_response
@@ -61,6 +61,8 @@ def run_raw_experiment(
         raise ProtectedSeedError(
             "Held-out evaluation seeds require allow_held_out=True explicitly"
         )
+    if split == "retired":
+        raise ProtectedSeedError("Retired evaluation seeds may not be invoked")
     if split == "unassigned":
         raise ProtectedSeedError("Unassigned seeds are not permitted by the protocol")
 
@@ -75,9 +77,9 @@ def run_raw_experiment(
             decoding_settings=dict(config.decoding_settings),
         )
     )
-    if invocation.status == "provider_error":
+    if invocation.status in {"provider_error", "rate_limited"}:
         parsed = ParsedResponse(
-            "provider_error",
+            invocation.status,
             invocation.raw_output,
             error=invocation.error or "Unspecified provider error",
         )
@@ -95,6 +97,7 @@ def run_raw_experiment(
         model=config.model,
         model_version=config.model_version,
         prompt_version=PROMPT_VERSION,
+        prompt_sha256=PROMPT_SHA256,
         decoding_settings=dict(config.decoding_settings),
         timestamp=config.timestamp or datetime.now(UTC).isoformat(),
         response=parsed,

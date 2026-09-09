@@ -2,13 +2,26 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from urllib.error import HTTPError
 
 import pytest
 
 from diagbench.generators.incident_001 import generate_incident_001
 from diagpriv.evaluation.manifest import ExperimentManifest, append_manifest
-from diagpriv.evaluation.prompt import PROMPT_VERSION, build_prompt, prompt_template
-from diagpriv.evaluation.providers import FakeProvider
+from diagpriv.evaluation.pilot import PilotDefinition
+from diagpriv.evaluation.prompt import (
+    PROMPT_SHA256,
+    PROMPT_VERSION,
+    build_prompt,
+    prompt_template,
+)
+from diagpriv.evaluation.providers import (
+    FakeProvider,
+    InvocationResult,
+    ModelRequest,
+    OpenAIResponsesProvider,
+)
+from diagpriv.evaluation.reporting import summarize_manifests, summarize_path
 from diagpriv.evaluation.response import RCAResponse, parse_response
 from diagpriv.evaluation.runner import (
     ProtectedSeedError,
@@ -198,6 +211,24 @@ def test_held_out_evaluation_seed_requires_override_before_generation(
         "diagpriv.evaluation.runner.generate_incident_001", fail_if_generated
     )
     with pytest.raises(ProtectedSeedError, match="allow_held_out"):
+        run_raw_experiment(_config(20_000), FakeProvider())
+    assert not generated
+
+
+def test_retired_evaluation_seed_is_never_invokable(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    generated = False
+
+    def fail_if_generated(seed: int):
+        nonlocal generated
+        generated = True
+        raise AssertionError(f"Retired seed {seed} was consumed")
+
+    monkeypatch.setattr(
+        "diagpriv.evaluation.runner.generate_incident_001", fail_if_generated
+    )
+    with pytest.raises(ProtectedSeedError, match="Retired"):
         run_raw_experiment(_config(10_000), FakeProvider())
     assert not generated
 
@@ -229,6 +260,7 @@ def test_provider_receives_model_view_and_no_oracle_fields() -> None:
 def test_versioned_prompt_avoids_excluded_research_context() -> None:
     template = prompt_template().lower()
     assert PROMPT_VERSION == "raw-rca-v1"
+    assert PROMPT_SHA256 == "0c06c1ec6d72ca08927a367aaf873d7bea2b34c6210ceb74824263dd7f2bd9cd"
     for forbidden in (
         "diagpriv",
         "privacy",
@@ -243,6 +275,16 @@ def test_versioned_prompt_avoids_excluded_research_context() -> None:
         assert forbidden not in template
 
 
+def test_frozen_prompt_hash_detects_unversioned_change(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    changed_prompt = tmp_path / "changed-prompt.txt"
+    changed_prompt.write_text(prompt_template() + "changed\n", encoding="utf-8")
+    monkeypatch.setattr("diagpriv.evaluation.prompt.PROMPT_PATH", changed_prompt)
+    with pytest.raises(ValueError, match="Prompt hash mismatch"):
+        prompt_template()
+
+
 def test_manifest_round_trip_and_append_only_persistence(tmp_path: Path) -> None:
     provider = FakeProvider(raw_output=_correct_response().to_json())
     manifest = run_raw_experiment(_config(1001), provider)
@@ -254,3 +296,134 @@ def test_manifest_round_trip_and_append_only_persistence(tmp_path: Path) -> None
     with pytest.raises(ValueError, match="already recorded"):
         append_manifest(path, manifest)
     assert path.read_text(encoding="utf-8") == first_contents
+
+
+def test_frozen_pilot_definition_has_only_development_and_validation_seeds() -> None:
+    path = Path(__file__).parents[1] / "experiments" / "raw_pilot_v1.toml"
+    definition = PilotDefinition.load(path)
+    assert definition.development_seeds == tuple(range(1000, 1005))
+    assert definition.validation_seeds == tuple(range(2000, 2010))
+    assert definition.held_out_seeds == ()
+    assert definition.calls_per_seed == 1
+    assert definition.decoding_settings["temperature"] == 0.0
+    assert definition.prompt_sha256 == PROMPT_SHA256
+
+
+def test_pilot_definition_rejects_new_held_out_seed_without_generating_it(
+    tmp_path: Path,
+) -> None:
+    source = Path(__file__).parents[1] / "experiments" / "raw_pilot_v1.toml"
+    changed = source.read_text(encoding="utf-8").replace(
+        "held_out_seeds = []", "held_out_seeds = [20000]"
+    )
+    path = tmp_path / "invalid-pilot.toml"
+    path.write_text(changed, encoding="utf-8")
+    with pytest.raises(ValueError, match="must not contain held-out"):
+        PilotDefinition.load(path)
+
+
+def test_empty_pilot_summary_is_pending(tmp_path: Path) -> None:
+    summary = summarize_path(tmp_path / "not-created.jsonl")
+    for split in (summary.development, summary.validation):
+        assert split.status == "pending"
+        assert split.runs == 0
+        assert split.valid_response_rate is None
+        assert split.exact_rca_accuracy is None
+
+
+def test_pilot_summary_separates_development_and_validation() -> None:
+    development = run_raw_experiment(
+        _config(1001, "summary-dev"),
+        FakeProvider(raw_output=_correct_response(1001).to_json()),
+    )
+    validation = run_raw_experiment(
+        _config(2001, "summary-validation"),
+        FakeProvider(raw_output="{bad json"),
+    )
+    summary = summarize_manifests((development, validation))
+    assert summary.development.runs == 1
+    assert summary.development.exact_rca_accuracy == 1.0
+    assert summary.validation.runs == 1
+    assert summary.validation.valid_response_rate == 0.0
+    assert summary.validation.parse_failures == {"malformed_json": 1}
+
+
+def test_openai_provider_requires_environment_credential(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+    provider = OpenAIResponsesProvider()
+    result = provider.invoke(ModelRequest("prompt", "model", "version", {}))
+    assert result.status == "provider_error"
+    assert result.error == "Missing environment variable: OPENAI_API_KEY"
+
+
+def test_openai_provider_extracts_output_without_exposing_key(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    secret = "test-secret-not-for-storage"
+    monkeypatch.setenv("OPENAI_API_KEY", secret)
+    output = _correct_response().to_json()
+    captured_body: dict[str, object] = {}
+
+    class FakeHTTPResponse:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *args: object) -> None:
+            return None
+
+        def read(self) -> bytes:
+            payload = {
+                "status": "completed",
+                "output": [
+                    {
+                        "type": "message",
+                        "content": [{"type": "output_text", "text": output}],
+                    }
+                ],
+            }
+            return json.dumps(payload).encode("utf-8")
+
+    def fake_urlopen(request, timeout: float):
+        captured_body.update(json.loads(request.data.decode("utf-8")))
+        assert timeout == 120.0
+        return FakeHTTPResponse()
+
+    monkeypatch.setattr("diagpriv.evaluation.providers.urlopen", fake_urlopen)
+    provider = OpenAIResponsesProvider()
+    manifest = run_raw_experiment(_config(1001, "openai-adapter-test"), provider)
+    assert manifest.response.status == "valid"
+    assert captured_body["model"] == "offline-fixture"
+    assert captured_body["store"] is False
+    assert captured_body["temperature"] == 0.0
+    assert "Operational evidence:" in str(captured_body["input"])
+    assert secret not in manifest.to_json()
+
+
+def test_openai_rate_limit_is_explicit(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("OPENAI_API_KEY", "test-secret")
+
+    def rate_limited(request, timeout: float):
+        raise HTTPError(request.full_url, 429, "rate limit", {}, None)
+
+    monkeypatch.setattr("diagpriv.evaluation.providers.urlopen", rate_limited)
+    result = OpenAIResponsesProvider().invoke(
+        ModelRequest("prompt", "model", "version", {})
+    )
+    assert result.status == "rate_limited"
+    assert result.error == "OpenAI Responses API rate limit (HTTP 429)"
+
+
+def test_rate_limit_is_recorded_in_manifest_and_summary() -> None:
+    class RateLimitedProvider:
+        def invoke(self, request: ModelRequest) -> InvocationResult:
+            return InvocationResult("rate_limited", error="rate limited")
+
+    manifest = run_raw_experiment(_config(1001, "rate-limited-run"), RateLimitedProvider())
+    assert manifest.response.status == "rate_limited"
+    assert manifest.response.error == "rate limited"
+    assert manifest.score is None
+    summary = summarize_manifests((manifest,))
+    assert summary.development.provider_failures == 0
+    assert summary.development.rate_limits == 1

@@ -15,6 +15,10 @@ splits, research documentation, and experimental-validity tests. Evaluation
 Protocol v0.1 adds a provider-independent, offline-testable raw RCA baseline
 harness; it does not invoke a real model by default.
 
+The first raw pilot is defined in `experiments/raw_pilot_v1.toml`. Its CLI is
+dry-run-only unless `--execute` is supplied, and real-provider credentials are
+read exclusively from environment variables.
+
 ## What DiagPriv is not yet
 
 DiagPriv is not currently:

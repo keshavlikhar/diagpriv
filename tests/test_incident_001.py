@@ -317,5 +317,6 @@ def test_different_seeds_preserve_structured_root_cause() -> None:
 def test_seed_splits_are_explicit_and_nonoverlapping() -> None:
     assert seed_split(1001) == "development"
     assert seed_split(2001) == "validation"
-    assert seed_split(10_001) == "evaluation"
+    assert seed_split(10_001) == "retired"
+    assert seed_split(20_001) == "evaluation"
     assert seed_split(42) == "unassigned"

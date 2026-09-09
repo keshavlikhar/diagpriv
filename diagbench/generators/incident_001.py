@@ -21,7 +21,8 @@ from diagbench.schema import (
 DEFAULT_SEED = 1001
 DEVELOPMENT_SEEDS = range(1000, 2000)
 VALIDATION_SEEDS = range(2000, 3000)
-EVALUATION_SEEDS = range(10_000, 11_000)
+RETIRED_EVALUATION_SEEDS = range(10_000, 11_000)
+EVALUATION_SEEDS = range(20_000, 21_000)
 DEFAULT_OUTPUT = (
     Path(__file__).parents[1]
     / "incidents"
@@ -44,6 +45,8 @@ def seed_split(seed: int) -> str:
         return "development"
     if seed in VALIDATION_SEEDS:
         return "validation"
+    if seed in RETIRED_EVALUATION_SEEDS:
+        return "retired"
     if seed in EVALUATION_SEEDS:
         return "evaluation"
     return "unassigned"

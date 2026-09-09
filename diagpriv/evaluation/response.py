@@ -17,6 +17,7 @@ ParseStatus = Literal[
     "refusal",
     "empty_response",
     "provider_error",
+    "rate_limited",
 ]
 
 
@@ -153,4 +154,3 @@ def parse_response(raw_output: str) -> ParsedResponse:
             unknown_fields=unknown,
         )
     return ParsedResponse("valid", raw_output, response=response)
-

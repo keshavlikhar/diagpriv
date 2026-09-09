@@ -102,12 +102,18 @@ Seed ranges are separated to reduce direct tuning against evaluation instances:
 |---|---:|---|
 | Development | 1000–1999 | Generator development and transformation debugging |
 | Validation | 2000–2999 | Protocol and parameter selection |
-| Held-out evaluation | 10000–10999 | Final evaluation after protocol decisions are frozen |
+| Retired | 10000–10999 | Never use for final evaluation; mechanically audited before any LLM run |
+| Held-out evaluation | 20000–20999 | Final evaluation after protocol decisions are frozen |
 
-The checked-in canonical example uses development seed `1001`. Seeds outside
-these ranges are marked `unassigned`. Held-out seed values and generated model
-views should not be inspected while tuning future transformations. The ranges
-are a partitioning convention, not evidence that instances are statistically
+The checked-in canonical example uses development seed `1001`. Seeds 10000–10999
+were retired before any LLM evaluation because instances from that range had
+been mechanically generated during construction auditing. Retired seeds cannot
+be invoked by the evaluation runner. Seeds outside all ranges are marked
+`unassigned`.
+
+New held-out seed values and generated model views must not be inspected while
+tuning prompts, evaluation code, or future transformations. The ranges are a
+partitioning convention, not evidence that instances are statistically
 independent.
 
 ## Serialization and versioning

@@ -70,6 +70,13 @@ the `ModelView` and prompt.
 
 Prompt version: `raw-rca-v1`
 
+SHA-256:
+`0c06c1ec6d72ca08927a367aaf873d7bea2b34c6210ceb74824263dd7f2bd9cd`
+
+Prompt loading verifies this digest and fails if the versioned file changes
+without a deliberate version/hash update. Every experiment manifest records both
+the version and digest.
+
 ```text
 Investigate the supplied operational evidence and identify the most likely root cause of the reported incident. Base your diagnosis only on the supplied evidence.
 
@@ -127,6 +134,26 @@ sufficient sample and a calibration analysis plan exist.
 
 No LLM grader is used by the primary scoring path.
 
+## Initial real-provider adapter
+
+`OpenAIResponsesProvider` is the single initial real-provider implementation. It
+implements the same `ModelProvider` protocol as `FakeProvider` and uses the
+Responses API through the Python standard library. Benchmark generation,
+prompting, parsing, scoring, and persistence contain no provider-specific logic.
+
+The adapter reads `OPENAI_API_KEY` only at invocation time. An optional
+`OPENAI_BASE_URL` may select a compatible endpoint. Neither value is placed in a
+model request, response object, experiment manifest, error message, or committed
+configuration. Requests set `store` to `false`, send the selected model and raw
+prompt as text input, and include temperature or maximum output tokens only when
+configured. Responses are parsed by collecting `output_text` content from
+message output items rather than assuming the first output item is text.
+
+HTTP 429 is recorded as `rate_limited`. Other HTTP, network, timeout, response-
+status, and JSON-decoding failures are recorded as `provider_error` without
+persisting response bodies or credentials. The adapter does not retry, so each
+configured call remains exactly one provider invocation.
+
 ## Failure handling
 
 Every invocation produces a manifest, except a run rejected before invocation by
@@ -157,6 +184,7 @@ Each manifest records:
 - the fixed `raw` condition;
 - model and model version;
 - prompt version;
+- prompt SHA-256;
 - decoding settings;
 - timestamp;
 - raw and parsed response status; and
@@ -172,33 +200,70 @@ prompt version, seed, environment, and any provider-side determinism controls.
 - Development seeds `1000–1999` may be used for prompt and harness debugging.
 - Validation seeds `2000–2999` may be used for early benchmark measurements and
   protocol selection.
-- Held-out evaluation seeds `10000–10999` require `allow_held_out=True` and are
-  rejected before incident generation by normal commands.
+- Seeds `10000–10999` are retired and cannot be invoked.
+- Final held-out evaluation seeds `20000–20999` require `allow_held_out=True` and
+  are rejected before incident generation by normal commands.
 - Unassigned seeds are rejected by the evaluation runner.
 
-The default configurable pilot plan selects five development seeds and ten
-validation seeds. It contains no evaluation seeds. Counts may be reduced or
-changed within their assigned ranges.
+The versioned `experiments/raw_pilot_v1.toml` plan selects development seeds
+1000–1004 and validation seeds 2000–2009, with no held-out seeds. It configures
+the raw condition, temperature zero, one model, and one call per seed. Model and
+model-version values come from `DIAGPRIV_MODEL` and
+`DIAGPRIV_MODEL_VERSION`; credentials remain separate in `OPENAI_API_KEY`.
 
 Held-out evidence is protected so prompt wording, normalization rules, scoring
 choices, and future transformation settings cannot be tuned against final
 evaluation instances. An override exists for an explicitly authorized final run,
 not for routine development.
 
-No held-out seed was sent to a provider or recorded as an experiment while
-implementing this protocol. The required pre-checkpoint v0.2 construction audit
-did mechanically generate seeds 10000–10049 for structural assertions before
-the evaluation safeguard was installed. The safeguard test replaces generation
-with a failing sentinel and verifies normal evaluation runs are now rejected
-first. Whether the mechanically audited seeds should remain eligible for final
-evaluation is an unresolved protocol decision and must be settled before a real
-held-out run.
+The old range was retired before any LLM evaluation because the required v0.2
+construction audit had mechanically generated seeds 10000–10049. No instance
+from the replacement 20000–20999 range was generated or inspected while
+preparing the first pilot. The safeguard test replaces generation with a failing
+sentinel and verifies a normal run is rejected first.
+
+## Pilot commands and reporting
+
+Omitting `--execute` prints the validated plan without calling a provider:
+
+```bash
+uv run python -m diagpriv.evaluation.cli run-pilot \
+  --config experiments/raw_pilot_v1.toml \
+  --results results/raw_pilot_v1.jsonl
+```
+
+A real run additionally requires the explicit `--execute` flag and environment
+configuration:
+
+```bash
+export OPENAI_API_KEY='set-outside-the-repository'
+export DIAGPRIV_MODEL='provider-model-id'
+export DIAGPRIV_MODEL_VERSION='immutable-provider-model-version'
+uv run python -m diagpriv.evaluation.cli run-pilot \
+  --config experiments/raw_pilot_v1.toml \
+  --results results/raw_pilot_v1.jsonl \
+  --execute
+```
+
+Summaries can be generated before, during, or after a pilot:
+
+```bash
+uv run python -m diagpriv.evaluation.cli summarize \
+  --results results/raw_pilot_v1.jsonl
+```
+
+Development and validation are reported separately. Accuracy and valid-response
+rates use all runs in the split as the denominator, so parsing/provider failures
+do not disappear from the headline rate. Evidence averages use responses that
+produced a structured score. Parse failures, provider failures, rate limits, and
+refusals are counted separately. A split with no results is reported as
+`pending`, with null rates rather than artificial zeros.
 
 ## Initial limitations
 
 The response taxonomy and synonym table require research review. Evidence-support
-criteria may be too permissive because one matched ID is sufficient. Provider
-APIs, retry policy, rate-limit handling, model-version capture, blind grading,
-pilot sample sizes, and statistical analysis remain unresolved. Human validation
-of incident difficulty and evidence sufficiency is still required before real
-model results are interpreted.
+criteria may be too permissive because one matched ID is sufficient. Exact model
+selection, provider-side determinism, rate-limit policy, blind grading, pilot
+interpretation, and statistical analysis remain unresolved. Human validation of
+incident difficulty and evidence sufficiency is still required before real model
+results are interpreted.

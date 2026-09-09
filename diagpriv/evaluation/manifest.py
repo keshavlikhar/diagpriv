@@ -22,6 +22,7 @@ class ExperimentManifest:
     model: str
     model_version: str
     prompt_version: str
+    prompt_sha256: str
     decoding_settings: dict[str, float | int | str | bool | None]
     timestamp: str
     response: ParsedResponse
@@ -38,6 +39,7 @@ class ExperimentManifest:
             "model": self.model,
             "model_version": self.model_version,
             "prompt_version": self.prompt_version,
+            "prompt_sha256": self.prompt_sha256,
             "decoding_settings": self.decoding_settings,
             "timestamp": self.timestamp,
             "response": self.response.to_dict(),
@@ -60,6 +62,7 @@ class ExperimentManifest:
             model=data["model"],
             model_version=data["model_version"],
             prompt_version=data["prompt_version"],
+            prompt_sha256=data["prompt_sha256"],
             decoding_settings=data["decoding_settings"],
             timestamp=data["timestamp"],
             response=ParsedResponse.from_dict(data["response"]),
@@ -83,4 +86,3 @@ def append_manifest(path: Path, manifest: ExperimentManifest) -> None:
                 raise ValueError(f"Experiment already recorded: {manifest.experiment_id}")
     with path.open("a", encoding="utf-8") as stream:
         stream.write(manifest.to_json(indent=None))
-
