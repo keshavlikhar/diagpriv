@@ -155,6 +155,26 @@ class StructuredRootCause:
 
 
 @dataclass(frozen=True, slots=True)
+class StructuredRootCauseV2:
+    """Oracle-only five-dimensional RCA target for rca-taxonomy-v2."""
+
+    observed_outcome: str
+    trigger: str
+    subsequent_action: str
+    failure_mechanism: str
+    affected_component: str
+    logical_operation_repeated: bool
+    explanation: str | None = None
+
+    def to_dict(self) -> dict[str, JSONValue]:
+        return asdict(self)
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> Self:
+        return cls(**data)
+
+
+@dataclass(frozen=True, slots=True)
 class ComponentMapping:
     """Oracle-only mapping from a canonical role to visible service names."""
 
@@ -219,6 +239,7 @@ class Incident:
     description: str
     troubleshooting_question: str
     ground_truth: StructuredRootCause
+    ground_truth_v2: StructuredRootCauseV2
     component_mappings: tuple[ComponentMapping, ...]
     structured_evidence: dict[str, list[dict[str, JSONValue]]]
     log_evidence: tuple[LogEntry, ...]
@@ -273,6 +294,7 @@ class Incident:
             "description": self.description,
             "troubleshooting_question": self.troubleshooting_question,
             "ground_truth": self.ground_truth.to_dict(),
+            "ground_truth_v2": self.ground_truth_v2.to_dict(),
             "component_mappings": [item.to_dict() for item in self.component_mappings],
             "structured_evidence": self.structured_evidence,
             "log_evidence": [entry.to_dict() for entry in self.log_evidence],
@@ -299,6 +321,7 @@ class Incident:
             description=data["description"],
             troubleshooting_question=data["troubleshooting_question"],
             ground_truth=StructuredRootCause.from_dict(data["ground_truth"]),
+            ground_truth_v2=StructuredRootCauseV2.from_dict(data["ground_truth_v2"]),
             component_mappings=tuple(
                 ComponentMapping.from_dict(item) for item in data["component_mappings"]
             ),

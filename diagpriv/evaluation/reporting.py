@@ -20,6 +20,7 @@ class SplitSummary:
     exact_rca_accuracy: float | None
     outcome_accuracy: float | None
     trigger_accuracy: float | None
+    subsequent_action_accuracy: float | None
     mechanism_accuracy: float | None
     component_accuracy: float | None
     average_evidence_precision: float | None
@@ -84,6 +85,7 @@ def _summarize_split(
             exact_rca_accuracy=None,
             outcome_accuracy=None,
             trigger_accuracy=None,
+            subsequent_action_accuracy=None,
             mechanism_accuracy=None,
             component_accuracy=None,
             average_evidence_precision=None,
@@ -131,6 +133,9 @@ def _summarize_split(
         ]
     )
     cost_total = sum(costs) if costs else None
+    v2_split = all(
+        item.scorer_version == "raw-rca-scorer-v2" for item in manifests
+    )
     return SplitSummary(
         status="complete",
         runs=run_count,
@@ -140,6 +145,18 @@ def _summarize_split(
         ),
         outcome_accuracy=_rate(sum(score.outcome_correct for score in scores), run_count),
         trigger_accuracy=_rate(sum(score.trigger_correct for score in scores), run_count),
+        subsequent_action_accuracy=(
+            _rate(
+                sum(
+                    score.subsequent_action_correct
+                    for score in scores
+                    if hasattr(score, "subsequent_action_correct")
+                ),
+                run_count,
+            )
+            if v2_split
+            else None
+        ),
         mechanism_accuracy=_rate(
             sum(score.failure_mechanism_correct for score in scores), run_count
         ),
@@ -238,10 +255,21 @@ def inspection_records(path: Path) -> list[dict[str, object]]:
                 "model_version_metadata": manifest.model_version_metadata,
                 "reasoning_effort": manifest.reasoning_effort,
                 "temperature": manifest.temperature,
+                "intended_temperature": manifest.intended_temperature,
+                "temperature_omission_reason": manifest.temperature_omission_reason,
+                "prompt_version": manifest.prompt_version,
+                "prompt_sha256": manifest.prompt_sha256,
+                "taxonomy_version": manifest.taxonomy_version,
+                "scorer_version": manifest.scorer_version,
                 "response_id": manifest.response_id,
                 "provider_timestamp": manifest.provider_timestamp,
                 "provider_response_status": manifest.provider_response_status,
                 "provider_service_tier": manifest.provider_service_tier,
+                "sanitized_api_error": (
+                    None
+                    if manifest.sanitized_api_error is None
+                    else manifest.sanitized_api_error.to_dict()
+                ),
                 "parse_status": manifest.response.status,
                 "failure": manifest.response.error,
                 "raw_model_response": manifest.response.raw_output,

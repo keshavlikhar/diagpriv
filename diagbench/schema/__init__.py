@@ -10,6 +10,7 @@ from diagbench.schema.models import (
     ModelView,
     SensitiveField,
     StructuredRootCause,
+    StructuredRootCauseV2,
 )
 
 __all__ = [
@@ -22,4 +23,5 @@ __all__ = [
     "ModelView",
     "SensitiveField",
     "StructuredRootCause",
+    "StructuredRootCauseV2",
 ]

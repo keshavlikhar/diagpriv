@@ -8,7 +8,19 @@ import tomllib
 from typing import Any, Literal, Self
 
 from diagbench.generators.incident_001 import seed_split
-from diagpriv.evaluation.prompt import PROMPT_SHA256, PROMPT_VERSION
+from diagpriv.evaluation.prompt import (
+    PROMPT_SHA256 as PROMPT_SHA256_V1,
+    PROMPT_VERSION as PROMPT_VERSION_V1,
+)
+from diagpriv.evaluation.prompt_v2 import (
+    PROMPT_SHA256 as PROMPT_SHA256_V2,
+    PROMPT_VERSION as PROMPT_VERSION_V2,
+)
+
+FROZEN_PROMPT_HASHES = {
+    PROMPT_VERSION_V1: PROMPT_SHA256_V1,
+    PROMPT_VERSION_V2: PROMPT_SHA256_V2,
+}
 
 
 @dataclass(frozen=True, slots=True)
@@ -26,6 +38,9 @@ class PilotDefinition:
     model_version_metadata_environment_variable: str | None
     reasoning_effort: str
     decoding_settings: dict[str, float | int | str | bool | None]
+    intended_temperature: float | None
+    effective_temperature: float | None
+    temperature_omission_reason: str | None
     pricing_snapshot_path: Path
 
     @classmethod
@@ -34,6 +49,24 @@ class PilotDefinition:
         pilot = data["pilot"]
         model = data["model"]
         pricing = data["pricing"]
+        temperature_correction = data.get("temperature_protocol_correction")
+        intended_temperature = None
+        effective_temperature = _optional_temperature(
+            data.get("decoding", {}).get("temperature")
+        )
+        temperature_omission_reason = None
+        if temperature_correction is not None:
+            if not isinstance(temperature_correction, dict):
+                raise ValueError("temperature_protocol_correction must be a table")
+            intended_temperature = _optional_temperature(
+                temperature_correction.get("intended")
+            )
+            if temperature_correction.get("effective") != "omitted":
+                raise ValueError("Corrected temperature must be marked omitted")
+            effective_temperature = None
+            temperature_omission_reason = temperature_correction.get(
+                "omission_reason"
+            )
         definition = cls(
             pilot_id=pilot["pilot_id"],
             provider=pilot["provider"],
@@ -50,6 +83,9 @@ class PilotDefinition:
             ),
             reasoning_effort=model["reasoning_effort"],
             decoding_settings=dict(data["decoding"]),
+            intended_temperature=intended_temperature,
+            effective_temperature=effective_temperature,
+            temperature_omission_reason=temperature_omission_reason,
             pricing_snapshot_path=path.parent / pricing["snapshot"],
         )
         definition.validate()
@@ -58,10 +94,19 @@ class PilotDefinition:
     def validate(self) -> None:
         if self.condition != "raw":
             raise ValueError("The v0.1 pilot supports only the raw condition")
-        if self.prompt_version != PROMPT_VERSION or self.prompt_sha256 != PROMPT_SHA256:
+        if FROZEN_PROMPT_HASHES.get(self.prompt_version) != self.prompt_sha256:
             raise ValueError("Pilot prompt version or hash does not match frozen raw prompt")
         if self.calls_per_seed < 1:
             raise ValueError("calls_per_seed must be positive")
+        if self.effective_temperature != _optional_temperature(
+            self.decoding_settings.get("temperature")
+        ):
+            raise ValueError("Effective temperature does not match decoding settings")
+        if self.intended_temperature is not None:
+            if "temperature" in self.decoding_settings:
+                raise ValueError("Corrected temperature must be omitted from decoding")
+            if not self.temperature_omission_reason:
+                raise ValueError("Corrected temperature requires an omission reason")
         if self.held_out_seeds:
             raise ValueError("The first pilot must not contain held-out seeds")
         if any(seed_split(seed) != "development" for seed in self.development_seeds):
@@ -92,5 +137,19 @@ class PilotDefinition:
             ),
             "reasoning_effort": self.reasoning_effort,
             "decoding_settings": self.decoding_settings,
+            "temperature": {
+                "intended": self.intended_temperature,
+                "effective": self.effective_temperature,
+                "request_parameter": (
+                    "omitted" if self.intended_temperature is not None else "configured"
+                ),
+                "omission_reason": self.temperature_omission_reason,
+            },
             "pricing_snapshot_path": str(self.pricing_snapshot_path),
         }
+
+
+def _optional_temperature(value: object) -> float | None:
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        return None
+    return float(value)

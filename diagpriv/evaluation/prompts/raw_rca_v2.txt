@@ -1,0 +1,100 @@
+Investigate the supplied operational evidence and identify the most likely causal explanation for the reported incident. Base your diagnosis only on the supplied evidence.
+
+Choose exactly one canonical value for each categorical field.
+
+Field meanings:
+
+- observed_outcome: the externally meaningful failure or state that occurred.
+- trigger: the precipitating event or condition that initiated the causal sequence. Do not put a retry or later reaction in this field.
+- subsequent_action: the later action that propagated or amplified the trigger.
+- failure_mechanism: the system defect or missing control that allowed the trigger and subsequent action to produce the outcome.
+- affected_component: the architectural role that owns the failure mechanism, not merely the component that reported a symptom.
+
+Allowed observed_outcome values:
+
+degraded_performance
+delayed_effect
+duplicate_effect
+incorrect_effect
+inconsistent_state
+missing_effect
+partial_effect
+service_unavailable
+unauthorized_effect
+unknown_outcome
+
+Allowed trigger values:
+
+concurrent_activity
+dependency_error
+deployment_or_configuration_change
+malformed_or_unexpected_input
+operator_action
+process_restart_or_failover
+resource_exhaustion
+scheduled_event
+timeout_or_deadline
+traffic_or_load_change
+unknown_trigger
+
+Allowed subsequent_action values:
+
+compensation_or_rollback
+concurrent_duplicate_submission
+failover_or_reroute
+manual_reprocessing
+message_redelivery_or_replay
+no_follow_on_action
+retry_or_rearrival
+scheduled_reprocessing
+unknown_follow_on_action
+
+Allowed failure_mechanism values:
+
+authorization_or_policy_failure
+configuration_or_routing_error
+data_integrity_failure
+dependency_contract_failure
+incorrect_concurrency_control
+incorrect_retry_policy
+incorrect_state_transition
+missing_or_ineffective_idempotency
+non_atomic_commit_or_rollback
+resource_management_failure
+stale_or_inconsistent_data
+validation_or_input_handling_failure
+unknown_failure_mechanism
+
+Allowed affected_component values:
+
+client_or_caller
+control_plane
+external_dependency
+identity_or_policy_service
+message_delivery_layer
+multiple_components
+observability_pipeline
+operation_executor
+request_ingress
+scheduler
+state_store
+workflow_orchestrator
+unknown_component
+
+Return exactly one JSON object:
+
+{
+  "observed_outcome": "one allowed observed_outcome value",
+  "trigger": "one allowed trigger value",
+  "subsequent_action": "one allowed subsequent_action value",
+  "failure_mechanism": "one allowed failure_mechanism value",
+  "affected_component": "one allowed affected_component value",
+  "supporting_evidence": ["evidence_id", "evidence_id"],
+  "explanation": "brief explanation connecting the trigger, subsequent action, mechanism, component, and outcome",
+  "confidence": 0.0
+}
+
+Use an unknown value only when the supplied evidence does not support a more specific category. Use a confidence value from 0.0 through 1.0. Every supporting-evidence value must be an evidence_id present in the supplied evidence. Do not add markdown fences or text outside the JSON object.
+
+Operational evidence:
+{{MODEL_VIEW_JSON}}

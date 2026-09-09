@@ -609,6 +609,15 @@
     "outcome": "duplicate_payment",
     "trigger": "retry_after_timeout"
   },
+  "ground_truth_v2": {
+    "affected_component": "operation_executor",
+    "explanation": "A caller repeated one logical operation after a response deadline, and the operation executor persisted both arrivals as distinct effects.",
+    "failure_mechanism": "missing_or_ineffective_idempotency",
+    "logical_operation_repeated": true,
+    "observed_outcome": "duplicate_effect",
+    "subsequent_action": "retry_or_rearrival",
+    "trigger": "timeout_or_deadline"
+  },
   "incident_id": "incident_001_duplicate_payment",
   "log_evidence": [
     {

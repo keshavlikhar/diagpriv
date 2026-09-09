@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from io import BytesIO
 import json
 from pathlib import Path
 from urllib.error import HTTPError
@@ -22,6 +23,7 @@ from diagpriv.evaluation.providers import (
     InvocationResult,
     ModelRequest,
     OpenAIResponsesProvider,
+    SanitizedAPIError,
 )
 from diagpriv.evaluation.reporting import (
     inspection_records,
@@ -314,7 +316,14 @@ def test_frozen_pilot_definition_is_exactly_the_development_luna_pilot() -> None
     assert definition.calls_per_seed == 1
     assert definition.requested_model == "gpt-5.6-luna"
     assert definition.reasoning_effort == "medium"
-    assert definition.decoding_settings["temperature"] == 0.0
+    assert "temperature" not in definition.decoding_settings
+    assert definition.intended_temperature == 0.0
+    assert definition.effective_temperature is None
+    assert definition.temperature_omission_reason is not None
+    assert "HTTP 400" in definition.temperature_omission_reason
+    assert "does not support the temperature parameter" in (
+        definition.temperature_omission_reason
+    )
     assert definition.decoding_settings["max_output_tokens"] == 4096
     assert definition.prompt_sha256 == PROMPT_SHA256
     assert definition.pricing_snapshot_path.is_file()
@@ -350,6 +359,33 @@ def test_run_pilot_requires_execute_before_provider_calls(
     )
     args.handler(args)
     assert json.loads(capsys.readouterr().out)["execution"] == "pending"
+    assert not results.exists()
+
+
+def test_run_diagnostic_dry_run_is_one_development_seed(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    config = Path(__file__).parents[1] / "experiments" / "raw_pilot_v1.toml"
+    results = tmp_path / "must-not-exist.jsonl"
+    parser = build_parser()
+    args = parser.parse_args(
+        [
+            "run-diagnostic",
+            "--config",
+            str(config),
+            "--results",
+            str(results),
+            "--experiment-id",
+            "diagnostic-development-1000-call-1",
+            "--seed",
+            "1000",
+        ]
+    )
+    args.handler(args)
+    pending = json.loads(capsys.readouterr().out)
+    assert pending["execution"] == "pending"
+    assert pending["seed"] == 1000
+    assert pending["split"] == "development"
     assert not results.exists()
 
 
@@ -468,6 +504,62 @@ def test_openai_provider_extracts_output_without_exposing_key(
     assert secret not in manifest.to_json()
 
 
+def test_luna_pilot_omits_temperature_and_records_protocol_correction(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("OPENAI_API_KEY", "test-secret")
+    definition = PilotDefinition.load(
+        Path(__file__).parents[1] / "experiments" / "raw_pilot_v1.toml"
+    )
+    captured_body: dict[str, object] = {}
+
+    class FakeHTTPResponse:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *args: object) -> None:
+            return None
+
+        def read(self) -> bytes:
+            return json.dumps(
+                {
+                    "id": "resp_temperature_omitted",
+                    "model": "gpt-5.6-luna",
+                    "status": "completed",
+                    "output": [],
+                }
+            ).encode("utf-8")
+
+    def fake_urlopen(request, timeout: float):
+        captured_body.update(json.loads(request.data.decode("utf-8")))
+        return FakeHTTPResponse()
+
+    monkeypatch.setattr("diagpriv.evaluation.providers.urlopen", fake_urlopen)
+    manifest = run_raw_experiment(
+        RawRunConfig(
+            experiment_id="luna-temperature-correction-test",
+            seed=1000,
+            model=definition.requested_model,
+            model_version=None,
+            reasoning_effort=definition.reasoning_effort,
+            decoding_settings=dict(definition.decoding_settings),
+            intended_temperature=definition.intended_temperature,
+            temperature_omission_reason=definition.temperature_omission_reason,
+            timestamp="2032-01-01T00:00:00+00:00",
+        ),
+        OpenAIResponsesProvider(),
+    )
+    assert "temperature" not in captured_body
+    assert captured_body["model"] == "gpt-5.6-luna"
+    assert captured_body["reasoning"] == {"effort": "medium"}
+    assert manifest.temperature is None
+    assert manifest.intended_temperature == 0.0
+    assert manifest.temperature_omission_reason == (
+        definition.temperature_omission_reason
+    )
+    assert manifest.to_dict()["temperature"] is None
+
+
 def test_openai_rate_limit_is_explicit(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("OPENAI_API_KEY", "test-secret")
 
@@ -480,6 +572,76 @@ def test_openai_rate_limit_is_explicit(monkeypatch: pytest.MonkeyPatch) -> None:
     )
     assert result.status == "rate_limited"
     assert result.error == "OpenAI Responses API rate limit (HTTP 429)"
+    assert result.sanitized_api_error == SanitizedAPIError(
+        http_status=429,
+        error_type=None,
+        error_code=None,
+        parameter_name=None,
+        message="OpenAI Responses API rate limit (HTTP 429)",
+        request_id=None,
+    )
+
+
+def test_openai_http_error_is_allowlisted_sanitized_and_persisted(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    secret = "sk-test-secret-123456789"
+    monkeypatch.setenv("OPENAI_API_KEY", secret)
+
+    def invalid_request(request, timeout: float):
+        body = json.dumps(
+            {
+                "error": {
+                    "message": (
+                        "Unsupported value; Authorization: Bearer leaked-token "
+                        f"and key {secret}"
+                    ),
+                    "type": "invalid_request_error",
+                    "param": "temperature",
+                    "code": "unsupported_value",
+                    "unapproved_detail": "must not be persisted",
+                },
+                "unapproved_top_level": "must not be persisted either",
+            }
+        ).encode("utf-8")
+        raise HTTPError(
+            request.full_url,
+            400,
+            "Bad Request",
+            {
+                "x-request-id": "req_safe_123",
+                "Authorization": f"Bearer {secret}",
+                "set-cookie": "credential=not-safe",
+            },
+            BytesIO(body),
+        )
+
+    monkeypatch.setattr("diagpriv.evaluation.providers.urlopen", invalid_request)
+    manifest = run_raw_experiment(
+        _config(1000, "sanitized-http-error"), OpenAIResponsesProvider()
+    )
+    assert manifest.response.status == "provider_error"
+    assert manifest.sanitized_api_error == SanitizedAPIError(
+        http_status=400,
+        error_type="invalid_request_error",
+        error_code="unsupported_value",
+        parameter_name="temperature",
+        message="Unsupported value; [REDACTED] and key [REDACTED]",
+        request_id="req_safe_123",
+    )
+    serialized = manifest.to_json()
+    assert ExperimentManifest.from_json(serialized) == manifest
+    assert secret not in serialized
+    assert "leaked-token" not in serialized
+    assert "Authorization" not in serialized
+    assert "set-cookie" not in serialized
+    assert "unapproved_detail" not in serialized
+    assert "unapproved_top_level" not in serialized
+    results = tmp_path / "sanitized-error.jsonl"
+    append_manifest(results, manifest)
+    assert inspection_records(results)[0]["sanitized_api_error"] == (
+        manifest.sanitized_api_error.to_dict()
+    )
 
 
 def test_openai_structured_refusal_is_explicit(monkeypatch: pytest.MonkeyPatch) -> None:

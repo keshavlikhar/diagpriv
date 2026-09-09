@@ -15,8 +15,12 @@ version_metadata_environment_variable = "DIAGPRIV_MODEL_VERSION_METADATA"
 reasoning_effort = "medium"
 
 [decoding]
-temperature = 0.0
 max_output_tokens = 4096
+
+[temperature_protocol_correction]
+intended = 0.0
+effective = "omitted"
+omission_reason = "Live OpenAI Responses API requests returned HTTP 400 because gpt-5.6-luna does not support the temperature parameter with this configuration."
 
 [pricing]
 snapshot = "pricing/openai_gpt_5_6_luna_2026-07-30.toml"

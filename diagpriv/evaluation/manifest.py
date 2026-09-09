@@ -7,8 +7,10 @@ import json
 from pathlib import Path
 from typing import Any, Literal, Self
 
+from diagpriv.evaluation.providers import SanitizedAPIError
 from diagpriv.evaluation.response import ParsedResponse
 from diagpriv.evaluation.scoring import RCAScore
+from diagpriv.evaluation.scoring_v2 import RCAScoreV2
 
 
 @dataclass(frozen=True, slots=True)
@@ -24,8 +26,12 @@ class ExperimentManifest:
     model_version_metadata: str | None
     reasoning_effort: str | None
     temperature: float | None
+    intended_temperature: float | None
+    temperature_omission_reason: str | None
     prompt_version: str
     prompt_sha256: str
+    taxonomy_version: str
+    scorer_version: str
     decoding_settings: dict[str, float | int | str | bool | None]
     timestamp: str
     response_id: str | None
@@ -38,12 +44,13 @@ class ExperimentManifest:
     total_token_count: int | None
     provider_response_status: str | None
     provider_service_tier: str | None
+    sanitized_api_error: SanitizedAPIError | None
     response: ParsedResponse
-    score: RCAScore | None
+    score: RCAScore | RCAScoreV2 | None
 
     def to_dict(self) -> dict[str, object]:
         return {
-            "manifest_schema_version": "raw-rca-manifest-v2",
+            "manifest_schema_version": "raw-rca-manifest-v5",
             "experiment_id": self.experiment_id,
             "benchmark_version": self.benchmark_version,
             "incident_family": self.incident_family,
@@ -55,8 +62,12 @@ class ExperimentManifest:
             "model_version_metadata": self.model_version_metadata,
             "reasoning_effort": self.reasoning_effort,
             "temperature": self.temperature,
+            "intended_temperature": self.intended_temperature,
+            "temperature_omission_reason": self.temperature_omission_reason,
             "prompt_version": self.prompt_version,
             "prompt_sha256": self.prompt_sha256,
+            "taxonomy_version": self.taxonomy_version,
+            "scorer_version": self.scorer_version,
             "decoding_settings": self.decoding_settings,
             "timestamp": self.timestamp,
             "response_id": self.response_id,
@@ -69,6 +80,11 @@ class ExperimentManifest:
             "total_token_count": self.total_token_count,
             "response_status": self.provider_response_status,
             "provider_service_tier": self.provider_service_tier,
+            "sanitized_api_error": (
+                None
+                if self.sanitized_api_error is None
+                else self.sanitized_api_error.to_dict()
+            ),
             "response": self.response.to_dict(),
             "score": _score_to_dict(self.score),
         }
@@ -78,7 +94,25 @@ class ExperimentManifest:
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> Self:
-        score = _score_from_dict(data.get("score"))
+        prompt_version = data["prompt_version"]
+        taxonomy_version = data.get(
+            "taxonomy_version",
+            "rca-taxonomy-v2"
+            if prompt_version == "raw-rca-v2"
+            else "rca-taxonomy-v1",
+        )
+        scorer_version = data.get(
+            "scorer_version",
+            "raw-rca-scorer-v2"
+            if prompt_version == "raw-rca-v2"
+            else "raw-rca-scorer-v1",
+        )
+        score = _score_from_dict(data.get("score"), scorer_version=scorer_version)
+        sanitized_error_data = data.get("sanitized_api_error")
+        if sanitized_error_data is not None and not isinstance(
+            sanitized_error_data, dict
+        ):
+            raise ValueError("Manifest sanitized API error must be an object or null")
         requested_model = data.get("requested_model", data.get("model"))
         model_version = data.get("model_version_metadata", data.get("model_version"))
         return cls(
@@ -95,8 +129,12 @@ class ExperimentManifest:
             temperature=data.get(
                 "temperature", data.get("decoding_settings", {}).get("temperature")
             ),
-            prompt_version=data["prompt_version"],
+            intended_temperature=data.get("intended_temperature"),
+            temperature_omission_reason=data.get("temperature_omission_reason"),
+            prompt_version=prompt_version,
             prompt_sha256=data["prompt_sha256"],
+            taxonomy_version=taxonomy_version,
+            scorer_version=scorer_version,
             decoding_settings=data["decoding_settings"],
             timestamp=data["timestamp"],
             response_id=data.get("response_id"),
@@ -111,7 +149,14 @@ class ExperimentManifest:
                 "response_status", data.get("provider_response_status")
             ),
             provider_service_tier=data.get("provider_service_tier"),
-            response=ParsedResponse.from_dict(data["response"]),
+            sanitized_api_error=(
+                None
+                if sanitized_error_data is None
+                else SanitizedAPIError.from_dict(sanitized_error_data)
+            ),
+            response=ParsedResponse.from_dict(
+                data["response"], prompt_version=prompt_version
+            ),
             score=score,
         )
 
@@ -123,17 +168,21 @@ class ExperimentManifest:
         return cls.from_dict(data)
 
 
-def _score_to_dict(score: RCAScore | None) -> dict[str, object] | None:
+def _score_to_dict(
+    score: RCAScore | RCAScoreV2 | None,
+) -> dict[str, object] | None:
     if score is None:
         return None
     data = score.to_dict()
-    rca_fields = (
+    rca_fields = [
         "outcome_correct",
         "trigger_correct",
         "failure_mechanism_correct",
         "affected_component_correct",
         "exact_root_cause_correct",
-    )
+    ]
+    if isinstance(score, RCAScoreV2):
+        rca_fields.insert(2, "subsequent_action_correct")
     evidence_fields = (
         "evidence_precision",
         "evidence_recall",
@@ -151,18 +200,21 @@ def _score_to_dict(score: RCAScore | None) -> dict[str, object] | None:
     }
 
 
-def _score_from_dict(data: object) -> RCAScore | None:
+def _score_from_dict(
+    data: object, *, scorer_version: str
+) -> RCAScore | RCAScoreV2 | None:
     if data is None:
         return None
     if not isinstance(data, dict):
         raise ValueError("Manifest score must be an object or null")
+    score_class = RCAScoreV2 if scorer_version == "raw-rca-scorer-v2" else RCAScore
     if "rca" not in data:
-        return RCAScore.from_dict(data)
+        return score_class.from_dict(data)
     rca = data.get("rca")
     evidence = data.get("evidence")
     if not isinstance(rca, dict) or not isinstance(evidence, dict):
         raise ValueError("Manifest RCA and evidence scores must be objects")
-    return RCAScore.from_dict(
+    return score_class.from_dict(
         {**rca, **evidence, "overall_correct": data["overall_correct"]}
     )
 

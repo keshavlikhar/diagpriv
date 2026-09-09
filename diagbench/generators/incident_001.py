@@ -16,6 +16,7 @@ from diagbench.schema import (
     LogEntry,
     SensitiveField,
     StructuredRootCause,
+    StructuredRootCauseV2,
 )
 
 DEFAULT_SEED = 1001
@@ -526,6 +527,18 @@ def generate_incident_001(seed: int = DEFAULT_SEED) -> Incident:
             explanation=(
                 "A caller repeated one logical request after a response timeout, and "
                 "the payment worker persisted both arrivals as separate payments."
+            ),
+        ),
+        ground_truth_v2=StructuredRootCauseV2(
+            observed_outcome="duplicate_effect",
+            trigger="timeout_or_deadline",
+            subsequent_action="retry_or_rearrival",
+            failure_mechanism="missing_or_ineffective_idempotency",
+            affected_component="operation_executor",
+            logical_operation_repeated=True,
+            explanation=(
+                "A caller repeated one logical operation after a response deadline, "
+                "and the operation executor persisted both arrivals as distinct effects."
             ),
         ),
         component_mappings=(

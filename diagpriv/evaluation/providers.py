@@ -5,6 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 import json
 import os
+import re
 from typing import Literal, Protocol
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
@@ -20,10 +21,50 @@ class ModelRequest:
 
 
 @dataclass(frozen=True, slots=True)
+class SanitizedAPIError:
+    """Allowlisted provider error details safe for experiment persistence."""
+
+    http_status: int
+    error_type: str | None
+    error_code: str | None
+    parameter_name: str | None
+    message: str
+    request_id: str | None
+
+    def to_dict(self) -> dict[str, object]:
+        return {
+            "http_status": self.http_status,
+            "error_type": self.error_type,
+            "error_code": self.error_code,
+            "parameter_name": self.parameter_name,
+            "message": self.message,
+            "request_id": self.request_id,
+        }
+
+    @classmethod
+    def from_dict(cls, data: dict[str, object]) -> SanitizedAPIError:
+        status = data.get("http_status")
+        if not isinstance(status, int) or isinstance(status, bool):
+            raise ValueError("Sanitized API error HTTP status must be an integer")
+        message = data.get("message")
+        if not isinstance(message, str):
+            raise ValueError("Sanitized API error message must be a string")
+        return cls(
+            http_status=status,
+            error_type=_optional_string(data.get("error_type")),
+            error_code=_optional_string(data.get("error_code")),
+            parameter_name=_optional_string(data.get("parameter_name")),
+            message=message,
+            request_id=_optional_string(data.get("request_id")),
+        )
+
+
+@dataclass(frozen=True, slots=True)
 class InvocationResult:
     status: Literal["success", "provider_error", "rate_limited", "refusal"]
     raw_output: str = ""
     error: str | None = None
+    sanitized_api_error: SanitizedAPIError | None = None
     provider_returned_model: str | None = None
     response_id: str | None = None
     provider_timestamp: int | float | str | None = None
@@ -107,12 +148,17 @@ class OpenAIResponsesProvider:
             with urlopen(http_request, timeout=self.timeout_seconds) as response:
                 payload = json.loads(response.read().decode("utf-8"))
         except HTTPError as error:
+            sanitized_error = _sanitize_openai_http_error(error, api_key)
             if error.code == 429:
                 return InvocationResult(
-                    "rate_limited", error="OpenAI Responses API rate limit (HTTP 429)"
+                    "rate_limited",
+                    error=sanitized_error.message,
+                    sanitized_api_error=sanitized_error,
                 )
             return InvocationResult(
-                "provider_error", error=f"OpenAI Responses API HTTP {error.code}"
+                "provider_error",
+                error=sanitized_error.message,
+                sanitized_api_error=sanitized_error,
             )
         except (URLError, TimeoutError, json.JSONDecodeError) as error:
             return InvocationResult(
@@ -149,6 +195,66 @@ def _optional_int(value: object) -> int | None:
 
 def _optional_string(value: object) -> str | None:
     return value if isinstance(value, str) else None
+
+
+_CREDENTIAL_PATTERNS = (
+    re.compile(r"(?i)\bauthorization\s*:\s*[^\s,;]+(?:\s+[^\s,;]+)?"),
+    re.compile(r"(?i)\bbearer\s+[A-Za-z0-9._~+/=-]+"),
+    re.compile(r"\bsk-[A-Za-z0-9_-]{8,}\b"),
+    re.compile(
+        r"(?i)\b(?:api[_ -]?key|access[_ -]?token|credential|secret)"
+        r"\s*[:=]\s*[^\s,;]+"
+    ),
+)
+
+
+def _sanitize_text(value: object, api_key: str) -> str | None:
+    if not isinstance(value, (str, int, float)) or isinstance(value, bool):
+        return None
+    sanitized = str(value)
+    if api_key:
+        sanitized = sanitized.replace(api_key, "[REDACTED]")
+    for pattern in _CREDENTIAL_PATTERNS:
+        sanitized = pattern.sub("[REDACTED]", sanitized)
+    return sanitized
+
+
+def _request_id_from_headers(headers: object, api_key: str) -> str | None:
+    items = getattr(headers, "items", None)
+    if not callable(items):
+        return None
+    for name, value in items():
+        if isinstance(name, str) and name.lower() == "x-request-id":
+            return _sanitize_text(value, api_key)
+    return None
+
+
+def _sanitize_openai_http_error(
+    error: HTTPError, api_key: str
+) -> SanitizedAPIError:
+    """Read an OpenAI HTTP error once and retain only explicitly safe fields."""
+    payload: object = None
+    try:
+        payload = json.loads(error.read().decode("utf-8"))
+    except (AttributeError, UnicodeDecodeError, json.JSONDecodeError):
+        pass
+
+    error_data: dict[str, object] = {}
+    if isinstance(payload, dict) and isinstance(payload.get("error"), dict):
+        error_data = payload["error"]
+    fallback_message = (
+        "OpenAI Responses API rate limit (HTTP 429)"
+        if error.code == 429
+        else f"OpenAI Responses API HTTP {error.code}"
+    )
+    return SanitizedAPIError(
+        http_status=error.code,
+        error_type=_sanitize_text(error_data.get("type"), api_key),
+        error_code=_sanitize_text(error_data.get("code"), api_key),
+        parameter_name=_sanitize_text(error_data.get("param"), api_key),
+        message=_sanitize_text(error_data.get("message"), api_key) or fallback_message,
+        request_id=_request_id_from_headers(error.headers, api_key),
+    )
 
 
 def _responses_metadata(payload: dict[str, object]) -> dict[str, object]:

@@ -14,6 +14,23 @@ from diagpriv.evaluation.reporting import inspection_json, summarize_path
 from diagpriv.evaluation.runner import RawRunConfig, run_raw_experiment
 
 
+def _openai_provider(
+    definition: PilotDefinition,
+) -> tuple[OpenAIResponsesProvider, str | None]:
+    if definition.provider != "openai-responses":
+        raise SystemExit(f"Unsupported provider: {definition.provider}")
+    version_environment = definition.model_version_metadata_environment_variable
+    model_version = (
+        os.environ.get(version_environment) if version_environment else None
+    )
+    provider = OpenAIResponsesProvider()
+    if not provider.is_configured:
+        raise SystemExit(
+            f"Required environment variable is not set: {provider.api_key_environment_variable}"
+        )
+    return provider, model_version
+
+
 def _run_pilot(args: argparse.Namespace) -> None:
     definition = PilotDefinition.load(args.config)
     if not args.execute:
@@ -25,18 +42,7 @@ def _run_pilot(args: argparse.Namespace) -> None:
             )
         )
         return
-    if definition.provider != "openai-responses":
-        raise SystemExit(f"Unsupported provider: {definition.provider}")
-
-    version_environment = definition.model_version_metadata_environment_variable
-    model_version = (
-        os.environ.get(version_environment) if version_environment else None
-    )
-    provider = OpenAIResponsesProvider()
-    if not provider.is_configured:
-        raise SystemExit(
-            f"Required environment variable is not set: {provider.api_key_environment_variable}"
-        )
+    provider, model_version = _openai_provider(definition)
 
     for seed in (*definition.development_seeds, *definition.validation_seeds):
         split = "development" if seed in definition.development_seeds else "validation"
@@ -52,12 +58,63 @@ def _run_pilot(args: argparse.Namespace) -> None:
                     model_version=model_version,
                     reasoning_effort=definition.reasoning_effort,
                     decoding_settings=dict(definition.decoding_settings),
+                    intended_temperature=definition.intended_temperature,
+                    temperature_omission_reason=(
+                        definition.temperature_omission_reason
+                    ),
+                    prompt_version=definition.prompt_version,
                 ),
                 provider,
                 result_path=args.results,
             )
     pricing = PricingSnapshot.load(definition.pricing_snapshot_path)
     print(summarize_path(args.results, pricing).to_json(), end="")
+
+
+def _run_diagnostic(args: argparse.Namespace) -> None:
+    """Run exactly one development seed into a new, collision-proof result file."""
+    definition = PilotDefinition.load(args.config)
+    if args.seed not in definition.development_seeds:
+        raise SystemExit("Diagnostic seed must be in the configured development set")
+    if definition.calls_per_seed != 1:
+        raise SystemExit("Diagnostic execution requires calls_per_seed = 1")
+    if not args.execute:
+        print(
+            json.dumps(
+                {
+                    "execution": "pending",
+                    "experiment_id": args.experiment_id,
+                    "seed": args.seed,
+                    "split": "development",
+                    "pilot": definition.to_dict(),
+                },
+                indent=2,
+                sort_keys=True,
+            )
+        )
+        return
+    if args.results.exists():
+        raise SystemExit(
+            "Diagnostic results path already exists; refusing to call provider"
+        )
+
+    provider, model_version = _openai_provider(definition)
+    manifest = run_raw_experiment(
+        RawRunConfig(
+            experiment_id=args.experiment_id,
+            seed=args.seed,
+            model=definition.requested_model,
+            model_version=model_version,
+            reasoning_effort=definition.reasoning_effort,
+            decoding_settings=dict(definition.decoding_settings),
+            intended_temperature=definition.intended_temperature,
+            temperature_omission_reason=definition.temperature_omission_reason,
+            prompt_version=definition.prompt_version,
+        ),
+        provider,
+        result_path=args.results,
+    )
+    print(manifest.to_json(), end="")
 
 
 def _summarize(args: argparse.Namespace) -> None:
@@ -82,6 +139,20 @@ def build_parser() -> argparse.ArgumentParser:
         help="Explicitly authorize real provider calls; omission is a dry run",
     )
     run_parser.set_defaults(handler=_run_pilot)
+
+    diagnostic_parser = subparsers.add_parser(
+        "run-diagnostic", help="Run exactly one configured development seed"
+    )
+    diagnostic_parser.add_argument("--config", type=Path, required=True)
+    diagnostic_parser.add_argument("--results", type=Path, required=True)
+    diagnostic_parser.add_argument("--experiment-id", required=True)
+    diagnostic_parser.add_argument("--seed", type=int, required=True)
+    diagnostic_parser.add_argument(
+        "--execute",
+        action="store_true",
+        help="Explicitly authorize one real provider call; omission is a dry run",
+    )
+    diagnostic_parser.set_defaults(handler=_run_diagnostic)
 
     summary_parser = subparsers.add_parser("summarize", help="Summarize JSONL results")
     summary_parser.add_argument("--results", type=Path, required=True)

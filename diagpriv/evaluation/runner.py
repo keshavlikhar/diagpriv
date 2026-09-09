@@ -13,10 +13,29 @@ from diagbench.generators.incident_001 import (
     seed_split,
 )
 from diagpriv.evaluation.manifest import ExperimentManifest, append_manifest
-from diagpriv.evaluation.prompt import PROMPT_SHA256, PROMPT_VERSION, build_prompt
+from diagpriv.evaluation.prompt import (
+    PROMPT_SHA256 as PROMPT_SHA256_V1,
+    PROMPT_VERSION as PROMPT_VERSION_V1,
+    build_prompt,
+)
+from diagpriv.evaluation.prompt_v2 import (
+    PROMPT_SHA256 as PROMPT_SHA256_V2,
+    PROMPT_VERSION as PROMPT_VERSION_V2,
+    build_prompt_v2,
+)
 from diagpriv.evaluation.providers import ModelProvider, ModelRequest
-from diagpriv.evaluation.response import ParsedResponse, parse_response
+from diagpriv.evaluation.response import (
+    ParsedResponse,
+    parse_response,
+    parse_response_v2,
+)
 from diagpriv.evaluation.scoring import score_response
+from diagpriv.evaluation.scoring_v2 import SCORER_VERSION as SCORER_VERSION_V2
+from diagpriv.evaluation.scoring_v2 import score_response_v2
+from diagpriv.evaluation.taxonomy_v2 import TAXONOMY_VERSION as TAXONOMY_VERSION_V2
+
+SCORER_VERSION_V1 = "raw-rca-scorer-v1"
+TAXONOMY_VERSION_V1 = "rca-taxonomy-v1"
 
 
 class ProtectedSeedError(ValueError):
@@ -33,6 +52,9 @@ class RawRunConfig:
     decoding_settings: dict[str, float | int | str | bool | None] = field(
         default_factory=lambda: {"temperature": 0.0}
     )
+    intended_temperature: float | None = None
+    temperature_omission_reason: str | None = None
+    prompt_version: str = PROMPT_VERSION_V1
     allow_held_out: bool = False
     timestamp: str | None = None
 
@@ -67,9 +89,24 @@ def run_raw_experiment(
     if split == "unassigned":
         raise ProtectedSeedError("Unassigned seeds are not permitted by the protocol")
 
+    if config.prompt_version == PROMPT_VERSION_V1:
+        prompt_builder = build_prompt
+        response_parser = parse_response
+        prompt_sha256 = PROMPT_SHA256_V1
+        taxonomy_version = TAXONOMY_VERSION_V1
+        scorer_version = SCORER_VERSION_V1
+    elif config.prompt_version == PROMPT_VERSION_V2:
+        prompt_builder = build_prompt_v2
+        response_parser = parse_response_v2
+        prompt_sha256 = PROMPT_SHA256_V2
+        taxonomy_version = TAXONOMY_VERSION_V2
+        scorer_version = SCORER_VERSION_V2
+    else:
+        raise ValueError(f"Unsupported raw RCA prompt version: {config.prompt_version}")
+
     incident = generate_incident_001(config.seed)
 
-    prompt = build_prompt(incident.model_view())
+    prompt = prompt_builder(incident.model_view())
     invocation = provider.invoke(
         ModelRequest(
             prompt=prompt,
@@ -86,8 +123,13 @@ def run_raw_experiment(
             error=invocation.error or "Unspecified provider error",
         )
     else:
-        parsed = parse_response(invocation.raw_output)
-    score = None if parsed.response is None else score_response(incident, parsed.response)
+        parsed = response_parser(invocation.raw_output)
+    if parsed.response is None:
+        score = None
+    elif config.prompt_version == PROMPT_VERSION_V2:
+        score = score_response_v2(incident, parsed.response)
+    else:
+        score = score_response(incident, parsed.response)
 
     manifest = ExperimentManifest(
         experiment_id=config.experiment_id,
@@ -101,8 +143,12 @@ def run_raw_experiment(
         model_version_metadata=config.model_version,
         reasoning_effort=config.reasoning_effort,
         temperature=_temperature(config.decoding_settings.get("temperature")),
-        prompt_version=PROMPT_VERSION,
-        prompt_sha256=PROMPT_SHA256,
+        intended_temperature=config.intended_temperature,
+        temperature_omission_reason=config.temperature_omission_reason,
+        prompt_version=config.prompt_version,
+        prompt_sha256=prompt_sha256,
+        taxonomy_version=taxonomy_version,
+        scorer_version=scorer_version,
         decoding_settings=dict(config.decoding_settings),
         timestamp=config.timestamp or datetime.now(UTC).isoformat(),
         response_id=invocation.response_id,
@@ -115,6 +161,7 @@ def run_raw_experiment(
         total_token_count=invocation.total_token_count,
         provider_response_status=invocation.response_status,
         provider_service_tier=invocation.service_tier,
+        sanitized_api_error=invocation.sanitized_api_error,
         response=parsed,
         score=score,
     )
