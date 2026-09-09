@@ -15,9 +15,12 @@ splits, research documentation, and experimental-validity tests. Evaluation
 Protocol v0.1 adds a provider-independent, offline-testable raw RCA baseline
 harness; it does not invoke a real model by default.
 
-The first raw pilot is defined in `experiments/raw_pilot_v1.toml`. Its CLI is
-dry-run-only unless `--execute` is supplied, and real-provider credentials are
-read exclusively from environment variables.
+The first raw pilot is defined in `experiments/raw_pilot_v1.toml`: five
+development seeds, GPT-5.6 Luna, medium reasoning, temperature zero, and one call
+per seed. Its CLI is dry-run-only unless `--execute` is supplied, and
+real-provider credentials are read exclusively from environment variables.
+Provider metadata and token usage are retained per response; cost estimates use
+a separate dated pricing snapshot and do not affect scientific scoring.
 
 ## What DiagPriv is not yet
 

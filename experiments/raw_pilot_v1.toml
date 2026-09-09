@@ -5,14 +5,18 @@ condition = "raw"
 prompt_version = "raw-rca-v1"
 prompt_sha256 = "0c06c1ec6d72ca08927a367aaf873d7bea2b34c6210ceb74824263dd7f2bd9cd"
 development_seeds = [1000, 1001, 1002, 1003, 1004]
-validation_seeds = [2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009]
+validation_seeds = []
 held_out_seeds = []
 calls_per_seed = 1
 
 [model]
-name_environment_variable = "DIAGPRIV_MODEL"
-version_environment_variable = "DIAGPRIV_MODEL_VERSION"
+requested_model = "gpt-5.6-luna"
+version_metadata_environment_variable = "DIAGPRIV_MODEL_VERSION_METADATA"
+reasoning_effort = "medium"
 
 [decoding]
 temperature = 0.0
+max_output_tokens = 4096
 
+[pricing]
+snapshot = "pricing/openai_gpt_5_6_luna_2026-07-30.toml"

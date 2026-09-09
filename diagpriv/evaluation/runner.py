@@ -28,7 +28,8 @@ class RawRunConfig:
     experiment_id: str
     seed: int
     model: str
-    model_version: str
+    model_version: str | None
+    reasoning_effort: str | None = None
     decoding_settings: dict[str, float | int | str | bool | None] = field(
         default_factory=lambda: {"temperature": 0.0}
     )
@@ -37,7 +38,7 @@ class RawRunConfig:
 
 
 def pilot_seed_plan(
-    development_count: int = 5, validation_count: int = 10
+    development_count: int = 5, validation_count: int = 0
 ) -> tuple[int, ...]:
     """Return a bounded pilot plan containing no held-out evaluation seeds."""
     if not 0 <= development_count <= len(DEVELOPMENT_SEEDS):
@@ -75,9 +76,10 @@ def run_raw_experiment(
             model=config.model,
             model_version=config.model_version,
             decoding_settings=dict(config.decoding_settings),
+            reasoning_effort=config.reasoning_effort,
         )
     )
-    if invocation.status in {"provider_error", "rate_limited"}:
+    if invocation.status in {"provider_error", "rate_limited", "refusal"}:
         parsed = ParsedResponse(
             invocation.status,
             invocation.raw_output,
@@ -94,15 +96,34 @@ def run_raw_experiment(
         seed=config.seed,
         split=split,
         condition="raw",
-        model=config.model,
-        model_version=config.model_version,
+        requested_model=config.model,
+        provider_returned_model=invocation.provider_returned_model,
+        model_version_metadata=config.model_version,
+        reasoning_effort=config.reasoning_effort,
+        temperature=_temperature(config.decoding_settings.get("temperature")),
         prompt_version=PROMPT_VERSION,
         prompt_sha256=PROMPT_SHA256,
         decoding_settings=dict(config.decoding_settings),
         timestamp=config.timestamp or datetime.now(UTC).isoformat(),
+        response_id=invocation.response_id,
+        provider_timestamp=invocation.provider_timestamp,
+        input_token_count=invocation.input_token_count,
+        cached_input_token_count=invocation.cached_input_token_count,
+        cache_write_input_token_count=invocation.cache_write_input_token_count,
+        output_token_count=invocation.output_token_count,
+        reasoning_token_count=invocation.reasoning_token_count,
+        total_token_count=invocation.total_token_count,
+        provider_response_status=invocation.response_status,
+        provider_service_tier=invocation.service_tier,
         response=parsed,
         score=score,
     )
     if result_path is not None:
         append_manifest(result_path, manifest)
     return manifest
+
+
+def _temperature(value: object) -> float | None:
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        return None
+    return float(value)

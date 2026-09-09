@@ -8,16 +8,10 @@ import os
 from pathlib import Path
 
 from diagpriv.evaluation.pilot import PilotDefinition
+from diagpriv.evaluation.pricing import PricingSnapshot
 from diagpriv.evaluation.providers import OpenAIResponsesProvider
-from diagpriv.evaluation.reporting import summarize_path
+from diagpriv.evaluation.reporting import inspection_json, summarize_path
 from diagpriv.evaluation.runner import RawRunConfig, run_raw_experiment
-
-
-def _required_environment(name: str) -> str:
-    value = os.environ.get(name)
-    if not value:
-        raise SystemExit(f"Required environment variable is not set: {name}")
-    return value
 
 
 def _run_pilot(args: argparse.Namespace) -> None:
@@ -34,9 +28,9 @@ def _run_pilot(args: argparse.Namespace) -> None:
     if definition.provider != "openai-responses":
         raise SystemExit(f"Unsupported provider: {definition.provider}")
 
-    model = _required_environment(definition.model_environment_variable)
-    model_version = _required_environment(
-        definition.model_version_environment_variable
+    version_environment = definition.model_version_metadata_environment_variable
+    model_version = (
+        os.environ.get(version_environment) if version_environment else None
     )
     provider = OpenAIResponsesProvider()
     if not provider.is_configured:
@@ -54,18 +48,25 @@ def _run_pilot(args: argparse.Namespace) -> None:
                 RawRunConfig(
                     experiment_id=experiment_id,
                     seed=seed,
-                    model=model,
+                    model=definition.requested_model,
                     model_version=model_version,
+                    reasoning_effort=definition.reasoning_effort,
                     decoding_settings=dict(definition.decoding_settings),
                 ),
                 provider,
                 result_path=args.results,
             )
-    print(summarize_path(args.results).to_json(), end="")
+    pricing = PricingSnapshot.load(definition.pricing_snapshot_path)
+    print(summarize_path(args.results, pricing).to_json(), end="")
 
 
 def _summarize(args: argparse.Namespace) -> None:
-    print(summarize_path(args.results).to_json(), end="")
+    pricing = None if args.pricing is None else PricingSnapshot.load(args.pricing)
+    print(summarize_path(args.results, pricing).to_json(), end="")
+
+
+def _inspect(args: argparse.Namespace) -> None:
+    print(inspection_json(args.results), end="")
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -84,7 +85,18 @@ def build_parser() -> argparse.ArgumentParser:
 
     summary_parser = subparsers.add_parser("summarize", help="Summarize JSONL results")
     summary_parser.add_argument("--results", type=Path, required=True)
+    summary_parser.add_argument(
+        "--pricing",
+        type=Path,
+        help="Versioned pricing snapshot used only for cost estimation",
+    )
     summary_parser.set_defaults(handler=_summarize)
+
+    inspect_parser = subparsers.add_parser(
+        "inspect", help="Show every raw response and individual score"
+    )
+    inspect_parser.add_argument("--results", type=Path, required=True)
+    inspect_parser.set_defaults(handler=_inspect)
     return parser
 
 

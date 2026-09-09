@@ -7,8 +7,10 @@ from urllib.error import HTTPError
 import pytest
 
 from diagbench.generators.incident_001 import generate_incident_001
+from diagpriv.evaluation.cli import build_parser
 from diagpriv.evaluation.manifest import ExperimentManifest, append_manifest
 from diagpriv.evaluation.pilot import PilotDefinition
+from diagpriv.evaluation.pricing import PricingSnapshot
 from diagpriv.evaluation.prompt import (
     PROMPT_SHA256,
     PROMPT_VERSION,
@@ -21,7 +23,11 @@ from diagpriv.evaluation.providers import (
     ModelRequest,
     OpenAIResponsesProvider,
 )
-from diagpriv.evaluation.reporting import summarize_manifests, summarize_path
+from diagpriv.evaluation.reporting import (
+    inspection_records,
+    summarize_manifests,
+    summarize_path,
+)
 from diagpriv.evaluation.response import RCAResponse, parse_response
 from diagpriv.evaluation.runner import (
     ProtectedSeedError,
@@ -69,7 +75,8 @@ def _config(seed: int, experiment_id: str = "raw-test-001") -> RawRunConfig:
         seed=seed,
         model="offline-fixture",
         model_version="1",
-        decoding_settings={"temperature": 0.0},
+        reasoning_effort="medium",
+        decoding_settings={"temperature": 0.0, "max_output_tokens": 4096},
         timestamp="2032-01-01T00:00:00+00:00",
     )
 
@@ -235,8 +242,8 @@ def test_retired_evaluation_seed_is_never_invokable(
 
 def test_default_pilot_plan_contains_no_held_out_seeds() -> None:
     plan = pilot_seed_plan()
-    assert plan == (*range(1000, 1005), *range(2000, 2010))
-    assert all(seed < 3000 for seed in plan)
+    assert plan == tuple(range(1000, 1005))
+    assert all(1000 <= seed <= 1004 for seed in plan)
 
 
 def test_provider_receives_model_view_and_no_oracle_fields() -> None:
@@ -298,15 +305,19 @@ def test_manifest_round_trip_and_append_only_persistence(tmp_path: Path) -> None
     assert path.read_text(encoding="utf-8") == first_contents
 
 
-def test_frozen_pilot_definition_has_only_development_and_validation_seeds() -> None:
+def test_frozen_pilot_definition_is_exactly_the_development_luna_pilot() -> None:
     path = Path(__file__).parents[1] / "experiments" / "raw_pilot_v1.toml"
     definition = PilotDefinition.load(path)
     assert definition.development_seeds == tuple(range(1000, 1005))
-    assert definition.validation_seeds == tuple(range(2000, 2010))
+    assert definition.validation_seeds == ()
     assert definition.held_out_seeds == ()
     assert definition.calls_per_seed == 1
+    assert definition.requested_model == "gpt-5.6-luna"
+    assert definition.reasoning_effort == "medium"
     assert definition.decoding_settings["temperature"] == 0.0
+    assert definition.decoding_settings["max_output_tokens"] == 4096
     assert definition.prompt_sha256 == PROMPT_SHA256
+    assert definition.pricing_snapshot_path.is_file()
 
 
 def test_pilot_definition_rejects_new_held_out_seed_without_generating_it(
@@ -320,6 +331,26 @@ def test_pilot_definition_rejects_new_held_out_seed_without_generating_it(
     path.write_text(changed, encoding="utf-8")
     with pytest.raises(ValueError, match="must not contain held-out"):
         PilotDefinition.load(path)
+
+
+def test_run_pilot_requires_execute_before_provider_calls(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    config = Path(__file__).parents[1] / "experiments" / "raw_pilot_v1.toml"
+    results = tmp_path / "must-not-exist.jsonl"
+    parser = build_parser()
+    args = parser.parse_args(
+        [
+            "run-pilot",
+            "--config",
+            str(config),
+            "--results",
+            str(results),
+        ]
+    )
+    args.handler(args)
+    assert json.loads(capsys.readouterr().out)["execution"] == "pending"
+    assert not results.exists()
 
 
 def test_empty_pilot_summary_is_pending(tmp_path: Path) -> None:
@@ -375,7 +406,21 @@ def test_openai_provider_extracts_output_without_exposing_key(
 
         def read(self) -> bytes:
             payload = {
+                "id": "resp_test_001",
+                "created_at": 1_968_163_200,
+                "model": "gpt-5.6-luna-2026-08-31",
+                "service_tier": "default",
                 "status": "completed",
+                "usage": {
+                    "input_tokens": 800,
+                    "input_tokens_details": {
+                        "cached_tokens": 200,
+                        "cache_write_tokens": 100,
+                    },
+                    "output_tokens": 120,
+                    "output_tokens_details": {"reasoning_tokens": 40},
+                    "total_tokens": 920,
+                },
                 "output": [
                     {
                         "type": "message",
@@ -396,8 +441,30 @@ def test_openai_provider_extracts_output_without_exposing_key(
     assert manifest.response.status == "valid"
     assert captured_body["model"] == "offline-fixture"
     assert captured_body["store"] is False
+    assert captured_body["service_tier"] == "default"
     assert captured_body["temperature"] == 0.0
+    assert captured_body["max_output_tokens"] == 4096
+    assert captured_body["reasoning"] == {"effort": "medium"}
     assert "Operational evidence:" in str(captured_body["input"])
+    assert manifest.requested_model == "offline-fixture"
+    assert manifest.provider_returned_model == "gpt-5.6-luna-2026-08-31"
+    assert manifest.model_version_metadata == "1"
+    assert manifest.reasoning_effort == "medium"
+    assert manifest.temperature == 0.0
+    assert manifest.response_id == "resp_test_001"
+    assert manifest.provider_timestamp == 1_968_163_200
+    assert manifest.input_token_count == 800
+    assert manifest.cached_input_token_count == 200
+    assert manifest.cache_write_input_token_count == 100
+    assert manifest.output_token_count == 120
+    assert manifest.reasoning_token_count == 40
+    assert manifest.total_token_count == 920
+    assert manifest.provider_response_status == "completed"
+    assert manifest.provider_service_tier == "default"
+    manifest_data = manifest.to_dict()
+    assert manifest_data["response_status"] == "completed"
+    assert manifest_data["score"]["rca"]["exact_root_cause_correct"] is True
+    assert manifest_data["score"]["evidence"]["evidence_f1"] == 1.0
     assert secret not in manifest.to_json()
 
 
@@ -415,6 +482,46 @@ def test_openai_rate_limit_is_explicit(monkeypatch: pytest.MonkeyPatch) -> None:
     assert result.error == "OpenAI Responses API rate limit (HTTP 429)"
 
 
+def test_openai_structured_refusal_is_explicit(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("OPENAI_API_KEY", "test-secret")
+
+    class FakeHTTPResponse:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *args: object) -> None:
+            return None
+
+        def read(self) -> bytes:
+            return json.dumps(
+                {
+                    "id": "resp_refusal",
+                    "status": "completed",
+                    "output": [
+                        {
+                            "type": "message",
+                            "content": [
+                                {
+                                    "type": "refusal",
+                                    "refusal": "Unable to provide this response.",
+                                }
+                            ],
+                        }
+                    ],
+                }
+            ).encode("utf-8")
+
+    monkeypatch.setattr(
+        "diagpriv.evaluation.providers.urlopen",
+        lambda request, timeout: FakeHTTPResponse(),
+    )
+    manifest = run_raw_experiment(_config(1001, "refusal"), OpenAIResponsesProvider())
+    assert manifest.response.status == "refusal"
+    assert manifest.response.raw_output == "Unable to provide this response."
+    assert manifest.response.error == "Provider refused the task"
+    assert manifest.response_id == "resp_refusal"
+
+
 def test_rate_limit_is_recorded_in_manifest_and_summary() -> None:
     class RateLimitedProvider:
         def invoke(self, request: ModelRequest) -> InvocationResult:
@@ -427,3 +534,74 @@ def test_rate_limit_is_recorded_in_manifest_and_summary() -> None:
     summary = summarize_manifests((manifest,))
     assert summary.development.provider_failures == 0
     assert summary.development.rate_limits == 1
+
+
+def test_versioned_pricing_estimates_cost_outside_scoring() -> None:
+    root = Path(__file__).parents[1]
+    pricing = PricingSnapshot.load(
+        root / "experiments" / "pricing" / "openai_gpt_5_6_luna_2026-07-30.toml"
+    )
+
+    class UsageProvider:
+        def invoke(self, request: ModelRequest) -> InvocationResult:
+            return InvocationResult(
+                "success",
+                raw_output=_correct_response(1000).to_json(),
+                provider_returned_model="gpt-5.6-luna",
+                response_id="resp_usage",
+                provider_timestamp=1_968_163_200,
+                input_token_count=100,
+                cached_input_token_count=20,
+                cache_write_input_token_count=10,
+                output_token_count=50,
+                reasoning_token_count=30,
+                total_token_count=150,
+                response_status="completed",
+            )
+
+    manifest = run_raw_experiment(
+        RawRunConfig(
+            experiment_id="luna-cost-test",
+            seed=1000,
+            model="gpt-5.6-luna",
+            model_version=None,
+            reasoning_effort="medium",
+            decoding_settings={"temperature": 0.0},
+            timestamp="2032-01-01T00:00:00+00:00",
+        ),
+        UsageProvider(),
+    )
+    summary = summarize_manifests((manifest,), pricing)
+    development = summary.development
+    assert development.total_input_tokens == 100
+    assert development.total_output_tokens == 50
+    assert development.total_reasoning_tokens == 30
+    assert development.total_tokens == 150
+    assert development.costed_runs == 1
+    assert development.uncosted_runs == 0
+    assert development.estimated_api_cost_usd == pytest.approx(0.0000769)
+    assert development.estimated_average_cost_per_incident_usd == pytest.approx(
+        0.0000769
+    )
+    assert manifest.score is not None
+    assert manifest.score.exact_root_cause_correct
+
+
+def test_inspection_exposes_every_raw_response_and_individual_score(
+    tmp_path: Path,
+) -> None:
+    path = tmp_path / "five-results.jsonl"
+    for seed in range(1000, 1005):
+        manifest = run_raw_experiment(
+            _config(seed, f"inspect-{seed}"),
+            FakeProvider(raw_output=_correct_response(seed).to_json()),
+        )
+        append_manifest(path, manifest)
+
+    records = inspection_records(path)
+    assert [record["seed"] for record in records] == list(range(1000, 1005))
+    assert all(record["raw_model_response"] for record in records)
+    assert all(record["structured_response"] for record in records)
+    assert all(record["supporting_evidence_ids"] for record in records)
+    assert all(record["rca_score"] is not None for record in records)
+    assert all(record["evidence_score"] is not None for record in records)

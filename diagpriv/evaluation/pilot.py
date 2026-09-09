@@ -22,15 +22,18 @@ class PilotDefinition:
     validation_seeds: tuple[int, ...]
     held_out_seeds: tuple[int, ...]
     calls_per_seed: int
-    model_environment_variable: str
-    model_version_environment_variable: str
+    requested_model: str
+    model_version_metadata_environment_variable: str | None
+    reasoning_effort: str
     decoding_settings: dict[str, float | int | str | bool | None]
+    pricing_snapshot_path: Path
 
     @classmethod
     def load(cls, path: Path) -> Self:
         data = tomllib.loads(path.read_text(encoding="utf-8"))
         pilot = data["pilot"]
         model = data["model"]
+        pricing = data["pricing"]
         definition = cls(
             pilot_id=pilot["pilot_id"],
             provider=pilot["provider"],
@@ -41,11 +44,13 @@ class PilotDefinition:
             validation_seeds=tuple(pilot["validation_seeds"]),
             held_out_seeds=tuple(pilot["held_out_seeds"]),
             calls_per_seed=pilot["calls_per_seed"],
-            model_environment_variable=model["name_environment_variable"],
-            model_version_environment_variable=model[
-                "version_environment_variable"
-            ],
+            requested_model=model["requested_model"],
+            model_version_metadata_environment_variable=model.get(
+                "version_metadata_environment_variable"
+            ),
+            reasoning_effort=model["reasoning_effort"],
             decoding_settings=dict(data["decoding"]),
+            pricing_snapshot_path=path.parent / pricing["snapshot"],
         )
         definition.validate()
         return definition
@@ -67,6 +72,8 @@ class PilotDefinition:
             self.development_seeds
         ) + len(self.validation_seeds):
             raise ValueError("Pilot seed lists must not overlap")
+        if not self.pricing_snapshot_path.is_file():
+            raise ValueError("Pilot pricing snapshot does not exist")
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -79,8 +86,11 @@ class PilotDefinition:
             "validation_seeds": list(self.validation_seeds),
             "held_out_seeds": list(self.held_out_seeds),
             "calls_per_seed": self.calls_per_seed,
-            "model_environment_variable": self.model_environment_variable,
-            "model_version_environment_variable": self.model_version_environment_variable,
+            "requested_model": self.requested_model,
+            "model_version_metadata_environment_variable": (
+                self.model_version_metadata_environment_variable
+            ),
+            "reasoning_effort": self.reasoning_effort,
             "decoding_settings": self.decoding_settings,
+            "pricing_snapshot_path": str(self.pricing_snapshot_path),
         }
-
