@@ -13,6 +13,10 @@ from diagpriv.transformations.redaction_v1 import (
     redact_incident,
     redaction_placeholder,
 )
+from diagpriv.transformations.tokenization_v1 import (
+    TRANSFORMATION_VERSION as TOKENIZATION_TRANSFORMATION_VERSION,
+    tokenize_incident,
+)
 
 # Backward-compatible package export for the already-frozen redaction baseline.
 TRANSFORMATION_VERSION = REDACTION_TRANSFORMATION_VERSION
@@ -21,6 +25,7 @@ __all__ = [
     "HMAC_KEY_ENVIRONMENT_VARIABLE",
     "HMAC_TRANSFORMATION_VERSION",
     "REDACTION_TRANSFORMATION_VERSION",
+    "TOKENIZATION_TRANSFORMATION_VERSION",
     "TRANSFORMATION_VERSION",
     "hmac_incident",
     "hmac_key_fingerprint",
@@ -28,4 +33,5 @@ __all__ = [
     "parse_hmac_key_hex",
     "redact_incident",
     "redaction_placeholder",
+    "tokenize_incident",
 ]

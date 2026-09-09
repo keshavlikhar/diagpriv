@@ -38,6 +38,7 @@ from diagpriv.transformations import (
     hmac_incident,
     hmac_key_fingerprint,
     redact_incident,
+    tokenize_incident,
 )
 
 SCORER_VERSION_V1 = "raw-rca-scorer-v1"
@@ -55,7 +56,9 @@ class RawRunConfig:
     model: str
     model_version: str | None
     reasoning_effort: str | None = None
-    condition: Literal["raw", "redaction-v1", "hmac-v1"] = "raw"
+    condition: Literal[
+        "raw", "redaction-v1", "hmac-v1", "tokenization-v1"
+    ] = "raw"
     decoding_settings: dict[str, float | int | str | bool | None] = field(
         default_factory=lambda: {"temperature": 0.0}
     )
@@ -126,6 +129,8 @@ def run_raw_experiment(
             raise ValueError("hmac-v1 requires a non-secret experimental key ID")
         transformation_key_fingerprint = hmac_key_fingerprint(config.hmac_key)
         model_view = hmac_incident(incident, key=config.hmac_key)
+    elif config.condition == "tokenization-v1":
+        model_view = tokenize_incident(incident)
     else:
         raise ValueError(f"Unsupported evaluation condition: {config.condition}")
 
