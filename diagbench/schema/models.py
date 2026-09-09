@@ -1,7 +1,8 @@
-"""Small, dependency-free, JSON-compatible benchmark models."""
+"""JSON-compatible models for benchmark oracle data and model-visible evidence."""
 
 from __future__ import annotations
 
+from copy import deepcopy
 from dataclasses import asdict, dataclass
 import json
 from pathlib import Path
@@ -9,28 +10,21 @@ from typing import Any, Literal, Self
 
 JSONPrimitive = str | int | float | bool | None
 JSONValue = JSONPrimitive | list["JSONValue"] | dict[str, "JSONValue"]
-InvariantType = Literal[
-    "equality",
-    "uniqueness",
-    "duplicates",
-    "row_cardinality",
-    "null_placement",
-    "referential_relationship",
-    "joinability",
-    "ordering",
-    "temporal_interval",
-    "numeric_equality",
-    "numeric_ordering",
-    "string_format",
-    "malformed_format",
-    "state_transition",
-    "cross_source_identity",
+InvariantNecessity = Literal["essential", "supportive", "discardable"]
+EvidenceRelation = Literal[
+    "equal",
+    "not_equal",
+    "all_distinct",
+    "ordered_before",
+    "interval_seconds",
+    "row_count",
+    "preserve_literal",
 ]
 
 
 @dataclass(frozen=True, slots=True)
 class SensitiveField:
-    """A field classified as sensitive for an incident."""
+    """An oracle-only sensitive-field classification."""
 
     path: str
     classification: str
@@ -43,21 +37,47 @@ class SensitiveField:
 
 
 @dataclass(frozen=True, slots=True)
+class EvidenceReference:
+    """A stable reference to one field on one selected evidence element."""
+
+    source: str
+    selector: dict[str, JSONPrimitive]
+    field: str | None = None
+
+    def to_dict(self) -> dict[str, JSONValue]:
+        return {
+            "source": self.source,
+            "selector": self.selector,
+            "field": self.field,
+        }
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> Self:
+        return cls(
+            source=data["source"],
+            selector=data["selector"],
+            field=data.get("field"),
+        )
+
+
+@dataclass(frozen=True, slots=True)
 class DiagnosticInvariant:
-    """A relationship a future transformation should preserve or may discard."""
+    """An oracle relationship over specifically selected evidence elements."""
 
     name: str
-    type: InvariantType
-    fields: tuple[str, ...]
-    must_preserve: bool
+    relation: EvidenceRelation
+    operands: tuple[EvidenceReference, ...]
+    expected: JSONValue
+    necessity: InvariantNecessity
     description: str
 
     def to_dict(self) -> dict[str, JSONValue]:
         return {
             "name": self.name,
-            "type": self.type,
-            "fields": list(self.fields),
-            "must_preserve": self.must_preserve,
+            "relation": self.relation,
+            "operands": [item.to_dict() for item in self.operands],
+            "expected": self.expected,
+            "necessity": self.necessity,
             "description": self.description,
         }
 
@@ -65,20 +85,27 @@ class DiagnosticInvariant:
     def from_dict(cls, data: dict[str, Any]) -> Self:
         return cls(
             name=data["name"],
-            type=data["type"],
-            fields=tuple(data["fields"]),
-            must_preserve=data["must_preserve"],
+            relation=data["relation"],
+            operands=tuple(
+                EvidenceReference.from_dict(item) for item in data["operands"]
+            ),
+            expected=data["expected"],
+            necessity=data["necessity"],
             description=data["description"],
         )
 
 
 @dataclass(frozen=True, slots=True)
 class LogEntry:
+    evidence_id: str
     timestamp: str
     level: str
     service: str
     message: str
     attributes: dict[str, JSONValue]
+
+    def to_dict(self) -> dict[str, JSONValue]:
+        return asdict(self)
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> Self:
@@ -87,25 +114,93 @@ class LogEntry:
 
 @dataclass(frozen=True, slots=True)
 class ExpectedEvidence:
+    """Oracle-only evidence expected in a well-supported diagnosis."""
+
     description: str
-    references: tuple[str, ...]
+    references: tuple[EvidenceReference, ...]
 
     def to_dict(self) -> dict[str, JSONValue]:
-        return {"description": self.description, "references": list(self.references)}
+        return {
+            "description": self.description,
+            "references": [item.to_dict() for item in self.references],
+        }
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> Self:
-        return cls(data["description"], tuple(data["references"]))
+        return cls(
+            description=data["description"],
+            references=tuple(
+                EvidenceReference.from_dict(item) for item in data["references"]
+            ),
+        )
+
+
+@dataclass(frozen=True, slots=True)
+class StructuredRootCause:
+    """Oracle-only components used for future component-level RCA scoring."""
+
+    outcome: str
+    trigger: str
+    failure_mechanism: str
+    affected_component: str
+    logical_operation_repeated: bool
+    explanation: str | None = None
+
+    def to_dict(self) -> dict[str, JSONValue]:
+        return asdict(self)
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> Self:
+        return cls(**data)
+
+
+@dataclass(frozen=True, slots=True)
+class ModelView:
+    """The complete and exclusive representation an evaluated model may receive."""
+
+    troubleshooting_question: str
+    structured_evidence: dict[str, list[dict[str, JSONValue]]]
+    log_evidence: tuple[LogEntry, ...]
+
+    def to_dict(self) -> dict[str, JSONValue]:
+        return {
+            "troubleshooting_question": self.troubleshooting_question,
+            "structured_evidence": self.structured_evidence,
+            "log_evidence": [entry.to_dict() for entry in self.log_evidence],
+        }
+
+    def to_json(self, *, indent: int | None = 2) -> str:
+        return json.dumps(self.to_dict(), indent=indent, sort_keys=True) + "\n"
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> Self:
+        allowed = {"troubleshooting_question", "structured_evidence", "log_evidence"}
+        if set(data) != allowed:
+            raise ValueError("ModelView must contain only model-visible fields")
+        return cls(
+            troubleshooting_question=data["troubleshooting_question"],
+            structured_evidence=data["structured_evidence"],
+            log_evidence=tuple(LogEntry.from_dict(item) for item in data["log_evidence"]),
+        )
+
+    @classmethod
+    def from_json(cls, payload: str) -> Self:
+        data = json.loads(payload)
+        if not isinstance(data, dict):
+            raise ValueError("A ModelView JSON document must contain an object")
+        return cls.from_dict(data)
 
 
 @dataclass(frozen=True, slots=True)
 class Incident:
+    """Complete benchmark definition, including model-hidden oracle information."""
+
     incident_id: str
     title: str
     category: str
     description: str
     troubleshooting_question: str
-    ground_truth_root_cause: str
+    ground_truth: StructuredRootCause
     structured_evidence: dict[str, list[dict[str, JSONValue]]]
     log_evidence: tuple[LogEntry, ...]
     sensitive_fields: tuple[SensitiveField, ...]
@@ -114,17 +209,53 @@ class Incident:
     difficulty: Literal["easy", "medium", "hard"]
     metadata: dict[str, JSONValue]
 
+    def model_view(self) -> ModelView:
+        """Return a defensive copy of only evidence allowed in model input."""
+        return ModelView(
+            troubleshooting_question=self.troubleshooting_question,
+            structured_evidence=deepcopy(self.structured_evidence),
+            log_evidence=deepcopy(self.log_evidence),
+        )
+
+    def resolve_reference(self, reference: EvidenceReference) -> JSONValue:
+        """Resolve one oracle reference and require exactly one matching element."""
+        if reference.source == "logs":
+            candidates = [entry.to_dict() for entry in self.log_evidence]
+        else:
+            try:
+                candidates = self.structured_evidence[reference.source]
+            except KeyError as error:
+                raise ValueError(f"Unknown evidence source: {reference.source}") from error
+
+        matches = [
+            item
+            for item in candidates
+            if all(item.get(key) == value for key, value in reference.selector.items())
+        ]
+        if len(matches) != 1:
+            raise ValueError(
+                f"Reference must resolve once; found {len(matches)} matches: {reference}"
+            )
+        selected = matches[0]
+        if reference.field is None:
+            return selected
+        if reference.field in selected:
+            return selected[reference.field]
+        attributes = selected.get("attributes")
+        if isinstance(attributes, dict) and reference.field in attributes:
+            return attributes[reference.field]
+        raise ValueError(f"Unknown referenced field: {reference.field}")
+
     def to_dict(self) -> dict[str, JSONValue]:
-        """Return a structure accepted by the standard JSON encoder."""
         return {
             "incident_id": self.incident_id,
             "title": self.title,
             "category": self.category,
             "description": self.description,
             "troubleshooting_question": self.troubleshooting_question,
-            "ground_truth_root_cause": self.ground_truth_root_cause,
+            "ground_truth": self.ground_truth.to_dict(),
             "structured_evidence": self.structured_evidence,
-            "log_evidence": [asdict(entry) for entry in self.log_evidence],
+            "log_evidence": [entry.to_dict() for entry in self.log_evidence],
             "sensitive_fields": [asdict(field) for field in self.sensitive_fields],
             "diagnostic_invariants": [item.to_dict() for item in self.diagnostic_invariants],
             "expected_evidence": [item.to_dict() for item in self.expected_evidence],
@@ -147,7 +278,7 @@ class Incident:
             category=data["category"],
             description=data["description"],
             troubleshooting_question=data["troubleshooting_question"],
-            ground_truth_root_cause=data["ground_truth_root_cause"],
+            ground_truth=StructuredRootCause.from_dict(data["ground_truth"]),
             structured_evidence=data["structured_evidence"],
             log_evidence=tuple(LogEntry.from_dict(item) for item in data["log_evidence"]),
             sensitive_fields=tuple(
@@ -174,4 +305,3 @@ class Incident:
     @classmethod
     def load(cls, path: Path) -> Self:
         return cls.from_json(path.read_text(encoding="utf-8"))
-

@@ -1,43 +1,121 @@
-# DiagBench v0.1 Specification
+# DiagBench v0.2 Specification
 
-## Purpose
+## Purpose and status
 
-DiagBench provides small, fully synthetic troubleshooting incidents for studying
-privacy/utility trade-offs. Version 0.1 contains only Incident 001.
+DiagBench provides bounded, fully synthetic troubleshooting incident families
+for studying privacy/utility trade-offs. Version 0.2 develops one family: a
+repeated logical payment operation following a caller-visible timeout.
 
-## Incident contract
+DiagBench v0.2 is designed to reduce answer leakage and support experimental
+validity. It has not yet been validated with human diagnosticians or LLMs, and it
+does not establish that its evidence is representative of production incidents.
 
-Each incident has stable identifying information, a troubleshooting question,
-an unambiguous ground-truth root cause, structured and log evidence, explicit
-sensitive-field declarations, diagnostic invariants, expected supporting
-evidence, a difficulty label, and JSON-compatible metadata.
+## Oracle and model-visible boundary
 
-Structured evidence is a mapping from source names to lists of row objects. Log
-evidence is a list of timestamped records. Field references use dotted paths:
-`source.field` for structured evidence and `logs.field` for log evidence.
+DiagBench distinguishes benchmark oracle information from model-visible
+evidence.
 
-Sensitive-field declarations describe data classification and research policy;
-they do not themselves perform a transformation. Diagnostic invariants state
-which relationships must or need not survive a future transformation.
+An `Incident` is the complete research definition. It contains internal labels,
+structured ground truth, sensitive-field classifications, diagnostic invariants,
+expected evidence, difficulty, and generation metadata in addition to the
+evidence itself. It must never be serialized directly into an evaluation prompt.
 
-## Determinism and fictionality
+`Incident.model_view()` constructs the complete model-visible representation.
+A `ModelView` contains only:
 
-A generator given the same integer seed must emit byte-equivalent logical data.
-Every incident must set `metadata.synthetic` to `true`. Names must clearly signal
-fictionality, emails use the reserved `example.invalid` domain, SSNs use an
-unissued synthetic range, and identifiers carry a `SYN-` prefix.
+- the user-like troubleshooting question;
+- structured evidence; and
+- log evidence.
 
-## Incident 001 acceptance criteria
+The model view excludes the incident ID, title, category, description, ground
+truth, expected evidence, invariants, sensitive-field policies and rationales,
+difficulty, and metadata. Future evaluation code must consume `ModelView`, not
+`Incident`.
 
-Incident 001 includes surrounding normal data plus exactly two rows for the
-problematic logical payment. Those rows share customer, account, request, and
-amount; have near-identical ordered timestamps; and are both successful. Logs
-must show an initial request timing out, a retry, and a second successful insert
-without an idempotency check.
+## Structured ground truth
 
-## Versioning
+Oracle ground truth records separately:
 
-Schema and benchmark changes should be reviewed separately. Future incidents may
-extend the schema through metadata or new optional fields, but must remain cleanly
-serializable to JSON.
+- observed outcome;
+- initiating trigger;
+- failure mechanism;
+- affected component;
+- whether one logical operation was repeated; and
+- an optional human-readable explanation.
 
+This representation is intended to support future component-level scoring. No
+scoring implementation is included in v0.2.
+
+## Evidence references and diagnostic invariants
+
+An `EvidenceReference` identifies a source, an exact selector, and an optional
+field. Every structured row and log has a neutral, non-sensitive `evidence_id`
+used only as stable provenance; references select by that value rather than by a
+field that a future privacy transformation may change. Every reference must
+resolve to exactly one element in its incident instance.
+
+A diagnostic invariant contains a relation, specifically selected operands, an
+expected property, a necessity classification, and an oracle-only description.
+The representation supports positive relations such as equality and ordering as
+well as negative relations such as inequality and all-distinctness. Negative
+relations are required because a transformation may be harmful either by
+destroying a real relationship or by creating a false one.
+
+Necessity has three levels:
+
+- `essential`: required for the intended evidence-based diagnosis or for avoiding
+  a competing interpretation;
+- `supportive`: corroborating but not required; and
+- `discardable`: deliberately unnecessary literal or exact information.
+
+The schema describes these relationships but does not yet transform evidence.
+
+## Incident-family guarantees
+
+Every Incident 001 instance has the same structured root cause. Its generator
+varies bounded nuisance properties including population size, neutral IDs,
+fictional identities, amounts, time origin, response/re-arrival timing, number
+and placement of unrelated payments, service aliases, log wording, and unrelated
+warnings.
+
+Each instance guarantees:
+
+- exactly two successful payment records for the target logical request;
+- exactly one request associated with more than one payment record;
+- a first request receipt and write, a caller-visible timeout, a second receipt
+  for the same request, and a second write;
+- distinct transport and payment identifiers for the two arrivals;
+- several unrelated successful operations with distinct request identifiers;
+- one benign timeout-and-rearrival sequence that produces only one payment;
+- no diagnosis-bearing labels in model-visible identifiers or messages;
+- fictional identity conventions; and
+- deterministic generation for a fixed seed.
+
+These construction guarantees do not demonstrate diagnostic realism or model
+performance.
+
+## Development, validation, and evaluation seeds
+
+Seed ranges are separated to reduce direct tuning against evaluation instances:
+
+| Split | Inclusive seed range | Intended use |
+|---|---:|---|
+| Development | 1000–1999 | Generator development and transformation debugging |
+| Validation | 2000–2999 | Protocol and parameter selection |
+| Held-out evaluation | 10000–10999 | Final evaluation after protocol decisions are frozen |
+
+The checked-in canonical example uses development seed `1001`. Seeds outside
+these ranges are marked `unassigned`. Held-out seed values and generated model
+views should not be inspected while tuning future transformations. The ranges
+are a partitioning convention, not evidence that instances are statistically
+independent.
+
+## Serialization and versioning
+
+Incident definitions and model views serialize to ordinary JSON. Oracle evidence
+references contain instance-specific neutral selectors and remain stable for a
+fixed seed. The canonical JSON fixture must equal generator output for its seed.
+
+Schema and benchmark versions are recorded separately in oracle metadata. Any
+change to generation distributions, model-visible evidence, invariant semantics,
+or split policy requires review and a version update.

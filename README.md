@@ -7,10 +7,11 @@ only fictional, synthetic incidents.
 
 ## Current milestone
 
-DiagBench v0.1 contains one carefully designed incident: a duplicate payment
-caused by a retry being processed without idempotency protection. The repository
-currently provides JSON-compatible incident and diagnostic-invariant models,
-deterministic incident generation, research documentation, and validation tests.
+DiagBench v0.2 turns Incident 001 into a bounded synthetic incident family and
+strictly separates research-oracle annotations from the evidence visible to a
+future evaluated model. The repository provides structured RCA ground truth,
+element-scoped diagnostic invariants, deterministic generation, explicit seed
+splits, research documentation, and experimental-validity tests.
 
 ## What DiagPriv is not yet
 
@@ -35,7 +36,7 @@ pytest
 python -m diagbench.generators.incident_001 --seed 1001
 ```
 
-The generator command writes the canonical JSON fixture in
+The generator command writes the canonical development JSON fixture in
 `diagbench/incidents/incident_001_duplicate_payment/incident.json`.
 
 ## Repository guide
@@ -46,6 +47,5 @@ The generator command writes the canonical JSON fixture in
 - `tests/` checks schema round trips and benchmark integrity.
 - `experiments/` and `results/` are reserved for later empirical work.
 
-No claim about privacy protection or diagnostic effectiveness is made at this
-stage.
-
+No claim about privacy protection, benchmark validation, production realism, or
+diagnostic effectiveness is made at this stage.

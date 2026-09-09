@@ -1,341 +1,1042 @@
 {
-  "category": "payment_processing",
-  "description": "A fictional customer was charged twice for one logical payment.",
+  "category": "duplicate_payment",
+  "description": "A repeated logical operation produced two successful payment records.",
   "diagnostic_invariants": [
     {
-      "description": "Duplicate rows must retain the same customer relationship.",
-      "fields": [
-        "payments.customer_id"
+      "description": "Both affected payment rows belong to the same logical request.",
+      "expected": true,
+      "name": "target_request_equality",
+      "necessity": "essential",
+      "operands": [
+        {
+          "field": "request_id",
+          "selector": {
+            "evidence_id": "SYN-EVD-27391743"
+          },
+          "source": "payments"
+        },
+        {
+          "field": "request_id",
+          "selector": {
+            "evidence_id": "SYN-EVD-23375803"
+          },
+          "source": "payments"
+        }
       ],
-      "must_preserve": true,
-      "name": "customer_equality",
-      "type": "equality"
+      "relation": "equal"
     },
     {
-      "description": "Duplicate rows must retain the same account relationship.",
-      "fields": [
-        "payments.account_id"
+      "description": "The affected rows correlate with the request, timeout, and write events.",
+      "expected": true,
+      "name": "target_request_cross_source_identity",
+      "necessity": "essential",
+      "operands": [
+        {
+          "field": "request_id",
+          "selector": {
+            "evidence_id": "SYN-EVD-27391743"
+          },
+          "source": "payments"
+        },
+        {
+          "field": "request_id",
+          "selector": {
+            "evidence_id": "SYN-EVD-23375803"
+          },
+          "source": "payments"
+        },
+        {
+          "field": "request_id",
+          "selector": {
+            "evidence_id": "SYN-EVD-92009674"
+          },
+          "source": "logs"
+        },
+        {
+          "field": "request_id",
+          "selector": {
+            "evidence_id": "SYN-EVD-54042937"
+          },
+          "source": "logs"
+        },
+        {
+          "field": "request_id",
+          "selector": {
+            "evidence_id": "SYN-EVD-80944087"
+          },
+          "source": "logs"
+        },
+        {
+          "field": "request_id",
+          "selector": {
+            "evidence_id": "SYN-EVD-52126538"
+          },
+          "source": "logs"
+        },
+        {
+          "field": "request_id",
+          "selector": {
+            "evidence_id": "SYN-EVD-73770054"
+          },
+          "source": "logs"
+        }
       ],
-      "must_preserve": true,
-      "name": "account_equality",
-      "type": "equality"
+      "relation": "equal"
     },
     {
-      "description": "The two successful records must remain recognizable as one logical payment.",
-      "fields": [
-        "payments.customer_id",
-        "payments.account_id",
-        "payments.request_id",
-        "payments.amount"
+      "description": "Unrelated operations must not become falsely equal to the target request or each other.",
+      "expected": true,
+      "name": "unrelated_request_inequality",
+      "necessity": "essential",
+      "operands": [
+        {
+          "field": "request_id",
+          "selector": {
+            "evidence_id": "SYN-EVD-27391743"
+          },
+          "source": "payments"
+        },
+        {
+          "field": "request_id",
+          "selector": {
+            "evidence_id": "SYN-EVD-22724307"
+          },
+          "source": "payments"
+        },
+        {
+          "field": "request_id",
+          "selector": {
+            "evidence_id": "SYN-EVD-36921878"
+          },
+          "source": "payments"
+        },
+        {
+          "field": "request_id",
+          "selector": {
+            "evidence_id": "SYN-EVD-17930077"
+          },
+          "source": "payments"
+        },
+        {
+          "field": "request_id",
+          "selector": {
+            "evidence_id": "SYN-EVD-80850330"
+          },
+          "source": "payments"
+        },
+        {
+          "field": "request_id",
+          "selector": {
+            "evidence_id": "SYN-EVD-89310778"
+          },
+          "source": "payments"
+        },
+        {
+          "field": "request_id",
+          "selector": {
+            "evidence_id": "SYN-EVD-27243506"
+          },
+          "source": "payments"
+        },
+        {
+          "field": "request_id",
+          "selector": {
+            "evidence_id": "SYN-EVD-44706345"
+          },
+          "source": "payments"
+        },
+        {
+          "field": "request_id",
+          "selector": {
+            "evidence_id": "SYN-EVD-75123587"
+          },
+          "source": "payments"
+        }
       ],
-      "must_preserve": true,
-      "name": "payment_duplicate",
-      "type": "duplicates"
+      "relation": "all_distinct"
     },
     {
-      "description": "Payment rows must correlate with request and retry logs.",
-      "fields": [
-        "payments.request_id",
-        "logs.request_id"
+      "description": "Two distinct persisted payment records must remain distinguishable.",
+      "expected": true,
+      "name": "target_payment_distinctness",
+      "necessity": "essential",
+      "operands": [
+        {
+          "field": "payment_id",
+          "selector": {
+            "evidence_id": "SYN-EVD-27391743"
+          },
+          "source": "payments"
+        },
+        {
+          "field": "payment_id",
+          "selector": {
+            "evidence_id": "SYN-EVD-23375803"
+          },
+          "source": "payments"
+        }
       ],
-      "must_preserve": true,
-      "name": "request_correlation",
-      "type": "cross_source_identity"
+      "relation": "not_equal"
     },
     {
-      "description": "The two problematic amounts must remain equal.",
-      "fields": [
-        "payments.amount"
+      "description": "Request receipt and first write precede the timeout, second receipt, and second write.",
+      "expected": true,
+      "name": "target_event_order",
+      "necessity": "essential",
+      "operands": [
+        {
+          "field": "timestamp",
+          "selector": {
+            "evidence_id": "SYN-EVD-92009674"
+          },
+          "source": "logs"
+        },
+        {
+          "field": "timestamp",
+          "selector": {
+            "evidence_id": "SYN-EVD-54042937"
+          },
+          "source": "logs"
+        },
+        {
+          "field": "timestamp",
+          "selector": {
+            "evidence_id": "SYN-EVD-80944087"
+          },
+          "source": "logs"
+        },
+        {
+          "field": "timestamp",
+          "selector": {
+            "evidence_id": "SYN-EVD-52126538"
+          },
+          "source": "logs"
+        },
+        {
+          "field": "timestamp",
+          "selector": {
+            "evidence_id": "SYN-EVD-73770054"
+          },
+          "source": "logs"
+        }
       ],
-      "must_preserve": true,
-      "name": "amount_equality",
-      "type": "numeric_equality"
+      "relation": "ordered_before"
     },
     {
-      "description": "Initial processing must precede the timeout, retry, and duplicate insert.",
-      "fields": [
-        "payments.created_at",
-        "logs.timestamp"
+      "description": "Both distinct records represent completed charges.",
+      "expected": "succeeded",
+      "name": "target_success_state",
+      "necessity": "essential",
+      "operands": [
+        {
+          "field": "status",
+          "selector": {
+            "evidence_id": "SYN-EVD-27391743"
+          },
+          "source": "payments"
+        },
+        {
+          "field": "status",
+          "selector": {
+            "evidence_id": "SYN-EVD-23375803"
+          },
+          "source": "payments"
+        }
       ],
-      "must_preserve": true,
-      "name": "timestamp_order",
-      "type": "ordering"
+      "relation": "equal"
     },
     {
-      "description": "The 2.767-second gap between duplicate records is diagnostic.",
-      "fields": [
-        "payments.created_at"
+      "description": "Customer equality corroborates that the two records affect one customer.",
+      "expected": true,
+      "name": "target_customer_equality",
+      "necessity": "supportive",
+      "operands": [
+        {
+          "field": "customer_id",
+          "selector": {
+            "evidence_id": "SYN-EVD-27391743"
+          },
+          "source": "payments"
+        },
+        {
+          "field": "customer_id",
+          "selector": {
+            "evidence_id": "SYN-EVD-23375803"
+          },
+          "source": "payments"
+        }
       ],
-      "must_preserve": true,
-      "name": "duplicate_interval",
-      "type": "temporal_interval"
+      "relation": "equal"
     },
     {
-      "description": "Both duplicate rows and surrounding rows must remain present.",
-      "fields": [
-        "payments.payment_id"
+      "description": "Account equality corroborates that the two records affect one account.",
+      "expected": true,
+      "name": "target_account_equality",
+      "necessity": "supportive",
+      "operands": [
+        {
+          "field": "account_id",
+          "selector": {
+            "evidence_id": "SYN-EVD-27391743"
+          },
+          "source": "payments"
+        },
+        {
+          "field": "account_id",
+          "selector": {
+            "evidence_id": "SYN-EVD-23375803"
+          },
+          "source": "payments"
+        }
       ],
-      "must_preserve": true,
-      "name": "payment_row_count",
-      "type": "row_cardinality"
+      "relation": "equal"
     },
     {
-      "description": "Literal identity values are unnecessary for this diagnosis.",
-      "fields": [
-        "customers.name",
-        "customers.ssn",
-        "customers.email",
-        "customers.customer_id"
+      "description": "Equal amounts support the repeated-operation interpretation.",
+      "expected": true,
+      "name": "target_amount_equality",
+      "necessity": "supportive",
+      "operands": [
+        {
+          "field": "amount",
+          "selector": {
+            "evidence_id": "SYN-EVD-27391743"
+          },
+          "source": "payments"
+        },
+        {
+          "field": "amount",
+          "selector": {
+            "evidence_id": "SYN-EVD-23375803"
+          },
+          "source": "payments"
+        }
       ],
-      "must_preserve": false,
+      "relation": "equal"
+    },
+    {
+      "description": "The generated evidence includes bounded surrounding payment activity.",
+      "expected": 10,
+      "name": "payment_row_cardinality",
+      "necessity": "supportive",
+      "operands": [
+        {
+          "field": null,
+          "selector": {
+            "evidence_id": "SYN-EVD-36921878"
+          },
+          "source": "payments"
+        },
+        {
+          "field": null,
+          "selector": {
+            "evidence_id": "SYN-EVD-27391743"
+          },
+          "source": "payments"
+        },
+        {
+          "field": null,
+          "selector": {
+            "evidence_id": "SYN-EVD-27243506"
+          },
+          "source": "payments"
+        },
+        {
+          "field": null,
+          "selector": {
+            "evidence_id": "SYN-EVD-80850330"
+          },
+          "source": "payments"
+        },
+        {
+          "field": null,
+          "selector": {
+            "evidence_id": "SYN-EVD-17930077"
+          },
+          "source": "payments"
+        },
+        {
+          "field": null,
+          "selector": {
+            "evidence_id": "SYN-EVD-89310778"
+          },
+          "source": "payments"
+        },
+        {
+          "field": null,
+          "selector": {
+            "evidence_id": "SYN-EVD-44706345"
+          },
+          "source": "payments"
+        },
+        {
+          "field": null,
+          "selector": {
+            "evidence_id": "SYN-EVD-23375803"
+          },
+          "source": "payments"
+        },
+        {
+          "field": null,
+          "selector": {
+            "evidence_id": "SYN-EVD-75123587"
+          },
+          "source": "payments"
+        },
+        {
+          "field": null,
+          "selector": {
+            "evidence_id": "SYN-EVD-22724307"
+          },
+          "source": "payments"
+        }
+      ],
+      "relation": "row_count"
+    },
+    {
+      "description": "The exact interval is nuisance data; causal ordering is sufficient.",
+      "expected": 0.877,
+      "name": "exact_rearrival_interval",
+      "necessity": "discardable",
+      "operands": [
+        {
+          "field": "timestamp",
+          "selector": {
+            "evidence_id": "SYN-EVD-80944087"
+          },
+          "source": "logs"
+        },
+        {
+          "field": "timestamp",
+          "selector": {
+            "evidence_id": "SYN-EVD-52126538"
+          },
+          "source": "logs"
+        }
+      ],
+      "relation": "interval_seconds"
+    },
+    {
+      "description": "Literal customer identity is unnecessary for diagnosis.",
+      "expected": false,
       "name": "literal_customer_identity",
-      "type": "string_format"
+      "necessity": "discardable",
+      "operands": [
+        {
+          "field": "name",
+          "selector": {
+            "evidence_id": "SYN-EVD-77374324"
+          },
+          "source": "customers"
+        },
+        {
+          "field": "ssn",
+          "selector": {
+            "evidence_id": "SYN-EVD-77374324"
+          },
+          "source": "customers"
+        },
+        {
+          "field": "email",
+          "selector": {
+            "evidence_id": "SYN-EVD-77374324"
+          },
+          "source": "customers"
+        },
+        {
+          "field": "customer_id",
+          "selector": {
+            "evidence_id": "SYN-EVD-77374324"
+          },
+          "source": "customers"
+        }
+      ],
+      "relation": "preserve_literal"
     },
     {
-      "description": "The literal account identifier is unnecessary for this diagnosis.",
-      "fields": [
-        "accounts.account_id"
-      ],
-      "must_preserve": false,
+      "description": "The literal account identifier is unnecessary for diagnosis.",
+      "expected": false,
       "name": "literal_account_identity",
-      "type": "string_format"
+      "necessity": "discardable",
+      "operands": [
+        {
+          "field": "account_id",
+          "selector": {
+            "evidence_id": "SYN-EVD-12549005"
+          },
+          "source": "accounts"
+        }
+      ],
+      "relation": "preserve_literal"
     }
   ],
-  "difficulty": "easy",
+  "difficulty": "medium",
   "expected_evidence": [
     {
-      "description": "Two successful payments share customer, account, request, and amount.",
+      "description": "Two distinct successful records share one request identifier.",
       "references": [
-        "payments.customer_id",
-        "payments.account_id",
-        "payments.request_id",
-        "payments.amount",
-        "payments.status"
+        {
+          "field": "payment_id",
+          "selector": {
+            "evidence_id": "SYN-EVD-27391743"
+          },
+          "source": "payments"
+        },
+        {
+          "field": "request_id",
+          "selector": {
+            "evidence_id": "SYN-EVD-27391743"
+          },
+          "source": "payments"
+        },
+        {
+          "field": "status",
+          "selector": {
+            "evidence_id": "SYN-EVD-27391743"
+          },
+          "source": "payments"
+        },
+        {
+          "field": "payment_id",
+          "selector": {
+            "evidence_id": "SYN-EVD-23375803"
+          },
+          "source": "payments"
+        },
+        {
+          "field": "request_id",
+          "selector": {
+            "evidence_id": "SYN-EVD-23375803"
+          },
+          "source": "payments"
+        },
+        {
+          "field": "status",
+          "selector": {
+            "evidence_id": "SYN-EVD-23375803"
+          },
+          "source": "payments"
+        }
       ]
     },
     {
-      "description": "The second payment follows the first by 2.767 seconds.",
+      "description": "The first write precedes a caller-visible timeout and a second receipt and write.",
       "references": [
-        "payments.created_at"
+        {
+          "field": null,
+          "selector": {
+            "evidence_id": "SYN-EVD-92009674"
+          },
+          "source": "logs"
+        },
+        {
+          "field": null,
+          "selector": {
+            "evidence_id": "SYN-EVD-54042937"
+          },
+          "source": "logs"
+        },
+        {
+          "field": null,
+          "selector": {
+            "evidence_id": "SYN-EVD-80944087"
+          },
+          "source": "logs"
+        },
+        {
+          "field": null,
+          "selector": {
+            "evidence_id": "SYN-EVD-52126538"
+          },
+          "source": "logs"
+        },
+        {
+          "field": null,
+          "selector": {
+            "evidence_id": "SYN-EVD-73770054"
+          },
+          "source": "logs"
+        }
       ]
     },
     {
-      "description": "Logs show a timeout-triggered retry and no idempotency check on either insert.",
+      "description": "The second transport has the same request identifier but a different transport identifier.",
       "references": [
-        "logs.request_id",
-        "logs.timestamp",
-        "logs.idempotency_check"
+        {
+          "field": "request_id",
+          "selector": {
+            "evidence_id": "SYN-EVD-92009674"
+          },
+          "source": "logs"
+        },
+        {
+          "field": "transport_id",
+          "selector": {
+            "evidence_id": "SYN-EVD-92009674"
+          },
+          "source": "logs"
+        },
+        {
+          "field": "request_id",
+          "selector": {
+            "evidence_id": "SYN-EVD-52126538"
+          },
+          "source": "logs"
+        },
+        {
+          "field": "transport_id",
+          "selector": {
+            "evidence_id": "SYN-EVD-52126538"
+          },
+          "source": "logs"
+        }
       ]
     }
   ],
-  "ground_truth_root_cause": "A client retried after an upstream timeout, and the payment worker processed the same request twice because it did not enforce an idempotency check.",
+  "ground_truth": {
+    "affected_component": "payment_worker",
+    "explanation": "A caller repeated one logical request after a response timeout, and the payment worker persisted both arrivals as separate payments.",
+    "failure_mechanism": "missing_or_ineffective_idempotency",
+    "logical_operation_repeated": true,
+    "outcome": "duplicate_payment",
+    "trigger": "retry_after_timeout"
+  },
   "incident_id": "incident_001_duplicate_payment",
   "log_evidence": [
     {
       "attributes": {
-        "attempt": 1,
-        "customer_id": "SYN-CUST-935349",
-        "request_id": "SYN-REQ-897589"
+        "payment_id": "SYN-PAY-30010591",
+        "request_id": "SYN-REQ-91576649"
       },
+      "evidence_id": "SYN-EVD-62440042",
       "level": "INFO",
-      "message": "Payment request accepted",
-      "service": "payment-api",
-      "timestamp": "2030-04-12T09:15:02.100Z"
+      "message": "Write completed",
+      "service": "ledger-writer",
+      "timestamp": "2031-08-31T09:31:30.380Z"
     },
     {
       "attributes": {
-        "idempotency_check": false,
-        "payment_id": "SYN-PAY-DUPLICATE-A",
-        "request_id": "SYN-REQ-897589"
+        "payment_id": "SYN-PAY-55278323",
+        "request_id": "SYN-REQ-28495478"
       },
+      "evidence_id": "SYN-EVD-77435000",
       "level": "INFO",
-      "message": "Payment inserted",
-      "service": "payment-worker",
-      "timestamp": "2030-04-12T09:15:02.120Z"
+      "message": "Write completed",
+      "service": "ledger-writer",
+      "timestamp": "2031-08-31T09:32:35.619Z"
     },
     {
       "attributes": {
-        "attempt": 2,
-        "request_id": "SYN-REQ-897589"
+        "payment_id": "SYN-PAY-15166497",
+        "request_id": "SYN-REQ-59703661"
       },
+      "evidence_id": "SYN-EVD-39224350",
+      "level": "INFO",
+      "message": "Record committed",
+      "service": "ledger-writer",
+      "timestamp": "2031-08-31T09:33:33.941Z"
+    },
+    {
+      "attributes": {
+        "request_id": "SYN-REQ-40092290",
+        "transport_id": "SYN-TRN-18418181"
+      },
+      "evidence_id": "SYN-EVD-25366041",
+      "level": "INFO",
+      "message": "Inbound operation accepted",
+      "service": "edge-handler",
+      "timestamp": "2031-08-31T09:34:09.000Z"
+    },
+    {
+      "attributes": {
+        "http_status": 504,
+        "request_id": "SYN-REQ-40092290"
+      },
+      "evidence_id": "SYN-EVD-21401062",
       "level": "WARN",
-      "message": "Upstream timeout caused client retry",
-      "service": "payment-api",
-      "timestamp": "2030-04-12T09:15:04.800Z"
+      "message": "Caller-facing deadline elapsed",
+      "service": "edge-handler",
+      "timestamp": "2031-08-31T09:34:10.764Z"
     },
     {
       "attributes": {
-        "idempotency_check": false,
-        "payment_id": "SYN-PAY-DUPLICATE-B",
-        "request_id": "SYN-REQ-897589"
+        "request_id": "SYN-REQ-40092290",
+        "transport_id": "SYN-TRN-24937172"
       },
+      "evidence_id": "SYN-EVD-99296043",
       "level": "INFO",
-      "message": "Retry inserted as a new payment",
-      "service": "payment-worker",
-      "timestamp": "2030-04-12T09:15:04.887Z"
+      "message": "Inbound operation accepted",
+      "service": "edge-handler",
+      "timestamp": "2031-08-31T09:34:11.394Z"
     },
     {
       "attributes": {
-        "attempt": 1,
-        "request_id": "SYN-REQ-NORMAL-AFTER"
+        "payment_id": "SYN-PAY-25570805",
+        "request_id": "SYN-REQ-40092290"
       },
+      "evidence_id": "SYN-EVD-36983848",
       "level": "INFO",
-      "message": "Unrelated payment inserted",
-      "service": "payment-worker",
-      "timestamp": "2030-04-12T09:16:10.000Z"
+      "message": "Write completed",
+      "service": "ledger-writer",
+      "timestamp": "2031-08-31T09:34:11.432Z"
+    },
+    {
+      "attributes": {
+        "payment_id": "SYN-PAY-57368764",
+        "request_id": "SYN-REQ-39172492"
+      },
+      "evidence_id": "SYN-EVD-51446221",
+      "level": "INFO",
+      "message": "Record committed",
+      "service": "ledger-writer",
+      "timestamp": "2031-08-31T09:34:27.659Z"
+    },
+    {
+      "attributes": {
+        "request_id": "SYN-REQ-23555431",
+        "transport_id": "SYN-TRN-44063984"
+      },
+      "evidence_id": "SYN-EVD-92009674",
+      "level": "INFO",
+      "message": "Inbound operation accepted",
+      "service": "edge-handler",
+      "timestamp": "2031-08-31T09:34:35.000Z"
+    },
+    {
+      "attributes": {
+        "payment_id": "SYN-PAY-95401729",
+        "request_id": "SYN-REQ-23555431"
+      },
+      "evidence_id": "SYN-EVD-54042937",
+      "level": "INFO",
+      "message": "Write completed",
+      "service": "ledger-writer",
+      "timestamp": "2031-08-31T09:34:35.075Z"
+    },
+    {
+      "attributes": {
+        "http_status": 504,
+        "request_id": "SYN-REQ-23555431"
+      },
+      "evidence_id": "SYN-EVD-80944087",
+      "level": "WARN",
+      "message": "Response deadline exceeded",
+      "service": "edge-handler",
+      "timestamp": "2031-08-31T09:34:36.082Z"
+    },
+    {
+      "attributes": {
+        "request_id": "SYN-REQ-23555431",
+        "transport_id": "SYN-TRN-68325441"
+      },
+      "evidence_id": "SYN-EVD-52126538",
+      "level": "INFO",
+      "message": "Operation received",
+      "service": "edge-handler",
+      "timestamp": "2031-08-31T09:34:36.959Z"
+    },
+    {
+      "attributes": {
+        "payment_id": "SYN-PAY-64577579",
+        "request_id": "SYN-REQ-23555431"
+      },
+      "evidence_id": "SYN-EVD-73770054",
+      "level": "INFO",
+      "message": "Write completed",
+      "service": "ledger-writer",
+      "timestamp": "2031-08-31T09:34:37.028Z"
+    },
+    {
+      "attributes": {
+        "payment_id": "SYN-PAY-79644133",
+        "request_id": "SYN-REQ-58234516"
+      },
+      "evidence_id": "SYN-EVD-77554885",
+      "level": "INFO",
+      "message": "Record committed",
+      "service": "ledger-writer",
+      "timestamp": "2031-08-31T09:35:34.510Z"
+    },
+    {
+      "attributes": {
+        "payment_id": "SYN-PAY-95992645",
+        "request_id": "SYN-REQ-29782424"
+      },
+      "evidence_id": "SYN-EVD-19818812",
+      "level": "INFO",
+      "message": "Record committed",
+      "service": "ledger-writer",
+      "timestamp": "2031-08-31T09:36:28.941Z"
+    },
+    {
+      "attributes": {
+        "sample_window_seconds": 30
+      },
+      "evidence_id": "SYN-EVD-38182621",
+      "level": "WARN",
+      "message": "Connection pool utilization elevated",
+      "service": "edge-handler",
+      "timestamp": "2031-08-31T09:36:32.024Z"
+    },
+    {
+      "attributes": {
+        "sample_window_seconds": 30
+      },
+      "evidence_id": "SYN-EVD-81055714",
+      "level": "WARN",
+      "message": "Dependency response delayed",
+      "service": "edge-handler",
+      "timestamp": "2031-08-31T09:36:44.052Z"
+    },
+    {
+      "attributes": {
+        "payment_id": "SYN-PAY-45523716",
+        "request_id": "SYN-REQ-22928528"
+      },
+      "evidence_id": "SYN-EVD-44031472",
+      "level": "INFO",
+      "message": "Write completed",
+      "service": "ledger-writer",
+      "timestamp": "2031-08-31T09:37:40.689Z"
     }
   ],
   "metadata": {
-    "benchmark_version": "0.1",
+    "benchmark_version": "0.2",
     "fictionality_notice": "All people, identifiers, events, and systems are fictional synthetic test data.",
-    "schema_version": "0.1",
+    "schema_version": "0.2",
     "seed": 1001,
-    "synthetic": true
+    "seed_split": "development",
+    "synthetic": true,
+    "target_payment_ids": [
+      "SYN-PAY-95401729",
+      "SYN-PAY-64577579"
+    ],
+    "target_request_id": "SYN-REQ-23555431"
   },
   "sensitive_fields": [
     {
       "classification": "direct_identifier",
       "path": "customers.name",
       "policy": "remove_or_pseudonymize",
-      "rationale": "Identity is not diagnostic."
+      "rationale": "Literal identity is not diagnostic."
     },
     {
       "classification": "highly_sensitive_identifier",
       "path": "customers.ssn",
       "policy": "remove_or_pseudonymize",
-      "rationale": "Value is wholly synthetic and not diagnostic."
+      "rationale": "Literal identity is not diagnostic."
     },
     {
       "classification": "contact_identifier",
       "path": "customers.email",
       "policy": "remove_or_pseudonymize",
-      "rationale": "Contact address is not diagnostic."
+      "rationale": "Literal identity is not diagnostic."
     },
     {
       "classification": "customer_identifier",
       "path": "customers.customer_id",
       "policy": "consistent_pseudonym",
-      "rationale": "Joinability is diagnostic; the literal ID is not."
+      "rationale": "Only selected relationships may be diagnostic."
     },
     {
       "classification": "customer_identifier",
       "path": "accounts.customer_id",
       "policy": "consistent_pseudonym",
-      "rationale": "This copy must remain joinable to the customer record."
+      "rationale": "Only selected relationships may be diagnostic."
     },
     {
       "classification": "account_identifier",
       "path": "accounts.account_id",
       "policy": "consistent_pseudonym",
-      "rationale": "Account equality is diagnostic; the literal ID is not."
+      "rationale": "Only selected relationships may be diagnostic."
     },
     {
       "classification": "customer_identifier",
       "path": "payments.customer_id",
       "policy": "consistent_pseudonym",
-      "rationale": "Customer equality across payment rows is diagnostic."
+      "rationale": "Equality is supportive; literal value is unnecessary."
     },
     {
       "classification": "account_identifier",
       "path": "payments.account_id",
       "policy": "consistent_pseudonym",
-      "rationale": "Account equality across payment rows is diagnostic."
-    },
-    {
-      "classification": "customer_identifier",
-      "path": "logs.customer_id",
-      "policy": "consistent_pseudonym",
-      "rationale": "Cross-source identity may be diagnostic."
+      "rationale": "Equality is supportive; literal value is unnecessary."
     },
     {
       "classification": "operational_identifier",
       "path": "payments.request_id",
       "policy": "consistent_pseudonym",
-      "rationale": "The request value is replaceable but its correlation must survive."
+      "rationale": "Selected equality and inequality relationships are essential."
     },
     {
       "classification": "operational_identifier",
       "path": "logs.request_id",
       "policy": "consistent_pseudonym",
-      "rationale": "The request value is replaceable but its correlation must survive."
+      "rationale": "Cross-source identity is essential."
     },
     {
       "classification": "operational_identifier",
       "path": "payments.payment_id",
       "policy": "pseudonymize_independently",
-      "rationale": "Payment-row distinction matters; literal values do not."
+      "rationale": "Distinctness and selected log correlation matter."
     },
     {
       "classification": "operational_identifier",
       "path": "logs.payment_id",
       "policy": "pseudonymize_independently",
-      "rationale": "Log-to-row correlation matters; literal values do not."
+      "rationale": "Selected log-to-row correlation is supportive."
+    },
+    {
+      "classification": "operational_identifier",
+      "path": "logs.transport_id",
+      "policy": "pseudonymize_independently",
+      "rationale": "Distinct arrivals are supporting evidence."
     }
   ],
   "structured_evidence": {
     "accounts": [
       {
-        "account_id": "SYN-ACCT-161474",
-        "customer_id": "SYN-CUST-935349"
+        "account_id": "SYN-ACCT-35171490",
+        "customer_id": "SYN-CUST-92252632",
+        "evidence_id": "SYN-EVD-12549005"
       },
       {
-        "account_id": "SYN-ACCT-REFERENCE",
-        "customer_id": "SYN-CUST-REFERENCE"
+        "account_id": "SYN-ACCT-91576603",
+        "customer_id": "SYN-CUST-36720253",
+        "evidence_id": "SYN-EVD-98016294"
+      },
+      {
+        "account_id": "SYN-ACCT-64583620",
+        "customer_id": "SYN-CUST-31504806",
+        "evidence_id": "SYN-EVD-86787428"
       }
     ],
     "customers": [
       {
-        "customer_id": "SYN-CUST-935349",
-        "email": "avery.example@example.invalid",
-        "name": "Avery Example (Fictional)",
-        "ssn": "000-12-3456"
+        "customer_id": "SYN-CUST-92252632",
+        "email": "rowan.placeholder.2@example.invalid",
+        "evidence_id": "SYN-EVD-77374324",
+        "name": "Rowan Placeholder (Fictional)",
+        "ssn": "000-88-3435"
       },
       {
-        "customer_id": "SYN-CUST-REFERENCE",
-        "email": "morgan.sample@example.invalid",
-        "name": "Morgan Sample (Fictional)",
-        "ssn": "000-98-7654"
+        "customer_id": "SYN-CUST-31504806",
+        "email": "quinn.placeholder.0@example.invalid",
+        "evidence_id": "SYN-EVD-60260867",
+        "name": "Quinn Placeholder (Fictional)",
+        "ssn": "000-82-7568"
+      },
+      {
+        "customer_id": "SYN-CUST-36720253",
+        "email": "morgan.example.1@example.invalid",
+        "evidence_id": "SYN-EVD-16808046",
+        "name": "Morgan Example (Fictional)",
+        "ssn": "000-13-9079"
       }
     ],
     "payments": [
       {
-        "account_id": "SYN-ACCT-REFERENCE",
-        "amount": "19.95",
-        "created_at": "2030-04-12T09:14:40.000Z",
-        "customer_id": "SYN-CUST-REFERENCE",
-        "payment_id": "SYN-PAY-NORMAL-BEFORE",
-        "request_id": "SYN-REQ-NORMAL-BEFORE",
+        "account_id": "SYN-ACCT-35171490",
+        "amount": "147.88",
+        "created_at": "2031-08-31T09:32:35.619Z",
+        "customer_id": "SYN-CUST-92252632",
+        "evidence_id": "SYN-EVD-36921878",
+        "payment_id": "SYN-PAY-55278323",
+        "request_id": "SYN-REQ-28495478",
         "status": "succeeded"
       },
       {
-        "account_id": "SYN-ACCT-161474",
-        "amount": "84.20",
-        "created_at": "2030-04-12T09:15:02.120Z",
-        "customer_id": "SYN-CUST-935349",
-        "payment_id": "SYN-PAY-DUPLICATE-A",
-        "request_id": "SYN-REQ-897589",
+        "account_id": "SYN-ACCT-35171490",
+        "amount": "79.44",
+        "created_at": "2031-08-31T09:34:35.075Z",
+        "customer_id": "SYN-CUST-92252632",
+        "evidence_id": "SYN-EVD-27391743",
+        "payment_id": "SYN-PAY-95401729",
+        "request_id": "SYN-REQ-23555431",
         "status": "succeeded"
       },
       {
-        "account_id": "SYN-ACCT-161474",
-        "amount": "84.20",
-        "created_at": "2030-04-12T09:15:04.887Z",
-        "customer_id": "SYN-CUST-935349",
-        "payment_id": "SYN-PAY-DUPLICATE-B",
-        "request_id": "SYN-REQ-897589",
+        "account_id": "SYN-ACCT-64583620",
+        "amount": "316.27",
+        "created_at": "2031-08-31T09:36:28.941Z",
+        "customer_id": "SYN-CUST-31504806",
+        "evidence_id": "SYN-EVD-27243506",
+        "payment_id": "SYN-PAY-95992645",
+        "request_id": "SYN-REQ-29782424",
         "status": "succeeded"
       },
       {
-        "account_id": "SYN-ACCT-REFERENCE",
-        "amount": "7.50",
-        "created_at": "2030-04-12T09:16:10.000Z",
-        "customer_id": "SYN-CUST-REFERENCE",
-        "payment_id": "SYN-PAY-NORMAL-AFTER",
-        "request_id": "SYN-REQ-NORMAL-AFTER",
+        "account_id": "SYN-ACCT-35171490",
+        "amount": "63.46",
+        "created_at": "2031-08-31T09:34:27.659Z",
+        "customer_id": "SYN-CUST-92252632",
+        "evidence_id": "SYN-EVD-80850330",
+        "payment_id": "SYN-PAY-57368764",
+        "request_id": "SYN-REQ-39172492",
+        "status": "succeeded"
+      },
+      {
+        "account_id": "SYN-ACCT-35171490",
+        "amount": "80.42",
+        "created_at": "2031-08-31T09:33:33.941Z",
+        "customer_id": "SYN-CUST-92252632",
+        "evidence_id": "SYN-EVD-17930077",
+        "payment_id": "SYN-PAY-15166497",
+        "request_id": "SYN-REQ-59703661",
+        "status": "succeeded"
+      },
+      {
+        "account_id": "SYN-ACCT-64583620",
+        "amount": "301.24",
+        "created_at": "2031-08-31T09:35:34.510Z",
+        "customer_id": "SYN-CUST-31504806",
+        "evidence_id": "SYN-EVD-89310778",
+        "payment_id": "SYN-PAY-79644133",
+        "request_id": "SYN-REQ-58234516",
+        "status": "succeeded"
+      },
+      {
+        "account_id": "SYN-ACCT-35171490",
+        "amount": "24.54",
+        "created_at": "2031-08-31T09:37:40.689Z",
+        "customer_id": "SYN-CUST-92252632",
+        "evidence_id": "SYN-EVD-44706345",
+        "payment_id": "SYN-PAY-45523716",
+        "request_id": "SYN-REQ-22928528",
+        "status": "succeeded"
+      },
+      {
+        "account_id": "SYN-ACCT-35171490",
+        "amount": "79.44",
+        "created_at": "2031-08-31T09:34:37.028Z",
+        "customer_id": "SYN-CUST-92252632",
+        "evidence_id": "SYN-EVD-23375803",
+        "payment_id": "SYN-PAY-64577579",
+        "request_id": "SYN-REQ-23555431",
+        "status": "succeeded"
+      },
+      {
+        "account_id": "SYN-ACCT-64583620",
+        "amount": "49.61",
+        "created_at": "2031-08-31T09:34:11.432Z",
+        "customer_id": "SYN-CUST-31504806",
+        "evidence_id": "SYN-EVD-75123587",
+        "payment_id": "SYN-PAY-25570805",
+        "request_id": "SYN-REQ-40092290",
+        "status": "succeeded"
+      },
+      {
+        "account_id": "SYN-ACCT-64583620",
+        "amount": "288.83",
+        "created_at": "2031-08-31T09:31:30.380Z",
+        "customer_id": "SYN-CUST-31504806",
+        "evidence_id": "SYN-EVD-22724307",
+        "payment_id": "SYN-PAY-30010591",
+        "request_id": "SYN-REQ-91576649",
         "status": "succeeded"
       }
     ]
   },
   "title": "Incident 001 \u2014 Duplicate Payment",
-  "troubleshooting_question": "Why was this customer charged twice?"
+  "troubleshooting_question": "A customer reports being charged twice. Investigate the evidence and identify the most likely root cause."
 }
