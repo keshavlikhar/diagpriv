@@ -1,62 +1,90 @@
 # DiagPriv
 
-DiagPriv is an academic research project studying whether operational
-troubleshooting evidence can be privacy-transformed without materially reducing
-an LLM's root-cause-analysis utility. Its companion benchmark, DiagBench, uses
-only fictional, synthetic incidents.
+DiagPriv is an academic research project studying whether privacy
+transformations can remove sensitive identity from operational troubleshooting
+evidence while retaining the relationships an LLM needs for root-cause
+analysis (RCA). Its companion benchmark, DiagBench, currently contains one
+fully synthetic incident family; no production or customer data is used.
 
-## Current milestone
+The central hypothesis is that a transformation which preserves explicitly
+declared diagnostic invariants will retain more RCA utility than conventional
+redaction at comparable privacy exposure. Current results are early pilot
+observations, not proof of that hypothesis or evidence of production validity.
 
-DiagBench v0.2 turns Incident 001 into a bounded synthetic incident family and
-strictly separates research-oracle annotations from the evidence visible to a
-future evaluated model. The repository provides structured RCA ground truth,
-element-scoped diagnostic invariants, deterministic generation, explicit seed
-splits, research documentation, and experimental-validity tests. Evaluation
-Protocol v0.1 adds a provider-independent, offline-testable raw RCA baseline
-harness; it does not invoke a real model by default.
+## Current status
 
-The first raw pilot is defined in `experiments/raw_pilot_v1.toml`: five
-development seeds, GPT-5.6 Luna, medium reasoning, temperature zero, and one call
-per seed. Its CLI is dry-run-only unless `--execute` is supplied, and
-real-provider credentials are read exclusively from environment variables.
-Provider metadata and token usage are retained per response; cost estimates use
-a separate dated pricing snapshot and do not affect scientific scoring.
+| Condition | Split | Status | Result |
+|---|---|---|---|
+| Raw, `raw-rca-v2` | Development 1000–1004 | Frozen | 5/5 exact RCA; 5/5 overall |
+| Raw, `raw-rca-v2` | Validation 2000–2009 | Frozen | 10/10 exact RCA; 9/10 overall |
+| `redaction-v1` | Development 1000–1004 | Frozen | 4/5 exact RCA; 4/5 overall |
+| `hmac-v1` | Development 1000–1004 | Offline only | Implemented and invariant-tested; no provider run |
 
-## What DiagPriv is not yet
+The active handoff point is the offline `hmac-v1` checkpoint. Do not run its
+provider experiment, run redaction on validation, or inspect held-out seeds
+without explicit research approval.
 
-DiagPriv is not currently:
+See [CURRENT_STATUS](docs/CURRENT_STATUS.md) for immutable artifact hashes and
+known limitations, and [RESEARCH_PLAN](docs/RESEARCH_PLAN.md) for the roadmap.
 
-- an enterprise security product;
-- an anonymization guarantee;
-- a compliance tool;
-- an MCP gateway; or
-- a production database connector.
+## Reproduce the software checks
 
-It does not yet implement privacy transformations, LLM evaluation, external
-integrations, or deployment infrastructure.
-
-## Quick start
-
-Python 3.12 or newer is required.
+Python 3.12 or newer and [uv](https://docs.astral.sh/uv/) are recommended.
 
 ```bash
-python -m pip install -e '.[dev]'
-pytest
-python -m diagbench.generators.incident_001 --seed 1001
+uv sync --extra dev
+uv run pytest
+git diff --check
 ```
 
-The generator command writes the canonical development JSON fixture in
-`diagbench/incidents/incident_001_duplicate_payment/incident.json`.
+Tests use an offline fake provider. They do not authorize real API calls. The
+canonical development fixture can be regenerated with:
 
-## Repository guide
+```bash
+uv run python -m diagbench.generators.incident_001 --seed 1001
+```
 
-- `docs/` records the research charter, questions, and benchmark contract.
-- `diagbench/` defines schemas, synthetic incidents, and deterministic generators.
-- `diagpriv/` reserves small modules for future transformations and evaluation.
-- `diagpriv/evaluation/` contains the raw prompt, response parser, deterministic
-  scorer, provider contract, runner, and append-only manifest support.
-- `tests/` checks schema round trips and benchmark integrity.
-- `experiments/` and `results/` are reserved for later empirical work.
+## Repository map
 
-No claim about privacy protection, benchmark validation, production realism, or
-diagnostic effectiveness is made at this stage.
+- `diagbench/schema/`: oracle and model-visible data models.
+- `diagbench/generators/`: deterministic synthetic incident generation and seed
+  policy.
+- `diagbench/incidents/`: canonical generated fixtures and family notes.
+- `diagpriv/evaluation/`: frozen prompts and taxonomies, provider abstraction,
+  parsing, scoring, manifests, reporting, and CLI.
+- `diagpriv/transformations/`: annotation-driven privacy baselines.
+- `diagpriv/invariants/`: offline diagnostic-invariant evaluation.
+- `experiments/`: versioned, reviewable pilot and pricing configurations.
+- `results/`: local append-only experiment artifacts; ignored by Git except for
+  `.gitkeep`.
+- `tests/`: benchmark, protocol, transformation, and leakage regression tests.
+
+## Collaboration documents
+
+- [Research plan](docs/RESEARCH_PLAN.md)
+- [Current status and artifact ledger](docs/CURRENT_STATUS.md)
+- [Experiment protocol](docs/EXPERIMENT_PROTOCOL.md)
+- [Threat model](docs/THREAT_MODEL.md)
+- [Architecture](docs/ARCHITECTURE.md)
+- [Contributing guide](CONTRIBUTING.md)
+- [Benchmark specification](docs/benchmark_spec.md)
+- [Research charter](docs/research_charter.md)
+- [Research questions](docs/research_questions.md)
+- [Naive redaction specification](docs/redaction_v1.md)
+- [HMAC baseline specification](docs/hmac_v1.md)
+
+## Safety and scope
+
+- Never commit API credentials, HMAC secrets, `.env` files, or authorization
+  headers.
+- Evaluated models receive `ModelView`, never the full oracle-bearing
+  `Incident`.
+- Development seeds are 1000–1999; validation seeds are 2000–2999; the retired
+  range 10000–10999 must never be used; final held-out seeds 20000–20999 require
+  an explicit override after protocol freeze.
+- Real provider commands require `--execute`. Absence of that flag is a dry run.
+- Frozen JSONL observations are append-only research records and must not be
+  edited or silently rerun.
+
+DiagPriv is not an anonymization guarantee, compliance tool, production privacy
+gateway, MCP service, or enterprise security product.

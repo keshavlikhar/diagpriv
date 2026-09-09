@@ -7,8 +7,14 @@ htmlcov/
 .venv/
 venv/
 .DS_Store
+.env
+.env.*
+!.env.example
+.secrets/
+*.pem
+*.p12
+*.key
 dist/
 build/
 results/*
 !results/.gitkeep
-
