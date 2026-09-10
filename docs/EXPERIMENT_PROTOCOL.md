@@ -35,11 +35,14 @@ provider request. Renaming the persisted field now would be backward
 incompatible with frozen results; documentation therefore refers to it as the
 prompt-template hash while preserving the field and its meaning.
 
-A future, versioned manifest schema may add a separate
-`rendered_request_sha256` (or `model_input_sha256`) computed over the exact
-provider-bound prompt. Such a field would strengthen per-observation provenance
-without changing or retroactively augmenting historical records. It has not
-been added in the current schema.
+Historical manifest schemas through `raw-rca-manifest-v5` retain only that
+template hash. The Incident 002 experiment introduces
+`raw-rca-manifest-v6`, which adds `model_input_sha256`: SHA-256 over the exact
+UTF-8 rendered prompt string placed in `ModelRequest.prompt` and sent as the
+provider's model-visible `input`. It changes with the rendered ModelView. It
+does not hash decoding settings, transport fields, credentials, or any hidden
+oracle data. Historical observations are not retroactively augmented or
+rewritten.
 
 The prompt exposes the complete fixed taxonomy but no family-specific answer.
 The required canonical dimensions are:
@@ -68,6 +71,42 @@ No LLM grader participates in primary scoring.
 Normal pilot configurations reject held-out seeds and enforce whether a file is
 development-only or validation-only. Unassigned seeds are rejected. Do not use
 the existence of an override as routine authorization.
+
+### Frozen Incident 002 development comparison set
+
+The Incident 002 set was chosen mechanically. Starting at seed 1000, generation
+was inspected in ascending order. A seed was selected exactly when its hidden
+generator-side `defect_class` had not appeared previously, and inspection
+stopped immediately after all six classes had appeared. Structural template,
+expected provider behavior, transformation behavior, target position, evidence
+complexity, and model difficulty were not selection criteria.
+The procedure is identified as
+`incident-002-first-defect-class-occurrence-v1` in the pilot configuration.
+
+| Seed | Generator-side defect class | Structural template | Observable structural delta |
+|---:|---|---|---|
+| 1000 | `extra_separator` | `hyphenated_mixed_b` | `extra_separator` |
+| 1001 | `missing_separator` | `hyphenated_mixed_b` | `missing_separator` |
+| 1003 | `case_class_mismatch` | `underscored_mixed` | `case_class_mismatch` |
+| 1004 | `truncation` | `slashed_mixed` | `truncation` |
+| 1005 | `leading_zero_loss` | `slashed_mixed` | `numeric_run_leading_position_deletion` |
+| 1017 | `fixed_width_mismatch` | `slashed_mixed` | `fixed_width_mismatch` |
+
+The scan generated seeds 1000 through 1017 and then stopped. These six seeds,
+in this order, are frozen for every matched Incident 002 development condition:
+raw, redaction-v1, hmac-v1, tokenization-v1, format-preserving-v1, and a future
+DiagPriv condition. They must not be replaced after observing model behavior.
+The evaluation registry rejects every other seed for Incident 002; its current
+pilot configuration also requires an empty validation and held-out set.
+
+### Prepared Incident 002 raw development pilot
+
+`experiments/incident_002_raw_development.toml` binds Incident 002 and the six
+frozen seeds to the unchanged v2 RCA protocol, GPT-5.6 Luna with medium
+reasoning, omitted temperature, raw evidence, and one call per seed. The
+proposed append-only local result path is
+`results/incident_002_raw_development_gpt_5_6_luna_medium.jsonl`. Preparation
+and dry-run inspection do not authorize provider execution.
 
 ## Evidence conditions
 

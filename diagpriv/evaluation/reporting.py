@@ -247,6 +247,8 @@ def inspection_records(path: Path) -> list[dict[str, object]]:
         records.append(
             {
                 "experiment_id": manifest.experiment_id,
+                "manifest_schema_version": manifest.manifest_schema_version,
+                "incident_family": manifest.incident_family,
                 "seed": manifest.seed,
                 "split": manifest.split,
                 "condition": manifest.condition,
@@ -259,6 +261,11 @@ def inspection_records(path: Path) -> list[dict[str, object]]:
                 "temperature_omission_reason": manifest.temperature_omission_reason,
                 "prompt_version": manifest.prompt_version,
                 "prompt_sha256": manifest.prompt_sha256,
+                **(
+                    {"model_input_sha256": manifest.model_input_sha256}
+                    if manifest.model_input_sha256 is not None
+                    else {}
+                ),
                 "taxonomy_version": manifest.taxonomy_version,
                 "scorer_version": manifest.scorer_version,
                 **(

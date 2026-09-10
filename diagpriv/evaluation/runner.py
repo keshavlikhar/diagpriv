@@ -4,14 +4,21 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
+import hashlib
 from pathlib import Path
 from typing import Literal
 
 from diagbench.generators.incident_001 import (
     DEVELOPMENT_SEEDS,
     VALIDATION_SEEDS,
-    generate_incident_001,
-    seed_split,
+    generate_incident_001,  # compatibility hook for frozen seed-guard tests
+)
+from diagpriv.evaluation.incident_families import (
+    INCIDENT_001_FAMILY,
+    INCIDENT_002_DEVELOPMENT_SEEDS,
+    INCIDENT_002_FAMILY,
+    evaluation_seed_split,
+    generate_evaluation_incident,
 )
 from diagpriv.evaluation.manifest import ExperimentManifest, append_manifest
 from diagpriv.evaluation.prompt import (
@@ -56,6 +63,8 @@ class RawRunConfig:
     seed: int
     model: str
     model_version: str | None
+    incident_family: str = INCIDENT_001_FAMILY
+    manifest_schema_version: str = "raw-rca-manifest-v5"
     reasoning_effort: str | None = None
     condition: Literal[
         "raw",
@@ -96,7 +105,7 @@ def run_raw_experiment(
     result_path: Path | None = None,
 ) -> ExperimentManifest:
     """Generate, prompt, invoke, parse, score, and optionally append one run."""
-    split = seed_split(config.seed)
+    split = evaluation_seed_split(config.incident_family, config.seed)
     if split == "evaluation" and not config.allow_held_out:
         raise ProtectedSeedError(
             "Held-out evaluation seeds require allow_held_out=True explicitly"
@@ -105,6 +114,13 @@ def run_raw_experiment(
         raise ProtectedSeedError("Retired evaluation seeds may not be invoked")
     if split == "unassigned":
         raise ProtectedSeedError("Unassigned seeds are not permitted by the protocol")
+    if (
+        config.incident_family == INCIDENT_002_FAMILY
+        and config.seed not in INCIDENT_002_DEVELOPMENT_SEEDS
+    ):
+        raise ProtectedSeedError(
+            "Incident 002 evaluation is restricted to its frozen development seeds"
+        )
 
     if config.prompt_version == PROMPT_VERSION_V1:
         prompt_builder = build_prompt
@@ -121,7 +137,7 @@ def run_raw_experiment(
     else:
         raise ValueError(f"Unsupported raw RCA prompt version: {config.prompt_version}")
 
-    incident = generate_incident_001(config.seed)
+    incident = generate_evaluation_incident(config.incident_family, config.seed)
     transformation_key_fingerprint: str | None = None
     if config.condition == "raw":
         model_view = incident.model_view()
@@ -142,6 +158,7 @@ def run_raw_experiment(
         raise ValueError(f"Unsupported evaluation condition: {config.condition}")
 
     prompt = prompt_builder(model_view)
+    model_input_sha256 = hashlib.sha256(prompt.encode("utf-8")).hexdigest()
     invocation = provider.invoke(
         ModelRequest(
             prompt=prompt,
@@ -167,9 +184,10 @@ def run_raw_experiment(
         score = score_response(incident, parsed.response)
 
     manifest = ExperimentManifest(
+        manifest_schema_version=config.manifest_schema_version,
         experiment_id=config.experiment_id,
         benchmark_version=str(incident.metadata["benchmark_version"]),
-        incident_family="incident_001",
+        incident_family=config.incident_family,
         seed=config.seed,
         split=split,
         condition=config.condition,
@@ -201,6 +219,11 @@ def run_raw_experiment(
         sanitized_api_error=invocation.sanitized_api_error,
         response=parsed,
         score=score,
+        model_input_sha256=(
+            model_input_sha256
+            if config.manifest_schema_version == "raw-rca-manifest-v6"
+            else None
+        ),
     )
     if result_path is not None:
         append_manifest(result_path, manifest)

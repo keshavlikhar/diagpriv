@@ -5,6 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 import json
 from pathlib import Path
+import re
 from typing import Any, Literal, Self
 
 from diagpriv.evaluation.providers import SanitizedAPIError
@@ -15,6 +16,7 @@ from diagpriv.evaluation.scoring_v2 import RCAScoreV2
 
 @dataclass(frozen=True, slots=True)
 class ExperimentManifest:
+    manifest_schema_version: str
     experiment_id: str
     benchmark_version: str
     incident_family: str
@@ -55,10 +57,30 @@ class ExperimentManifest:
     sanitized_api_error: SanitizedAPIError | None
     response: ParsedResponse
     score: RCAScore | RCAScoreV2 | None
+    model_input_sha256: str | None = None
+
+    def __post_init__(self) -> None:
+        if self.manifest_schema_version not in {
+            "raw-rca-manifest-v2",
+            "raw-rca-manifest-v3",
+            "raw-rca-manifest-v4",
+            "raw-rca-manifest-v5",
+            "raw-rca-manifest-v6",
+        }:
+            raise ValueError(
+                f"Unsupported manifest schema: {self.manifest_schema_version}"
+            )
+        if self.manifest_schema_version == "raw-rca-manifest-v6":
+            if not isinstance(self.model_input_sha256, str) or re.fullmatch(
+                r"[0-9a-f]{64}", self.model_input_sha256
+            ) is None:
+                raise ValueError("Manifest schema v6 requires model_input_sha256")
+        elif self.model_input_sha256 is not None:
+            raise ValueError("model_input_sha256 is valid only in manifest schema v6")
 
     def to_dict(self) -> dict[str, object]:
         data: dict[str, object] = {
-            "manifest_schema_version": "raw-rca-manifest-v5",
+            "manifest_schema_version": self.manifest_schema_version,
             "experiment_id": self.experiment_id,
             "benchmark_version": self.benchmark_version,
             "incident_family": self.incident_family,
@@ -102,6 +124,8 @@ class ExperimentManifest:
             data["transformation_key_fingerprint"] = (
                 self.transformation_key_fingerprint
             )
+        if self.model_input_sha256 is not None:
+            data["model_input_sha256"] = self.model_input_sha256
         return data
 
     def to_json(self, *, indent: int | None = 2) -> str:
@@ -131,6 +155,9 @@ class ExperimentManifest:
         requested_model = data.get("requested_model", data.get("model"))
         model_version = data.get("model_version_metadata", data.get("model_version"))
         return cls(
+            manifest_schema_version=data.get(
+                "manifest_schema_version", "raw-rca-manifest-v5"
+            ),
             experiment_id=data["experiment_id"],
             benchmark_version=data["benchmark_version"],
             incident_family=data["incident_family"],
@@ -177,6 +204,7 @@ class ExperimentManifest:
                 data["response"], prompt_version=prompt_version
             ),
             score=score,
+            model_input_sha256=data.get("model_input_sha256"),
         )
 
     @classmethod
