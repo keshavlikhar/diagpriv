@@ -3,8 +3,8 @@
 DiagPriv is an academic research project studying whether privacy
 transformations can remove sensitive identity from operational troubleshooting
 evidence while retaining the relationships an LLM needs for root-cause
-analysis (RCA). Its companion benchmark, DiagBench, currently contains one
-fully synthetic incident family; no production or customer data is used.
+analysis (RCA). Its companion benchmark, DiagBench, contains two fully
+synthetic incident families; no production or customer data is used.
 
 The central hypothesis is that a transformation which preserves explicitly
 declared diagnostic invariants will retain more RCA utility than conventional
@@ -22,10 +22,13 @@ observations, not proof of that hypothesis or evidence of production validity.
 | `tokenization-v1` | Development 1000–1004 | Frozen | 5/5 exact RCA |
 | `format-preserving-v1` | Development 1000–1004 | Frozen | 4/5 exact RCA |
 
-The active handoff point is the reviewed `format-preserving-v1` development
-checkpoint. These small development results are observations, not general
-conclusions. Do not rerun completed experiments, run a privacy condition on
-validation, or inspect held-out seeds without explicit research approval.
+The active branch constructs Incident Family 002, in which reference structure
+is deliberately necessary to diagnose a missing provisioning effect. This is
+an offline benchmark-design checkpoint only; Incident 002 has no provider,
+validation, or held-out observations. The earlier small development results are
+observations, not general conclusions. Do not rerun completed experiments, run
+a privacy condition on validation, or inspect held-out seeds without explicit
+research approval.
 
 See [CURRENT_STATUS](docs/CURRENT_STATUS.md) for immutable artifact hashes and
 known limitations, and [RESEARCH_PLAN](docs/RESEARCH_PLAN.md) for the roadmap.
@@ -45,6 +48,7 @@ canonical development fixture can be regenerated with:
 
 ```bash
 uv run python -m diagbench.generators.incident_001 --seed 1001
+uv run python -m diagbench.generators.incident_002 --seed 1001
 ```
 
 ## Repository map
@@ -77,6 +81,7 @@ uv run python -m diagbench.generators.incident_001 --seed 1001
 - [HMAC baseline specification](docs/hmac_v1.md)
 - [Tokenization baseline specification](docs/tokenization_v1.md)
 - [Format-preserving baseline specification](docs/format_preserving_v1.md)
+- [Incident 002 protocol](docs/incident_002_protocol.md)
 
 ## Safety and scope
 

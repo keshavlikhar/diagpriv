@@ -20,9 +20,11 @@ incident family under one evidence condition, prompt, model configuration, and
 call index. Primary and secondary outcomes are defined in
 `docs/EXPERIMENT_PROTOCOL.md`.
 
-The current benchmark contains Incident Family 001: a timeout followed by a
-re-arrival of the same logical operation, with missing or ineffective
-idempotency causing two successful effects. All data is fictional and synthetic.
+The benchmark contains Incident Family 001: a timeout followed by a re-arrival
+of the same logical operation, with missing or ineffective idempotency causing
+two successful effects. Incident Family 002 is an offline construction in which
+a reference-shape defect reaches an exact lookup and causes a missing
+provisioning effect. All data is fictional and synthetic.
 
 ## Design principles
 
@@ -59,18 +61,19 @@ idempotency causing two successful effects. All data is fictional and synthetic.
 8. **Format-preserving pseudonymization:** `format-preserving-v1` implemented,
    invariant-tested, and run on the five development seeds, producing 4/5 exact
    RCA. The only error was component localization; the protocol was not changed.
+9. **Format-dependent benchmark construction:** Incident Family 002 implemented
+   offline with versioned structural signatures, a canonical development
+   fixture, shape ablation, anti-shortcut controls, and transformation
+   expectation audits. It has no provider observations and remains under human
+   review.
 
 ## Roadmap and decision gates
 
 ### 1. Format-dependent incident family
 
-- Add an incident family where format is genuinely diagnostic before claiming
-  utility from format preservation.
-- Predeclare the necessary structural property, such as truncation,
-  leading-zero loss, separator corruption, malformed identifier shape,
-  fixed-width mismatch, or a structural/check-digit violation.
-- Validate that the evidence requires that property and does not reveal the
-  answer through wording or labels.
+- Review and freeze Incident Family 002 before any provider experiment.
+- Validate that its offline evidence requires the predeclared structural
+  property and does not reveal the answer through wording or labels.
 - Compare redaction, HMAC, tokenization, and format-preserving pseudonymization
   under the same frozen RCA protocol and a documented exposure model.
 

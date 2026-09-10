@@ -3,8 +3,10 @@
 ## Purpose and status
 
 DiagBench provides bounded, fully synthetic troubleshooting incident families
-for studying privacy/utility trade-offs. Version 0.2 develops one family: a
-repeated logical payment operation following a caller-visible timeout.
+for studying privacy/utility trade-offs. Incident 001 covers a repeated logical
+payment operation following a caller-visible timeout. Incident 002 adds a
+missing provisioning effect caused by a sensitive external-reference shape
+defect at the operation executor.
 
 DiagBench v0.2 is designed to reduce answer leakage and support experimental
 validity. It has not yet been validated with human diagnosticians or LLMs, and it
@@ -94,6 +96,26 @@ Each instance guarantees:
 These construction guarantees do not demonstrate diagnostic realism or model
 performance.
 
+Incident 002 guarantees that at least five successful controls establish one
+generated structural reference pattern around a position-varying target. The
+target differs by one supported visible defect, exact lookup misses, and no
+effect is created. A high-latency successful control, a benign initial miss with
+successful recovery, and bounded dependency warnings prevent those individual
+signals from uniquely identifying the intended cause. Intake accepts an opaque
+envelope; the executor owns domain-level validation/normalization and effect
+creation.
+
+Incident 002 uses the generic `structural-signature-v1` semantics: ASCII
+uppercase, lowercase, and decimal-digit positions become `U`, `l`, and `D`,
+respectively, while printable punctuation and spaces remain literal. Its
+defect-signature predicates are evaluated from visible target/control values,
+not accepted from hidden generator metadata. In particular, hidden
+`leading_zero_loss` construction metadata maps to the evidence-supported
+observable delta `numeric_run_leading_position_deletion`; the invariant makes no
+claim about the missing digit's literal value. See
+`docs/incident_002_protocol.md` for the supported defect set and shape-ablation
+audit.
+
 ## Development, validation, and evaluation seeds
 
 Seed ranges are separated to reduce direct tuning against evaluation instances:
@@ -105,7 +127,8 @@ Seed ranges are separated to reduce direct tuning against evaluation instances:
 | Retired | 10000–10999 | Never use for final evaluation; mechanically audited before any LLM run |
 | Held-out evaluation | 20000–20999 | Final evaluation after protocol decisions are frozen |
 
-The checked-in canonical example uses development seed `1001`. Seeds 10000–10999
+Each checked-in canonical family example uses development seed `1001`. Incident
+002 construction currently rejects every non-development seed. Seeds 10000–10999
 were retired before any LLM evaluation because instances from that range had
 been mechanically generated during construction auditing. Retired seeds cannot
 be invoked by the evaluation runner. Seeds outside all ranges are marked

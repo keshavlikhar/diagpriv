@@ -1,0 +1,1580 @@
+{
+  "category": "provisioning_missing_effect",
+  "component_mappings": [
+    {
+      "canonical_role": "request_ingress",
+      "visible_names": [
+        "queue-front"
+      ]
+    },
+    {
+      "canonical_role": "operation_executor",
+      "visible_names": [
+        "provision-agent"
+      ]
+    },
+    {
+      "canonical_role": "dependency_or_downstream",
+      "visible_names": [
+        "registry-lookup"
+      ]
+    }
+  ],
+  "description": "An opaque operation reaches its executor, where an unhandled one-edit external-reference shape defect causes an exact lookup miss and no effect.",
+  "diagnostic_invariants": [
+    {
+      "description": "Successful controls establish one common visible identifier shape.",
+      "expected": true,
+      "name": "healthy_identifier_pattern_consistency",
+      "necessity": "essential",
+      "operands": [
+        {
+          "field": "external_reference",
+          "selector": {
+            "evidence_id": "EV-30304665"
+          },
+          "source": "processing_attempts"
+        },
+        {
+          "field": "external_reference",
+          "selector": {
+            "evidence_id": "EV-89894376"
+          },
+          "source": "processing_attempts"
+        },
+        {
+          "field": "external_reference",
+          "selector": {
+            "evidence_id": "EV-89322209"
+          },
+          "source": "processing_attempts"
+        },
+        {
+          "field": "external_reference",
+          "selector": {
+            "evidence_id": "EV-94087242"
+          },
+          "source": "processing_attempts"
+        },
+        {
+          "field": "external_reference",
+          "selector": {
+            "evidence_id": "EV-48219422"
+          },
+          "source": "processing_attempts"
+        },
+        {
+          "field": "external_reference",
+          "selector": {
+            "evidence_id": "EV-86008956"
+          },
+          "source": "processing_attempts"
+        }
+      ],
+      "relation": "same_structural_pattern"
+    },
+    {
+      "description": "The target shape differs from the unanimous healthy-control shape.",
+      "expected": true,
+      "name": "target_identifier_pattern_anomaly",
+      "necessity": "essential",
+      "operands": [
+        {
+          "field": "external_reference",
+          "selector": {
+            "evidence_id": "EV-55119090"
+          },
+          "source": "processing_attempts"
+        },
+        {
+          "field": "external_reference",
+          "selector": {
+            "evidence_id": "EV-30304665"
+          },
+          "source": "processing_attempts"
+        },
+        {
+          "field": "external_reference",
+          "selector": {
+            "evidence_id": "EV-89894376"
+          },
+          "source": "processing_attempts"
+        },
+        {
+          "field": "external_reference",
+          "selector": {
+            "evidence_id": "EV-89322209"
+          },
+          "source": "processing_attempts"
+        },
+        {
+          "field": "external_reference",
+          "selector": {
+            "evidence_id": "EV-94087242"
+          },
+          "source": "processing_attempts"
+        },
+        {
+          "field": "external_reference",
+          "selector": {
+            "evidence_id": "EV-48219422"
+          },
+          "source": "processing_attempts"
+        },
+        {
+          "field": "external_reference",
+          "selector": {
+            "evidence_id": "EV-86008956"
+          },
+          "source": "processing_attempts"
+        }
+      ],
+      "relation": "structural_pattern_anomaly"
+    },
+    {
+      "description": "The visible shape delta matches the declared observable one-edit relation.",
+      "expected": "missing_separator",
+      "name": "target_identifier_defect_signature",
+      "necessity": "essential",
+      "operands": [
+        {
+          "field": "external_reference",
+          "selector": {
+            "evidence_id": "EV-55119090"
+          },
+          "source": "processing_attempts"
+        },
+        {
+          "field": "external_reference",
+          "selector": {
+            "evidence_id": "EV-30304665"
+          },
+          "source": "processing_attempts"
+        },
+        {
+          "field": "external_reference",
+          "selector": {
+            "evidence_id": "EV-89894376"
+          },
+          "source": "processing_attempts"
+        },
+        {
+          "field": "external_reference",
+          "selector": {
+            "evidence_id": "EV-89322209"
+          },
+          "source": "processing_attempts"
+        },
+        {
+          "field": "external_reference",
+          "selector": {
+            "evidence_id": "EV-94087242"
+          },
+          "source": "processing_attempts"
+        },
+        {
+          "field": "external_reference",
+          "selector": {
+            "evidence_id": "EV-48219422"
+          },
+          "source": "processing_attempts"
+        },
+        {
+          "field": "external_reference",
+          "selector": {
+            "evidence_id": "EV-86008956"
+          },
+          "source": "processing_attempts"
+        }
+      ],
+      "relation": "structural_defect"
+    },
+    {
+      "description": "The target/control length delta agrees with the visible one-edit defect.",
+      "expected": -1,
+      "name": "target_identifier_length_delta",
+      "necessity": "essential",
+      "operands": [
+        {
+          "field": "external_reference",
+          "selector": {
+            "evidence_id": "EV-55119090"
+          },
+          "source": "processing_attempts"
+        },
+        {
+          "field": "external_reference",
+          "selector": {
+            "evidence_id": "EV-30304665"
+          },
+          "source": "processing_attempts"
+        }
+      ],
+      "relation": "length_delta"
+    },
+    {
+      "description": "Target processing, lookup, and log evidence refer to one identifier.",
+      "expected": true,
+      "name": "target_identifier_cross_source_identity",
+      "necessity": "essential",
+      "operands": [
+        {
+          "field": "external_reference",
+          "selector": {
+            "evidence_id": "EV-55119090"
+          },
+          "source": "processing_attempts"
+        },
+        {
+          "field": "external_reference",
+          "selector": {
+            "evidence_id": "EV-56622120"
+          },
+          "source": "lookup_observations"
+        },
+        {
+          "field": "external_reference",
+          "selector": {
+            "evidence_id": "EV-85750063"
+          },
+          "source": "logs"
+        }
+      ],
+      "relation": "equal"
+    },
+    {
+      "description": "A successful control is consistently linked across evidence sources.",
+      "expected": true,
+      "name": "control_identifier_cross_source_identity",
+      "necessity": "essential",
+      "operands": [
+        {
+          "field": "external_reference",
+          "selector": {
+            "evidence_id": "EV-30304665"
+          },
+          "source": "processing_attempts"
+        },
+        {
+          "field": "external_reference",
+          "selector": {
+            "evidence_id": "EV-13400628"
+          },
+          "source": "lookup_observations"
+        },
+        {
+          "field": "external_reference",
+          "selector": {
+            "evidence_id": "EV-61508493"
+          },
+          "source": "logs"
+        }
+      ],
+      "relation": "equal"
+    },
+    {
+      "description": "The target exact lookup produced no match.",
+      "expected": "no_match",
+      "name": "target_lookup_miss_state",
+      "necessity": "essential",
+      "operands": [
+        {
+          "field": "lookup_result",
+          "selector": {
+            "evidence_id": "EV-56622120"
+          },
+          "source": "lookup_observations"
+        }
+      ],
+      "relation": "equal"
+    },
+    {
+      "description": "A well-shaped control exact lookup succeeded.",
+      "expected": "match",
+      "name": "control_lookup_success_state",
+      "necessity": "essential",
+      "operands": [
+        {
+          "field": "lookup_result",
+          "selector": {
+            "evidence_id": "EV-13400628"
+          },
+          "source": "lookup_observations"
+        }
+      ],
+      "relation": "equal"
+    },
+    {
+      "description": "Every successful control created an active effect record.",
+      "expected": "active",
+      "name": "control_effect_presence",
+      "necessity": "essential",
+      "operands": [
+        {
+          "field": "state",
+          "selector": {
+            "evidence_id": "EV-85399887"
+          },
+          "source": "effect_records"
+        },
+        {
+          "field": "state",
+          "selector": {
+            "evidence_id": "EV-88294904"
+          },
+          "source": "effect_records"
+        },
+        {
+          "field": "state",
+          "selector": {
+            "evidence_id": "EV-58327570"
+          },
+          "source": "effect_records"
+        },
+        {
+          "field": "state",
+          "selector": {
+            "evidence_id": "EV-34133065"
+          },
+          "source": "effect_records"
+        },
+        {
+          "field": "state",
+          "selector": {
+            "evidence_id": "EV-77694095"
+          },
+          "source": "effect_records"
+        },
+        {
+          "field": "state",
+          "selector": {
+            "evidence_id": "EV-56192305"
+          },
+          "source": "effect_records"
+        }
+      ],
+      "relation": "equal"
+    },
+    {
+      "description": "The target was received before lookup and closed after lookup.",
+      "expected": true,
+      "name": "target_event_order",
+      "necessity": "essential",
+      "operands": [
+        {
+          "field": "received_at",
+          "selector": {
+            "evidence_id": "EV-55119090"
+          },
+          "source": "processing_attempts"
+        },
+        {
+          "field": "observed_at",
+          "selector": {
+            "evidence_id": "EV-56622120"
+          },
+          "source": "lookup_observations"
+        },
+        {
+          "field": "completed_at",
+          "selector": {
+            "evidence_id": "EV-55119090"
+          },
+          "source": "processing_attempts"
+        }
+      ],
+      "relation": "ordered_before"
+    },
+    {
+      "description": "No effect record belongs to the target operation.",
+      "expected": 0,
+      "name": "target_effect_absence",
+      "necessity": "essential",
+      "operands": [
+        {
+          "field": null,
+          "selector": {
+            "operation_id": "OP-53213486"
+          },
+          "source": "effect_records"
+        }
+      ],
+      "relation": "match_count"
+    },
+    {
+      "description": "The target and every control remain distinguishable identifiers.",
+      "expected": true,
+      "name": "target_and_control_identifier_distinctness",
+      "necessity": "essential",
+      "operands": [
+        {
+          "field": "external_reference",
+          "selector": {
+            "evidence_id": "EV-55119090"
+          },
+          "source": "processing_attempts"
+        },
+        {
+          "field": "external_reference",
+          "selector": {
+            "evidence_id": "EV-30304665"
+          },
+          "source": "processing_attempts"
+        },
+        {
+          "field": "external_reference",
+          "selector": {
+            "evidence_id": "EV-89894376"
+          },
+          "source": "processing_attempts"
+        },
+        {
+          "field": "external_reference",
+          "selector": {
+            "evidence_id": "EV-89322209"
+          },
+          "source": "processing_attempts"
+        },
+        {
+          "field": "external_reference",
+          "selector": {
+            "evidence_id": "EV-94087242"
+          },
+          "source": "processing_attempts"
+        },
+        {
+          "field": "external_reference",
+          "selector": {
+            "evidence_id": "EV-48219422"
+          },
+          "source": "processing_attempts"
+        },
+        {
+          "field": "external_reference",
+          "selector": {
+            "evidence_id": "EV-86008956"
+          },
+          "source": "processing_attempts"
+        }
+      ],
+      "relation": "all_distinct"
+    },
+    {
+      "description": "Successful controls occur immediately before and after the target.",
+      "expected": true,
+      "name": "controls_bracket_target",
+      "necessity": "supportive",
+      "operands": [
+        {
+          "field": "received_at",
+          "selector": {
+            "evidence_id": "EV-89894376"
+          },
+          "source": "processing_attempts"
+        },
+        {
+          "field": "received_at",
+          "selector": {
+            "evidence_id": "EV-55119090"
+          },
+          "source": "processing_attempts"
+        },
+        {
+          "field": "received_at",
+          "selector": {
+            "evidence_id": "EV-89322209"
+          },
+          "source": "processing_attempts"
+        }
+      ],
+      "relation": "ordered_before"
+    },
+    {
+      "description": "Target and controls were processed by the same executor alias.",
+      "expected": "provision-agent",
+      "name": "shared_executor_role",
+      "necessity": "supportive",
+      "operands": [
+        {
+          "field": "executor_alias",
+          "selector": {
+            "evidence_id": "EV-55119090"
+          },
+          "source": "processing_attempts"
+        },
+        {
+          "field": "executor_alias",
+          "selector": {
+            "evidence_id": "EV-30304665"
+          },
+          "source": "processing_attempts"
+        },
+        {
+          "field": "executor_alias",
+          "selector": {
+            "evidence_id": "EV-89894376"
+          },
+          "source": "processing_attempts"
+        },
+        {
+          "field": "executor_alias",
+          "selector": {
+            "evidence_id": "EV-89322209"
+          },
+          "source": "processing_attempts"
+        },
+        {
+          "field": "executor_alias",
+          "selector": {
+            "evidence_id": "EV-94087242"
+          },
+          "source": "processing_attempts"
+        },
+        {
+          "field": "executor_alias",
+          "selector": {
+            "evidence_id": "EV-48219422"
+          },
+          "source": "processing_attempts"
+        },
+        {
+          "field": "executor_alias",
+          "selector": {
+            "evidence_id": "EV-86008956"
+          },
+          "source": "processing_attempts"
+        }
+      ],
+      "relation": "equal"
+    },
+    {
+      "description": "Dependency health samples show availability despite bounded warnings.",
+      "expected": "available",
+      "name": "dependency_remained_available",
+      "necessity": "supportive",
+      "operands": [
+        {
+          "field": "availability_state",
+          "selector": {
+            "evidence_id": "EV-15756995"
+          },
+          "source": "dependency_health"
+        },
+        {
+          "field": "availability_state",
+          "selector": {
+            "evidence_id": "EV-39800304"
+          },
+          "source": "dependency_health"
+        },
+        {
+          "field": "availability_state",
+          "selector": {
+            "evidence_id": "EV-41068978"
+          },
+          "source": "dependency_health"
+        }
+      ],
+      "relation": "equal"
+    },
+    {
+      "description": "A high-latency control lookup still succeeded.",
+      "expected": "match",
+      "name": "latency_control_lookup_success",
+      "necessity": "supportive",
+      "operands": [
+        {
+          "field": "lookup_result",
+          "selector": {
+            "evidence_id": "EV-11601300"
+          },
+          "source": "lookup_observations"
+        }
+      ],
+      "relation": "equal"
+    },
+    {
+      "description": "A healthy reference has an initial miss followed by a successful lookup.",
+      "expected": [
+        "no_match",
+        "match"
+      ],
+      "name": "benign_miss_recovery",
+      "necessity": "supportive",
+      "operands": [
+        {
+          "field": "lookup_result",
+          "selector": {
+            "evidence_id": "EV-65945927"
+          },
+          "source": "lookup_observations"
+        },
+        {
+          "field": "lookup_result",
+          "selector": {
+            "evidence_id": "EV-53896152"
+          },
+          "source": "lookup_observations"
+        }
+      ],
+      "relation": "sequence_equals"
+    },
+    {
+      "description": "The benign miss precedes its later successful lookup.",
+      "expected": true,
+      "name": "benign_miss_recovery_order",
+      "necessity": "supportive",
+      "operands": [
+        {
+          "field": "observed_at",
+          "selector": {
+            "evidence_id": "EV-65945927"
+          },
+          "source": "lookup_observations"
+        },
+        {
+          "field": "observed_at",
+          "selector": {
+            "evidence_id": "EV-53896152"
+          },
+          "source": "lookup_observations"
+        }
+      ],
+      "relation": "ordered_before"
+    },
+    {
+      "description": "The target has no second lookup, replay, or special follow-on action.",
+      "expected": 1,
+      "name": "target_no_follow_on_lookup",
+      "necessity": "supportive",
+      "operands": [
+        {
+          "field": null,
+          "selector": {
+            "operation_id": "OP-53213486"
+          },
+          "source": "lookup_observations"
+        }
+      ],
+      "relation": "match_count"
+    },
+    {
+      "description": "Exactly one effect record exists for each healthy control.",
+      "expected": 6,
+      "name": "effect_record_cardinality",
+      "necessity": "supportive",
+      "operands": [
+        {
+          "field": null,
+          "selector": {
+            "evidence_id": "EV-85399887"
+          },
+          "source": "effect_records"
+        },
+        {
+          "field": null,
+          "selector": {
+            "evidence_id": "EV-34133065"
+          },
+          "source": "effect_records"
+        },
+        {
+          "field": null,
+          "selector": {
+            "evidence_id": "EV-56192305"
+          },
+          "source": "effect_records"
+        },
+        {
+          "field": null,
+          "selector": {
+            "evidence_id": "EV-58327570"
+          },
+          "source": "effect_records"
+        },
+        {
+          "field": null,
+          "selector": {
+            "evidence_id": "EV-77694095"
+          },
+          "source": "effect_records"
+        },
+        {
+          "field": null,
+          "selector": {
+            "evidence_id": "EV-88294904"
+          },
+          "source": "effect_records"
+        }
+      ],
+      "relation": "row_count"
+    },
+    {
+      "description": "The exact target reference literal is unnecessary; its relationships and shape matter.",
+      "expected": false,
+      "name": "literal_external_reference_identity",
+      "necessity": "discardable",
+      "operands": [
+        {
+          "field": "external_reference",
+          "selector": {
+            "evidence_id": "EV-55119090"
+          },
+          "source": "processing_attempts"
+        }
+      ],
+      "relation": "preserve_literal"
+    }
+  ],
+  "difficulty": "medium",
+  "expected_evidence": [
+    {
+      "description": "The target reference has a distinct one-edit shape delta from successful controls.",
+      "references": [
+        {
+          "field": "external_reference",
+          "selector": {
+            "evidence_id": "EV-55119090"
+          },
+          "source": "processing_attempts"
+        },
+        {
+          "field": "external_reference",
+          "selector": {
+            "evidence_id": "EV-30304665"
+          },
+          "source": "processing_attempts"
+        },
+        {
+          "field": "external_reference",
+          "selector": {
+            "evidence_id": "EV-89894376"
+          },
+          "source": "processing_attempts"
+        },
+        {
+          "field": "external_reference",
+          "selector": {
+            "evidence_id": "EV-89322209"
+          },
+          "source": "processing_attempts"
+        }
+      ]
+    },
+    {
+      "description": "The target lookup misses and no target effect record exists.",
+      "references": [
+        {
+          "field": null,
+          "selector": {
+            "evidence_id": "EV-56622120"
+          },
+          "source": "lookup_observations"
+        },
+        {
+          "field": null,
+          "selector": {
+            "evidence_id": "EV-55119090"
+          },
+          "source": "processing_attempts"
+        }
+      ]
+    },
+    {
+      "description": "Controls succeed around the target, including latency and benign-miss controls.",
+      "references": [
+        {
+          "field": null,
+          "selector": {
+            "evidence_id": "EV-11601300"
+          },
+          "source": "lookup_observations"
+        },
+        {
+          "field": null,
+          "selector": {
+            "evidence_id": "EV-65945927"
+          },
+          "source": "lookup_observations"
+        },
+        {
+          "field": null,
+          "selector": {
+            "evidence_id": "EV-53896152"
+          },
+          "source": "lookup_observations"
+        }
+      ]
+    }
+  ],
+  "ground_truth": {
+    "affected_component": "operation_executor",
+    "explanation": "The executor used an unexpected external-reference shape in an exact lookup without the required input handling, so no provisioning effect was created.",
+    "failure_mechanism": "missing_reference_validation_or_normalization",
+    "logical_operation_repeated": false,
+    "outcome": "missing_provisioning_effect",
+    "trigger": "unexpected_external_reference_shape"
+  },
+  "ground_truth_v2": {
+    "affected_component": "operation_executor",
+    "explanation": "The executor did not validate or normalize a structurally unexpected external reference before exact lookup; the miss created no effect.",
+    "failure_mechanism": "validation_or_input_handling_failure",
+    "logical_operation_repeated": false,
+    "observed_outcome": "missing_effect",
+    "subsequent_action": "no_follow_on_action",
+    "trigger": "malformed_or_unexpected_input"
+  },
+  "incident_id": "incident_002_format_defect",
+  "log_evidence": [
+    {
+      "attributes": {
+        "operation_id": "OP-98686137"
+      },
+      "evidence_id": "EV-14401138",
+      "level": "INFO",
+      "message": "Operation envelope accepted",
+      "service": "queue-front",
+      "timestamp": "2034-10-27T11:28:50.338Z"
+    },
+    {
+      "attributes": {
+        "operation_id": "OP-98686137"
+      },
+      "evidence_id": "EV-69509147",
+      "level": "INFO",
+      "message": "Opaque envelope queued",
+      "service": "queue-front",
+      "timestamp": "2034-10-27T11:28:50.348Z"
+    },
+    {
+      "attributes": {
+        "external_reference": "CV-630-G-38",
+        "operation_id": "OP-98686137"
+      },
+      "evidence_id": "EV-61508493",
+      "level": "INFO",
+      "message": "Work item processing started",
+      "service": "provision-agent",
+      "timestamp": "2034-10-27T11:28:50.393Z"
+    },
+    {
+      "attributes": {
+        "external_reference": "CV-630-G-38",
+        "lookup_result": "match",
+        "operation_id": "OP-98686137"
+      },
+      "evidence_id": "EV-95676429",
+      "level": "INFO",
+      "message": "Lookup observation recorded",
+      "service": "provision-agent",
+      "timestamp": "2034-10-27T11:28:50.440Z"
+    },
+    {
+      "attributes": {
+        "operation_id": "OP-98686137"
+      },
+      "evidence_id": "EV-84341184",
+      "level": "INFO",
+      "message": "Operation processing ended",
+      "service": "provision-agent",
+      "timestamp": "2034-10-27T11:28:50.512Z"
+    },
+    {
+      "attributes": {
+        "effect_id": "EF-87180820",
+        "operation_id": "OP-98686137"
+      },
+      "evidence_id": "EV-66729266",
+      "level": "INFO",
+      "message": "Destination record stored",
+      "service": "provision-agent",
+      "timestamp": "2034-10-27T11:28:50.513Z"
+    },
+    {
+      "attributes": {
+        "operation_id": "OP-71353944"
+      },
+      "evidence_id": "EV-63586059",
+      "level": "INFO",
+      "message": "Opaque envelope accepted",
+      "service": "queue-front",
+      "timestamp": "2034-10-27T11:29:02.084Z"
+    },
+    {
+      "attributes": {
+        "operation_id": "OP-71353944"
+      },
+      "evidence_id": "EV-23855277",
+      "level": "INFO",
+      "message": "Opaque envelope queued",
+      "service": "queue-front",
+      "timestamp": "2034-10-27T11:29:02.094Z"
+    },
+    {
+      "attributes": {
+        "external_reference": "VH-413-P-85",
+        "operation_id": "OP-71353944"
+      },
+      "evidence_id": "EV-11834350",
+      "level": "INFO",
+      "message": "Operation processing started",
+      "service": "provision-agent",
+      "timestamp": "2034-10-27T11:29:02.161Z"
+    },
+    {
+      "attributes": {
+        "external_reference": "VH-413-P-85",
+        "lookup_result": "match",
+        "operation_id": "OP-71353944"
+      },
+      "evidence_id": "EV-10632939",
+      "level": "INFO",
+      "message": "Reference lookup completed",
+      "service": "provision-agent",
+      "timestamp": "2034-10-27T11:29:02.223Z"
+    },
+    {
+      "attributes": {
+        "operation_id": "OP-71353944"
+      },
+      "evidence_id": "EV-89185520",
+      "level": "INFO",
+      "message": "Operation processing ended",
+      "service": "provision-agent",
+      "timestamp": "2034-10-27T11:29:02.291Z"
+    },
+    {
+      "attributes": {
+        "effect_id": "EF-50477014",
+        "operation_id": "OP-71353944"
+      },
+      "evidence_id": "EV-75134210",
+      "level": "INFO",
+      "message": "Provisioned record committed",
+      "service": "provision-agent",
+      "timestamp": "2034-10-27T11:29:02.292Z"
+    },
+    {
+      "attributes": {
+        "operation_id": "OP-53213486"
+      },
+      "evidence_id": "EV-75426613",
+      "level": "INFO",
+      "message": "Operation envelope accepted",
+      "service": "queue-front",
+      "timestamp": "2034-10-27T11:29:14.610Z"
+    },
+    {
+      "attributes": {
+        "operation_id": "OP-53213486"
+      },
+      "evidence_id": "EV-71696496",
+      "level": "INFO",
+      "message": "Opaque envelope queued",
+      "service": "queue-front",
+      "timestamp": "2034-10-27T11:29:14.620Z"
+    },
+    {
+      "attributes": {
+        "external_reference": "KN617-G-26",
+        "operation_id": "OP-53213486"
+      },
+      "evidence_id": "EV-85750063",
+      "level": "INFO",
+      "message": "Operation processing started",
+      "service": "provision-agent",
+      "timestamp": "2034-10-27T11:29:14.666Z"
+    },
+    {
+      "attributes": {
+        "external_reference": "KN617-G-26",
+        "lookup_result": "no_match",
+        "operation_id": "OP-53213486"
+      },
+      "evidence_id": "EV-46757112",
+      "level": "INFO",
+      "message": "Reference lookup completed",
+      "service": "provision-agent",
+      "timestamp": "2034-10-27T11:29:14.736Z"
+    },
+    {
+      "attributes": {
+        "operation_id": "OP-53213486"
+      },
+      "evidence_id": "EV-16560914",
+      "level": "INFO",
+      "message": "Work item processing ended",
+      "service": "provision-agent",
+      "timestamp": "2034-10-27T11:29:14.797Z"
+    },
+    {
+      "attributes": {
+        "sample_window_seconds": 30
+      },
+      "evidence_id": "EV-89160219",
+      "level": "WARN",
+      "message": "Dependency response time elevated",
+      "service": "registry-lookup",
+      "timestamp": "2034-10-27T11:29:16.202Z"
+    },
+    {
+      "attributes": {
+        "operation_id": "OP-54558826"
+      },
+      "evidence_id": "EV-20220779",
+      "level": "INFO",
+      "message": "Operation envelope accepted",
+      "service": "queue-front",
+      "timestamp": "2034-10-27T11:29:26.274Z"
+    },
+    {
+      "attributes": {
+        "operation_id": "OP-54558826"
+      },
+      "evidence_id": "EV-35338419",
+      "level": "INFO",
+      "message": "Operation envelope queued",
+      "service": "queue-front",
+      "timestamp": "2034-10-27T11:29:26.284Z"
+    },
+    {
+      "attributes": {
+        "external_reference": "IS-796-Z-46",
+        "operation_id": "OP-54558826"
+      },
+      "evidence_id": "EV-86921629",
+      "level": "INFO",
+      "message": "Work item processing started",
+      "service": "provision-agent",
+      "timestamp": "2034-10-27T11:29:26.308Z"
+    },
+    {
+      "attributes": {
+        "external_reference": "IS-796-Z-46",
+        "lookup_result": "match",
+        "operation_id": "OP-54558826"
+      },
+      "evidence_id": "EV-37714701",
+      "level": "INFO",
+      "message": "Reference lookup completed",
+      "service": "provision-agent",
+      "timestamp": "2034-10-27T11:29:26.409Z"
+    },
+    {
+      "attributes": {
+        "operation_id": "OP-54558826"
+      },
+      "evidence_id": "EV-98522908",
+      "level": "INFO",
+      "message": "Work item processing ended",
+      "service": "provision-agent",
+      "timestamp": "2034-10-27T11:29:26.471Z"
+    },
+    {
+      "attributes": {
+        "effect_id": "EF-79487328",
+        "operation_id": "OP-54558826"
+      },
+      "evidence_id": "EV-36363322",
+      "level": "INFO",
+      "message": "Destination record stored",
+      "service": "provision-agent",
+      "timestamp": "2034-10-27T11:29:26.472Z"
+    },
+    {
+      "attributes": {
+        "operation_id": "OP-35165785"
+      },
+      "evidence_id": "EV-38383734",
+      "level": "INFO",
+      "message": "Opaque envelope accepted",
+      "service": "queue-front",
+      "timestamp": "2034-10-27T11:29:38.218Z"
+    },
+    {
+      "attributes": {
+        "operation_id": "OP-35165785"
+      },
+      "evidence_id": "EV-86112027",
+      "level": "INFO",
+      "message": "Operation envelope queued",
+      "service": "queue-front",
+      "timestamp": "2034-10-27T11:29:38.228Z"
+    },
+    {
+      "attributes": {
+        "external_reference": "WZ-364-A-18",
+        "operation_id": "OP-35165785"
+      },
+      "evidence_id": "EV-45686582",
+      "level": "INFO",
+      "message": "Work item processing started",
+      "service": "provision-agent",
+      "timestamp": "2034-10-27T11:29:38.271Z"
+    },
+    {
+      "attributes": {
+        "external_reference": "WZ-364-A-18",
+        "lookup_result": "match",
+        "operation_id": "OP-35165785"
+      },
+      "evidence_id": "EV-57654111",
+      "level": "INFO",
+      "message": "Lookup observation recorded",
+      "service": "provision-agent",
+      "timestamp": "2034-10-27T11:29:38.755Z"
+    },
+    {
+      "attributes": {
+        "operation_id": "OP-35165785"
+      },
+      "evidence_id": "EV-65267055",
+      "level": "INFO",
+      "message": "Operation processing ended",
+      "service": "provision-agent",
+      "timestamp": "2034-10-27T11:29:38.794Z"
+    },
+    {
+      "attributes": {
+        "effect_id": "EF-31582603",
+        "operation_id": "OP-35165785"
+      },
+      "evidence_id": "EV-80805588",
+      "level": "INFO",
+      "message": "Provisioned record committed",
+      "service": "provision-agent",
+      "timestamp": "2034-10-27T11:29:38.795Z"
+    },
+    {
+      "attributes": {
+        "operation_id": "OP-59954679"
+      },
+      "evidence_id": "EV-21454499",
+      "level": "INFO",
+      "message": "Opaque envelope accepted",
+      "service": "queue-front",
+      "timestamp": "2034-10-27T11:29:50.212Z"
+    },
+    {
+      "attributes": {
+        "operation_id": "OP-59954679"
+      },
+      "evidence_id": "EV-59738525",
+      "level": "INFO",
+      "message": "Operation envelope queued",
+      "service": "queue-front",
+      "timestamp": "2034-10-27T11:29:50.222Z"
+    },
+    {
+      "attributes": {
+        "external_reference": "IO-836-Y-07",
+        "operation_id": "OP-59954679"
+      },
+      "evidence_id": "EV-60201180",
+      "level": "INFO",
+      "message": "Work item processing started",
+      "service": "provision-agent",
+      "timestamp": "2034-10-27T11:29:50.234Z"
+    },
+    {
+      "attributes": {
+        "external_reference": "IO-836-Y-07",
+        "lookup_result": "match",
+        "operation_id": "OP-59954679"
+      },
+      "evidence_id": "EV-14928200",
+      "level": "INFO",
+      "message": "Lookup observation recorded",
+      "service": "provision-agent",
+      "timestamp": "2034-10-27T11:29:50.265Z"
+    },
+    {
+      "attributes": {
+        "operation_id": "OP-59954679"
+      },
+      "evidence_id": "EV-34766243",
+      "level": "INFO",
+      "message": "Operation processing ended",
+      "service": "provision-agent",
+      "timestamp": "2034-10-27T11:29:50.290Z"
+    },
+    {
+      "attributes": {
+        "effect_id": "EF-99543443",
+        "operation_id": "OP-59954679"
+      },
+      "evidence_id": "EV-53909362",
+      "level": "INFO",
+      "message": "Provisioned record committed",
+      "service": "provision-agent",
+      "timestamp": "2034-10-27T11:29:50.291Z"
+    },
+    {
+      "attributes": {
+        "operation_id": "OP-75743445"
+      },
+      "evidence_id": "EV-16225639",
+      "level": "INFO",
+      "message": "Opaque envelope accepted",
+      "service": "queue-front",
+      "timestamp": "2034-10-27T11:30:02.577Z"
+    },
+    {
+      "attributes": {
+        "operation_id": "OP-75743445"
+      },
+      "evidence_id": "EV-73683835",
+      "level": "INFO",
+      "message": "Opaque envelope queued",
+      "service": "queue-front",
+      "timestamp": "2034-10-27T11:30:02.587Z"
+    },
+    {
+      "attributes": {
+        "external_reference": "QS-865-X-55",
+        "operation_id": "OP-75743445"
+      },
+      "evidence_id": "EV-37324593",
+      "level": "INFO",
+      "message": "Work item processing started",
+      "service": "provision-agent",
+      "timestamp": "2034-10-27T11:30:02.632Z"
+    },
+    {
+      "attributes": {
+        "external_reference": "QS-865-X-55",
+        "lookup_result": "match",
+        "operation_id": "OP-75743445"
+      },
+      "evidence_id": "EV-50859431",
+      "level": "INFO",
+      "message": "Lookup observation recorded",
+      "service": "provision-agent",
+      "timestamp": "2034-10-27T11:30:02.684Z"
+    },
+    {
+      "attributes": {
+        "operation_id": "OP-75743445"
+      },
+      "evidence_id": "EV-96634555",
+      "level": "INFO",
+      "message": "Operation processing ended",
+      "service": "provision-agent",
+      "timestamp": "2034-10-27T11:30:02.717Z"
+    },
+    {
+      "attributes": {
+        "effect_id": "EF-71692159",
+        "operation_id": "OP-75743445"
+      },
+      "evidence_id": "EV-84101550",
+      "level": "INFO",
+      "message": "Provisioned record committed",
+      "service": "provision-agent",
+      "timestamp": "2034-10-27T11:30:02.718Z"
+    }
+  ],
+  "metadata": {
+    "benchmark_version": "diagbench-v0.3",
+    "control_operation_ids": [
+      "OP-98686137",
+      "OP-71353944",
+      "OP-54558826",
+      "OP-35165785",
+      "OP-59954679",
+      "OP-75743445"
+    ],
+    "defect_class": "missing_separator",
+    "defect_operation": "deletion",
+    "defect_position": 2,
+    "dependency_alias": "registry-lookup",
+    "executor_alias": "provision-agent",
+    "family_id": "incident_002_format_defect",
+    "generation_domain_sha256": "3444d511c83a480dc484ad666270f1c2923267edd70fcc4c5a7ce34e77fca8a2",
+    "generator_version": "incident-002-generator-v1",
+    "healthy_structural_signature": "UU-DDD-U-DD",
+    "intake_alias": "queue-front",
+    "latency_control_operation_id": "OP-71353944",
+    "latent_valid_reference": "KN-617-G-26",
+    "observable_structural_delta": "missing_separator",
+    "recovery_control_operation_id": "OP-35165785",
+    "seed": 1001,
+    "seed_split": "development",
+    "structural_signature_version": "structural-signature-v1",
+    "structural_template": "UU-DDD-U-DD",
+    "structural_template_name": "hyphenated_mixed_b",
+    "target_chronological_position": 2,
+    "target_external_reference": "KN617-G-26",
+    "target_operation_id": "OP-53213486",
+    "target_structural_signature": "UUDDD-U-DD"
+  },
+  "sensitive_fields": [
+    {
+      "classification": "external_subject_identifier",
+      "path": "processing_attempts.external_reference",
+      "policy": "consistent_pseudonym",
+      "rationale": "Reference values are sensitive and must remain linkable across evidence sources."
+    },
+    {
+      "classification": "external_subject_identifier",
+      "path": "lookup_observations.external_reference",
+      "policy": "consistent_pseudonym",
+      "rationale": "Reference values are sensitive and must remain linkable across evidence sources."
+    },
+    {
+      "classification": "external_subject_identifier",
+      "path": "logs.external_reference",
+      "policy": "consistent_pseudonym",
+      "rationale": "Reference values are sensitive and must remain linkable across evidence sources."
+    }
+  ],
+  "structured_evidence": {
+    "dependency_health": [
+      {
+        "availability_state": "available",
+        "dependency_alias": "registry-lookup",
+        "error_rate": 0.0109,
+        "evidence_id": "EV-15756995",
+        "observed_at": "2034-10-27T11:28:52.213Z",
+        "warning": "none"
+      },
+      {
+        "availability_state": "available",
+        "dependency_alias": "registry-lookup",
+        "error_rate": 0.0152,
+        "evidence_id": "EV-39800304",
+        "observed_at": "2034-10-27T11:29:16.202Z",
+        "warning": "latency_elevated"
+      },
+      {
+        "availability_state": "available",
+        "dependency_alias": "registry-lookup",
+        "error_rate": 0.0119,
+        "evidence_id": "EV-41068978",
+        "observed_at": "2034-10-27T11:29:39.153Z",
+        "warning": "none"
+      }
+    ],
+    "effect_records": [
+      {
+        "created_at": "2034-10-27T11:28:50.512Z",
+        "effect_id": "EF-87180820",
+        "evidence_id": "EV-85399887",
+        "executor_alias": "provision-agent",
+        "operation_id": "OP-98686137",
+        "state": "active"
+      },
+      {
+        "created_at": "2034-10-27T11:29:38.794Z",
+        "effect_id": "EF-31582603",
+        "evidence_id": "EV-34133065",
+        "executor_alias": "provision-agent",
+        "operation_id": "OP-35165785",
+        "state": "active"
+      },
+      {
+        "created_at": "2034-10-27T11:30:02.717Z",
+        "effect_id": "EF-71692159",
+        "evidence_id": "EV-56192305",
+        "executor_alias": "provision-agent",
+        "operation_id": "OP-75743445",
+        "state": "active"
+      },
+      {
+        "created_at": "2034-10-27T11:29:26.471Z",
+        "effect_id": "EF-79487328",
+        "evidence_id": "EV-58327570",
+        "executor_alias": "provision-agent",
+        "operation_id": "OP-54558826",
+        "state": "active"
+      },
+      {
+        "created_at": "2034-10-27T11:29:50.290Z",
+        "effect_id": "EF-99543443",
+        "evidence_id": "EV-77694095",
+        "executor_alias": "provision-agent",
+        "operation_id": "OP-59954679",
+        "state": "active"
+      },
+      {
+        "created_at": "2034-10-27T11:29:02.291Z",
+        "effect_id": "EF-50477014",
+        "evidence_id": "EV-88294904",
+        "executor_alias": "provision-agent",
+        "operation_id": "OP-71353944",
+        "state": "active"
+      }
+    ],
+    "lookup_observations": [
+      {
+        "dependency_alias": "registry-lookup",
+        "evidence_id": "EV-56622120",
+        "executor_alias": "provision-agent",
+        "external_reference": "KN617-G-26",
+        "latency_ms": 111,
+        "lookup_result": "no_match",
+        "match_mode": "exact",
+        "observed_at": "2034-10-27T11:29:14.736Z",
+        "operation_id": "OP-53213486"
+      },
+      {
+        "dependency_alias": "registry-lookup",
+        "evidence_id": "EV-50083329",
+        "executor_alias": "provision-agent",
+        "external_reference": "IS-796-Z-46",
+        "latency_ms": 102,
+        "lookup_result": "match",
+        "match_mode": "exact",
+        "observed_at": "2034-10-27T11:29:26.409Z",
+        "operation_id": "OP-54558826"
+      },
+      {
+        "dependency_alias": "registry-lookup",
+        "evidence_id": "EV-72965534",
+        "executor_alias": "provision-agent",
+        "external_reference": "QS-865-X-55",
+        "latency_ms": 113,
+        "lookup_result": "match",
+        "match_mode": "exact",
+        "observed_at": "2034-10-27T11:30:02.684Z",
+        "operation_id": "OP-75743445"
+      },
+      {
+        "dependency_alias": "registry-lookup",
+        "evidence_id": "EV-11601300",
+        "executor_alias": "provision-agent",
+        "external_reference": "VH-413-P-85",
+        "latency_ms": 728,
+        "lookup_result": "match",
+        "match_mode": "exact",
+        "observed_at": "2034-10-27T11:29:02.223Z",
+        "operation_id": "OP-71353944"
+      },
+      {
+        "dependency_alias": "registry-lookup",
+        "evidence_id": "EV-13400628",
+        "executor_alias": "provision-agent",
+        "external_reference": "CV-630-G-38",
+        "latency_ms": 108,
+        "lookup_result": "match",
+        "match_mode": "exact",
+        "observed_at": "2034-10-27T11:28:50.440Z",
+        "operation_id": "OP-98686137"
+      },
+      {
+        "dependency_alias": "registry-lookup",
+        "evidence_id": "EV-65945927",
+        "executor_alias": "provision-agent",
+        "external_reference": "WZ-364-A-18",
+        "latency_ms": 42,
+        "lookup_result": "no_match",
+        "match_mode": "exact",
+        "observed_at": "2034-10-27T11:29:38.372Z",
+        "operation_id": "OP-35165785"
+      },
+      {
+        "dependency_alias": "registry-lookup",
+        "evidence_id": "EV-32027785",
+        "executor_alias": "provision-agent",
+        "external_reference": "IO-836-Y-07",
+        "latency_ms": 37,
+        "lookup_result": "match",
+        "match_mode": "exact",
+        "observed_at": "2034-10-27T11:29:50.265Z",
+        "operation_id": "OP-59954679"
+      },
+      {
+        "dependency_alias": "registry-lookup",
+        "evidence_id": "EV-53896152",
+        "executor_alias": "provision-agent",
+        "external_reference": "WZ-364-A-18",
+        "latency_ms": 42,
+        "lookup_result": "match",
+        "match_mode": "exact",
+        "observed_at": "2034-10-27T11:29:38.755Z",
+        "operation_id": "OP-35165785"
+      }
+    ],
+    "processing_attempts": [
+      {
+        "completed_at": "2034-10-27T11:29:38.794Z",
+        "effect_created": true,
+        "evidence_id": "EV-94087242",
+        "executor_alias": "provision-agent",
+        "external_reference": "WZ-364-A-18",
+        "final_state": "completed",
+        "intake_alias": "queue-front",
+        "operation_id": "OP-35165785",
+        "received_at": "2034-10-27T11:29:38.218Z"
+      },
+      {
+        "completed_at": "2034-10-27T11:29:50.290Z",
+        "effect_created": true,
+        "evidence_id": "EV-48219422",
+        "executor_alias": "provision-agent",
+        "external_reference": "IO-836-Y-07",
+        "final_state": "completed",
+        "intake_alias": "queue-front",
+        "operation_id": "OP-59954679",
+        "received_at": "2034-10-27T11:29:50.212Z"
+      },
+      {
+        "completed_at": "2034-10-27T11:30:02.717Z",
+        "effect_created": true,
+        "evidence_id": "EV-86008956",
+        "executor_alias": "provision-agent",
+        "external_reference": "QS-865-X-55",
+        "final_state": "completed",
+        "intake_alias": "queue-front",
+        "operation_id": "OP-75743445",
+        "received_at": "2034-10-27T11:30:02.577Z"
+      },
+      {
+        "completed_at": "2034-10-27T11:29:14.797Z",
+        "effect_created": false,
+        "evidence_id": "EV-55119090",
+        "executor_alias": "provision-agent",
+        "external_reference": "KN617-G-26",
+        "final_state": "closed",
+        "intake_alias": "queue-front",
+        "operation_id": "OP-53213486",
+        "received_at": "2034-10-27T11:29:14.610Z"
+      },
+      {
+        "completed_at": "2034-10-27T11:28:50.512Z",
+        "effect_created": true,
+        "evidence_id": "EV-30304665",
+        "executor_alias": "provision-agent",
+        "external_reference": "CV-630-G-38",
+        "final_state": "completed",
+        "intake_alias": "queue-front",
+        "operation_id": "OP-98686137",
+        "received_at": "2034-10-27T11:28:50.338Z"
+      },
+      {
+        "completed_at": "2034-10-27T11:29:26.471Z",
+        "effect_created": true,
+        "evidence_id": "EV-89322209",
+        "executor_alias": "provision-agent",
+        "external_reference": "IS-796-Z-46",
+        "final_state": "completed",
+        "intake_alias": "queue-front",
+        "operation_id": "OP-54558826",
+        "received_at": "2034-10-27T11:29:26.274Z"
+      },
+      {
+        "completed_at": "2034-10-27T11:29:02.291Z",
+        "effect_created": true,
+        "evidence_id": "EV-89894376",
+        "executor_alias": "provision-agent",
+        "external_reference": "VH-413-P-85",
+        "final_state": "completed",
+        "intake_alias": "queue-front",
+        "operation_id": "OP-71353944",
+        "received_at": "2034-10-27T11:29:02.084Z"
+      }
+    ]
+  },
+  "title": "Incident 002 \u2014 Missing Provisioning Effect from Reference-Shape Defect",
+  "troubleshooting_question": "One submitted provisioning operation did not create its expected destination record. Review the surrounding operational evidence and identify the most likely root cause."
+}
