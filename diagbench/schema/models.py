@@ -18,7 +18,13 @@ EvidenceRelation = Literal[
     "ordered_before",
     "interval_seconds",
     "row_count",
+    "match_count",
     "preserve_literal",
+    "same_structural_pattern",
+    "structural_pattern_anomaly",
+    "structural_defect",
+    "length_delta",
+    "sequence_equals",
 ]
 
 
