@@ -4,16 +4,44 @@ Last updated: 2026-09-09.
 
 ## Handoff point
 
-The repository is on `feat/incident-family-002-format-defect`. Incident Family
-002 has been implemented for offline human review with a canonical development
-fixture, generic structural signatures and invariants, shape-ablation checks,
-anti-shortcut construction audits, and the existing-transformation expectation
-matrix. No Incident 002 provider experiment or experiment configuration exists.
+PR #4 has merged the reviewed Incident Family 002 benchmark into `main`. Work is
+now isolated on `experiment/incident-002-raw-development`. The branch freezes a
+six-seed development comparison set, adds explicit incident-family routing, and
+prepares a raw-only configuration for review. No Incident 002 provider call or
+result JSONL exists.
 
 No format-preserving validation or held-out provider observation exists. Do not
 rerun the development observation or tune the transformation after its 4/5
-result. Incident 002 construction is restricted to development seeds and has
-not generated or inspected validation or held-out instances.
+result. Incident 002 construction is restricted to development seeds. The
+seed-selection scan generated seeds 1000–1017 while applying the frozen
+first-occurrence rule; it did not generate or inspect validation or held-out
+instances.
+
+## Frozen Incident 002 development seeds
+
+Starting at 1000, seeds were inspected in ascending order and selected only
+when they introduced a previously unseen hidden generator-side defect class.
+The scan stopped as soon as all six classes were represented. The procedure is
+versioned as `incident-002-first-defect-class-occurrence-v1`.
+
+| Seed | Defect class | Structural template | Observable delta |
+|---:|---|---|---|
+| 1000 | `extra_separator` | `hyphenated_mixed_b` | `extra_separator` |
+| 1001 | `missing_separator` | `hyphenated_mixed_b` | `missing_separator` |
+| 1003 | `case_class_mismatch` | `underscored_mixed` | `case_class_mismatch` |
+| 1004 | `truncation` | `slashed_mixed` | `truncation` |
+| 1005 | `leading_zero_loss` | `slashed_mixed` | `numeric_run_leading_position_deletion` |
+| 1017 | `fixed_width_mismatch` | `slashed_mixed` | `fixed_width_mismatch` |
+
+This set is frozen for all future matched Incident 002 development conditions.
+It was not selected using model or transformation behavior and must not change
+in response to future results.
+
+The prepared raw pilot uses `raw-rca-v2`, `rca-taxonomy-v2`,
+`raw-rca-scorer-v2`, GPT-5.6 Luna, medium reasoning, omitted temperature, and
+one call for each of these seeds. It uses manifest schema v6, whose new
+`model_input_sha256` field hashes the exact rendered model-visible prompt. The
+historical `prompt_sha256` template-hash meaning remains unchanged.
 
 ## Frozen Incident 001 protocol
 
@@ -138,5 +166,5 @@ remain out of scope.
   dimensions.
 - Result artifacts are local/ignored; a collaboration-safe distribution policy
   remains to be chosen.
-- The runner directly constructs Incident Family 001 and needs a reviewed
-  family registry before broad multi-family evaluation.
+- The evaluation registry currently supports only Incident Families 001 and
+  002; adding another family requires explicit routing and seed-policy review.

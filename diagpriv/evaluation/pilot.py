@@ -7,7 +7,14 @@ from pathlib import Path
 import tomllib
 from typing import Any, Literal, Self
 
-from diagbench.generators.incident_001 import seed_split
+from diagpriv.evaluation.incident_families import (
+    INCIDENT_001_FAMILY,
+    INCIDENT_002_DEVELOPMENT_SEEDS,
+    INCIDENT_002_FAMILY,
+    INCIDENT_002_SEED_SELECTION_VERSION,
+    SUPPORTED_INCIDENT_FAMILIES,
+    evaluation_seed_split,
+)
 from diagpriv.evaluation.prompt import (
     PROMPT_SHA256 as PROMPT_SHA256_V1,
     PROMPT_VERSION as PROMPT_VERSION_V1,
@@ -37,6 +44,9 @@ SeedScope = Literal["development_and_validation", "development_only", "validatio
 class PilotDefinition:
     pilot_id: str
     provider: str
+    incident_family: str
+    manifest_schema_version: str
+    development_seed_selection_version: str | None
     condition: Literal[
         "raw",
         "redaction-v1",
@@ -97,6 +107,13 @@ class PilotDefinition:
         definition = cls(
             pilot_id=pilot["pilot_id"],
             provider=pilot["provider"],
+            incident_family=pilot.get("incident_family", INCIDENT_001_FAMILY),
+            manifest_schema_version=pilot.get(
+                "manifest_schema_version", "raw-rca-manifest-v5"
+            ),
+            development_seed_selection_version=pilot.get(
+                "development_seed_selection_version"
+            ),
             condition=pilot["condition"],
             prompt_version=pilot["prompt_version"],
             prompt_sha256=pilot["prompt_sha256"],
@@ -126,6 +143,15 @@ class PilotDefinition:
         return definition
 
     def validate(self) -> None:
+        if self.incident_family not in SUPPORTED_INCIDENT_FAMILIES:
+            raise ValueError(f"Unsupported incident family: {self.incident_family}")
+        if self.manifest_schema_version not in {
+            "raw-rca-manifest-v5",
+            "raw-rca-manifest-v6",
+        }:
+            raise ValueError(
+                f"Unsupported manifest schema: {self.manifest_schema_version}"
+            )
         if self.condition not in {
             "raw",
             "redaction-v1",
@@ -174,14 +200,40 @@ class PilotDefinition:
             raise ValueError("Validation-only pilot cannot contain development seeds")
         if self.seed_scope == "validation_only" and not self.validation_seeds:
             raise ValueError("Validation-only pilot must contain validation seeds")
-        if any(seed_split(seed) != "development" for seed in self.development_seeds):
+        if any(
+            evaluation_seed_split(self.incident_family, seed) != "development"
+            for seed in self.development_seeds
+        ):
             raise ValueError("Pilot development_seeds contains a non-development seed")
-        if any(seed_split(seed) != "validation" for seed in self.validation_seeds):
+        if any(
+            evaluation_seed_split(self.incident_family, seed) != "validation"
+            for seed in self.validation_seeds
+        ):
             raise ValueError("Pilot validation_seeds contains a non-validation seed")
         if len(set((*self.development_seeds, *self.validation_seeds))) != len(
             self.development_seeds
         ) + len(self.validation_seeds):
             raise ValueError("Pilot seed lists must not overlap")
+        if self.incident_family == INCIDENT_002_FAMILY:
+            if self.seed_scope != "development_only":
+                raise ValueError("Incident 002 pilot must be development-only")
+            if self.development_seeds != INCIDENT_002_DEVELOPMENT_SEEDS:
+                raise ValueError(
+                    "Incident 002 pilot must use exactly the frozen development seeds"
+                )
+            if (
+                self.development_seed_selection_version
+                != INCIDENT_002_SEED_SELECTION_VERSION
+            ):
+                raise ValueError(
+                    "Incident 002 pilot requires the frozen seed-selection version"
+                )
+            if self.manifest_schema_version != "raw-rca-manifest-v6":
+                raise ValueError("Incident 002 pilot requires manifest schema v6")
+        elif self.development_seed_selection_version is not None:
+            raise ValueError(
+                "Incident 002 seed-selection metadata is valid only for Incident 002"
+            )
         if not self.pricing_snapshot_path.is_file():
             raise ValueError("Pilot pricing snapshot does not exist")
 
@@ -189,6 +241,11 @@ class PilotDefinition:
         data: dict[str, Any] = {
             "pilot_id": self.pilot_id,
             "provider": self.provider,
+            "incident_family": self.incident_family,
+            "manifest_schema_version": self.manifest_schema_version,
+            "development_seed_selection_version": (
+                self.development_seed_selection_version
+            ),
             "condition": self.condition,
             "prompt_version": self.prompt_version,
             "prompt_sha256": self.prompt_sha256,

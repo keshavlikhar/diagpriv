@@ -35,8 +35,8 @@ scoring. The provider-facing path never receives the complete Incident object.
   metadata.
 - `ModelView` contains only the troubleshooting question, structured evidence,
   and log evidence.
-- `generators/incident_001.py` deterministically creates the current family and
-  enforces documented seed splits.
+- `generators/incident_001.py` and `generators/incident_002.py` create the two
+  deterministic families and enforce their construction scopes.
 - `incidents/incident_001_duplicate_payment/incident.json` is the canonical
   development fixture for seed 1001.
 
@@ -73,6 +73,8 @@ prompt.
 
 - `prompts/`, `prompt.py`, and `prompt_v2.py`: immutable prompt versions and
   hash verification.
+- `incident_families.py`: explicit family routing and frozen family-specific
+  evaluation seed sets.
 - `taxonomy.py` and `taxonomy_v2.py`: canonical output categories.
 - `response.py`: deterministic JSON parsing and schema validation.
 - `scoring.py` and `scoring_v2.py`: oracle-based RCA and evidence scoring.
@@ -81,7 +83,8 @@ prompt.
 - `runner.py`: seed protection, incident generation, condition selection,
   prompting, invocation, parsing, scoring, and manifest creation for one run.
 - `pilot.py`: TOML loading plus protocol/seed/config validation.
-- `manifest.py`: append-only JSONL records with backward-compatible loading.
+- `manifest.py`: append-only JSONL records with backward-compatible loading;
+  schema v6 adds an exact rendered model-input hash for new observations.
 - `reporting.py`: split summaries, individual response inspection, usage, and
   cost aggregation.
 - `pricing.py`: versioned cost snapshots outside scientific scoring.
@@ -137,8 +140,8 @@ ModelView, errors, results, or configuration files.
 3. Declare positive and negative diagnostic invariants and expected evidence.
 4. Prove ModelView/oracle separation and nuisance variation in tests.
 5. Audit wording and structure for answer leakage.
-6. Add a reviewed family registry before generalizing the current runner, which
-   directly constructs Incident Family 001.
+6. Add the family and its frozen evaluation seed policy to the reviewed family
+   registry; never infer a family from a seed number.
 
 ### Adding a provider
 
@@ -149,7 +152,8 @@ protocol explicitly defines them.
 
 ## Current architectural limitations
 
-- The runner is specialized to one incident family.
+- The family registry is explicit and currently limited to Incidents 001 and
+  002.
 - There is no artifact registry or remote results store.
 - Key management is an external operator procedure, not a production KMS
   integration.

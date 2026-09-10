@@ -22,9 +22,10 @@ observations, not proof of that hypothesis or evidence of production validity.
 | `tokenization-v1` | Development 1000–1004 | Frozen | 5/5 exact RCA |
 | `format-preserving-v1` | Development 1000–1004 | Frozen | 4/5 exact RCA |
 
-The active branch constructs Incident Family 002, in which reference structure
-is deliberately necessary to diagnose a missing provisioning effect. This is
-an offline benchmark-design checkpoint only; Incident 002 has no provider,
+Incident Family 002 is now a reviewed offline benchmark in which reference
+structure is deliberately necessary to diagnose a missing provisioning effect.
+The active experiment branch has frozen its six-seed development comparison set
+and prepared—but not executed—the raw pilot. Incident 002 still has no provider,
 validation, or held-out observations. The earlier small development results are
 observations, not general conclusions. Do not rerun completed experiments, run
 a privacy condition on validation, or inspect held-out seeds without explicit
