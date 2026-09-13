@@ -1,14 +1,14 @@
 # Current Status
 
-Last updated: 2026-09-09.
+Last updated: 2026-09-10.
 
 ## Handoff point
 
-PR #4 has merged the reviewed Incident Family 002 benchmark into `main`. Work is
-now isolated on `experiment/incident-002-raw-development`. The branch freezes a
-six-seed development comparison set, adds explicit incident-family routing, and
-prepares a raw-only configuration for review. No Incident 002 provider call or
-result JSONL exists.
+PR #6 has merged the Luna raw-development preparation checkpoint into `main`.
+Its six observations are frozen and its ignored JSONL must not be changed. The
+separate `experiment/incident-002-raw-sol-development` branch is based on that
+merged checkpoint and prepares a matched stronger-model qualification without
+making provider calls.
 
 No format-preserving validation or held-out provider observation exists. Do not
 rerun the development observation or tune the transformation after its 4/5
@@ -42,6 +42,34 @@ The prepared raw pilot uses `raw-rca-v2`, `rca-taxonomy-v2`,
 one call for each of these seeds. It uses manifest schema v6, whose new
 `model_input_sha256` field hashes the exact rendered model-visible prompt. The
 historical `prompt_sha256` template-hash meaning remains unchanged.
+
+## Frozen Incident 002 Luna raw observation
+
+The development-only Luna run is a diagnostic observation, not a general
+conclusion. It produced 6/6 valid responses, 4/6 exact RCA, and 4/6
+`overall_correct`. Outcome and subsequent action were correct in 6/6, trigger
+and failure mechanism in 4/6, and affected component in 5/6. Average evidence
+precision was 0.6750, recall 0.3125, and F1 approximately 0.423271. There were
+no provider, parser, rate-limit, or refusal failures.
+
+Seeds 1001 (`missing_separator`) and 1017 (`fixed_width_mismatch`) favored a
+dependency/retry explanation rather than the format/input-handling oracle. This
+result must not be rerun or used to revise the benchmark or protocol.
+
+The local append-only result has SHA-256
+`43004a011443fd2b2ca1789e4ce57198484b8cad01e50f80b240679148d6b425`.
+It remains ignored and untracked.
+
+## Prepared Incident 002 Sol qualification
+
+`experiments/incident_002_raw_sol_development.toml` changes the requested model
+to `gpt-5.6-sol` and otherwise retains the raw Luna protocol: the same six
+seeds, ModelViews, prompt, taxonomy, scorer, medium reasoning, omitted
+temperature, schema v6, and one call per seed. The configuration records the
+six frozen Luna `model_input_sha256` values and reconstructs each prompt during
+configuration validation. A mismatch fails before provider setup. No Sol
+provider result exists. Temperature is omitted to preserve the matched Luna
+decoding protocol; this does not claim that GPT-5.6 Sol rejects temperature.
 
 ## Frozen Incident 001 protocol
 

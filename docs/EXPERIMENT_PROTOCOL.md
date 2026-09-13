@@ -99,14 +99,27 @@ DiagPriv condition. They must not be replaced after observing model behavior.
 The evaluation registry rejects every other seed for Incident 002; its current
 pilot configuration also requires an empty validation and held-out set.
 
-### Prepared Incident 002 raw development pilot
+### Incident 002 raw development experiments
 
 `experiments/incident_002_raw_development.toml` binds Incident 002 and the six
 frozen seeds to the unchanged v2 RCA protocol, GPT-5.6 Luna with medium
 reasoning, omitted temperature, raw evidence, and one call per seed. The
-proposed append-only local result path is
+frozen append-only local result path is
 `results/incident_002_raw_development_gpt_5_6_luna_medium.jsonl`. Preparation
-and dry-run inspection do not authorize provider execution.
+commit `f71aad0f1b7670cfd27f9fe723048417e2d2e8f6` and result SHA-256
+`43004a011443fd2b2ca1789e4ce57198484b8cad01e50f80b240679148d6b425`
+identify that development observation.
+
+The separate `experiments/incident_002_raw_sol_development.toml` qualification
+changes only the substantive experimental variable `requested_model`, from
+`gpt-5.6-luna` to `gpt-5.6-sol`. Pilot/result identifiers and the separate Sol
+pricing snapshot are administrative provenance. The configuration embeds the
+frozen Luna `model_input_sha256` for each seed. Loading the configuration
+reconstructs every raw prompt and fails closed if any digest differs, before a
+provider is configured. Temperature remains omitted; no Sol-specific decoding
+parameter is introduced. The omission preserves the matched Luna decoding
+protocol and does not claim that GPT-5.6 Sol rejects temperature. This
+qualification requires separate execution approval.
 
 ## Evidence conditions
 

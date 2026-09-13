@@ -1,0 +1,16 @@
+[pricing]
+pricing_snapshot_id = "openai-gpt-5.6-sol-2026-09-10"
+provider = "openai"
+requested_model = "gpt-5.6-sol"
+effective_date = "2026-09-10"
+currency = "USD"
+unit_tokens = 1000000
+input_usd_per_unit = 4.00
+cached_input_usd_per_unit = 0.40
+cache_write_input_usd_per_unit = 5.00
+output_usd_per_unit = 20.00
+output_token_count_includes_reasoning = true
+long_context_threshold_input_tokens = 272000
+long_context_input_multiplier = 2.0
+long_context_output_multiplier = 1.5
+source = "https://developers.openai.com/api/docs/models/gpt-5.6-sol"
