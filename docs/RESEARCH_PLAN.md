@@ -73,8 +73,13 @@ provisioning effect. All data is fictional and synthetic.
     raw, 2/6 redaction, 0/6 HMAC, 1/6 tokenization, and 4/6
     format-preserving. The assessment is mixed, with directional support for
     the preregistered hypothesis.
-12. **Repeated-trial preparation:** two additional calls per seed-condition are
-    configured to measure output variability without replacing trial 1.
+12. **Incident 002 repeated trials:** two additional calls were attempted for
+    every seed-condition without replacing trial 1. The primary as-executed
+    analysis retains ten transport failures as missing responses.
+13. **Transport-recovery sensitivity:** one separately labeled attempt was made
+    for each of the ten failed cells. All ten were valid; they enter only a
+    sensitivity view and do not revise the primary result. The final frozen
+    findings are in `docs/INCIDENT_002_FINAL_FINDINGS.md`.
 
 ## Roadmap and decision gates
 

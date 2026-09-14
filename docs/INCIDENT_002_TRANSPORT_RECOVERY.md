@@ -2,12 +2,14 @@
 
 ## Status and scope
 
-Preparation only. No recovery provider call has been made.
+Completed and frozen. All ten preregistered attempt-1 recovery requests were
+made once; no second attempt occurred.
 
 Protocol: `incident-002-transport-recovery-v1`.
 Source code checkpoint: `e1bd3c125ae2042b81b5ad88d5c0093d6bd553eb`.
-Preparation branch: `experiment/incident-002-transport-recovery`, stacked on
-the frozen repeated-trials branch without merging or rebasing it.
+Preparation and result-documentation branch:
+`experiment/incident-002-transport-recovery`, stacked on the frozen
+repeated-trials branch.
 
 The original 60 repeated-trial invocations produced 50 valid responses and ten
 transport failures. Their JSONLs and the 30 trial-1 observations are immutable.
@@ -17,10 +19,10 @@ recovery is exclusively a **transport-recovery sensitivity analysis**.
 
 ## Exact sparse schedule
 
-One later attempt is permitted for each cell below, in this order. There are
-exactly ten future calls. No valid response, other failure, new seed, condition,
-or additional trial is eligible. This is an explicit list, not a Cartesian
-product of seeds and trials.
+One later attempt was permitted and completed for each cell below, in this
+order. No valid response, other failure, new seed, condition, or additional
+trial was eligible. This was an explicit list, not a Cartesian product of seeds
+and trials.
 
 | Condition | Seed | Logical trial | Original transport failure |
 |---|---:|---:|---|
@@ -131,7 +133,7 @@ uv run python -m diagpriv.evaluation.cli run-recovery \
   --results results/incident_002_sol_transport_recovery.jsonl
 ```
 
-Future execution, only after separate approval:
+The executed command is retained as protocol history and must not be rerun:
 
 ```bash
 uv run python -m diagpriv.evaluation.cli run-recovery \
@@ -142,6 +144,15 @@ uv run python -m diagpriv.evaluation.cli run-recovery \
 
 All source and recovery JSONLs remain ignored and untracked. The existing
 `inspect` command exposes the recovery responses and their source references.
+
+## Frozen recovery outcome
+
+The single authorized attempt produced 10/10 valid responses, 0/10 correct
+trigger, 0/10 correct failure mechanism, 0/10 exact RCA, and 7/10 correct
+component. There were no recovery provider, parser, rate-limit, or refusal
+failures and no second attempts. The immutable local recovery artifact is
+`results/incident_002_sol_transport_recovery.jsonl`, with SHA-256
+`87902fa3217aaca020cb2cd2df14effc19c8c97a6f823031ed171a6f0ef4747e`.
 
 ## Preregistered analysis views
 
@@ -168,8 +179,8 @@ the logical cell remains missing. Preserve both physical records either way.
 Do not append recovery rows to primary data and treat them as extra trials,
 choose the best answer, or silently prefer the latest record. Report the
 primary and sensitivity comparisons side by side, with missingness and
-provenance visible. This document preregisters that future analysis; no
-sensitivity outcome exists at preparation time.
+provenance visible. The completed sensitivity outcome is reported separately
+from the primary view in `docs/INCIDENT_002_FINAL_FINDINGS.md`.
 
 Use only the existing metrics: valid responses, exact RCA, `overall_correct`,
 all five causal dimensions, evidence precision/recall/F1, token usage,
