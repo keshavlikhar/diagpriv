@@ -63,6 +63,11 @@ def _run_pilot(args: argparse.Namespace) -> None:
         payload: dict[str, object] = {
             "execution": "pending",
             "pilot": definition.to_dict(),
+            "scheduled_calls": (
+                len(definition.development_seeds)
+                + len(definition.validation_seeds)
+            )
+            * definition.calls_per_seed,
         }
         if input_preflight is not None:
             payload["input_preflight"] = input_preflight
@@ -74,6 +79,10 @@ def _run_pilot(args: argparse.Namespace) -> None:
             )
         )
         return
+    if definition.trial_indices and args.results.exists():
+        raise SystemExit(
+            "Repeated-trial results path already exists; refusing to call provider"
+        )
     hmac_key = _external_hmac_key(definition)
     if definition.expected_model_input_sha256_by_seed:
         _input_preflight(definition, hmac_key=hmac_key)
@@ -81,10 +90,19 @@ def _run_pilot(args: argparse.Namespace) -> None:
 
     for seed in (*definition.development_seeds, *definition.validation_seeds):
         split = "development" if seed in definition.development_seeds else "validation"
-        for call_index in range(1, definition.calls_per_seed + 1):
-            experiment_id = (
-                f"{definition.pilot_id}-{split}-{seed}-call-{call_index}"
+        call_slots = (
+            tuple(
+                (trial_index, f"trial-{trial_index}")
+                for trial_index in definition.trial_indices
             )
+            if definition.trial_indices
+            else tuple(
+                (None, f"call-{call_index}")
+                for call_index in range(1, definition.calls_per_seed + 1)
+            )
+        )
+        for trial_index, call_label in call_slots:
+            experiment_id = f"{definition.pilot_id}-{split}-{seed}-{call_label}"
             run_raw_experiment(
                 RawRunConfig(
                     experiment_id=experiment_id,
@@ -109,6 +127,7 @@ def _run_pilot(args: argparse.Namespace) -> None:
                     expected_transformation_key_fingerprint=(
                         definition.expected_transformation_key_fingerprint
                     ),
+                    trial_index=trial_index,
                 ),
                 provider,
                 result_path=args.results,
@@ -121,43 +140,69 @@ def _input_preflight(
     definition: PilotDefinition, *, hmac_key: bytes | None
 ) -> dict[str, object]:
     hashes: dict[str, str] = {}
+    trial_hashes: dict[str, dict[str, str]] = {
+        str(index): {} for index in definition.trial_indices
+    }
     fingerprint: str | None = None
     for seed in (*definition.development_seeds, *definition.validation_seeds):
-        prepared = prepare_model_input(
-            RawRunConfig(
-                experiment_id=f"{definition.pilot_id}-input-preflight-{seed}",
-                seed=seed,
-                model=definition.requested_model,
-                model_version=None,
-                incident_family=definition.incident_family,
-                manifest_schema_version=definition.manifest_schema_version,
-                reasoning_effort=definition.reasoning_effort,
-                condition=definition.condition,
-                decoding_settings=dict(definition.decoding_settings),
-                intended_temperature=definition.intended_temperature,
-                temperature_omission_reason=(
-                    definition.temperature_omission_reason
-                ),
-                prompt_version=definition.prompt_version,
-                hmac_key=hmac_key,
-                transformation_key_id=definition.hmac_key_id,
-                expected_model_input_sha256=(
-                    definition.expected_model_input_sha256_by_seed[seed]
-                ),
-                expected_transformation_key_fingerprint=(
-                    definition.expected_transformation_key_fingerprint
-                ),
-            )
+        indices: tuple[int | None, ...] = (
+            definition.trial_indices if definition.trial_indices else (None,)
         )
-        hashes[str(seed)] = prepared.model_input_sha256
-        if prepared.transformation_key_fingerprint is not None:
-            fingerprint = prepared.transformation_key_fingerprint
+        prepared_for_seed = []
+        for trial_index in indices:
+            prepared = prepare_model_input(
+                RawRunConfig(
+                    experiment_id=(
+                        f"{definition.pilot_id}-input-preflight-{seed}"
+                    ),
+                    seed=seed,
+                    model=definition.requested_model,
+                    model_version=None,
+                    incident_family=definition.incident_family,
+                    manifest_schema_version=definition.manifest_schema_version,
+                    reasoning_effort=definition.reasoning_effort,
+                    condition=definition.condition,
+                    decoding_settings=dict(definition.decoding_settings),
+                    intended_temperature=definition.intended_temperature,
+                    temperature_omission_reason=(
+                        definition.temperature_omission_reason
+                    ),
+                    prompt_version=definition.prompt_version,
+                    hmac_key=hmac_key,
+                    transformation_key_id=definition.hmac_key_id,
+                    expected_model_input_sha256=(
+                        definition.expected_model_input_sha256_by_seed[seed]
+                    ),
+                    expected_transformation_key_fingerprint=(
+                        definition.expected_transformation_key_fingerprint
+                    ),
+                    trial_index=trial_index,
+                )
+            )
+            prepared_for_seed.append(prepared)
+            if trial_index is not None:
+                trial_hashes[str(trial_index)][str(seed)] = (
+                    prepared.model_input_sha256
+                )
+            if prepared.transformation_key_fingerprint is not None:
+                fingerprint = prepared.transformation_key_fingerprint
+        distinct_hashes = {
+            prepared.model_input_sha256 for prepared in prepared_for_seed
+        }
+        if len(distinct_hashes) != 1:
+            raise ValueError(
+                f"Trial index altered model-visible input for seed {seed}"
+            )
+        hashes[str(seed)] = prepared_for_seed[0].model_input_sha256
     data: dict[str, object] = {
         "status": "verified",
         "model_input_sha256_by_seed": hashes,
     }
     if definition.hmac_key_id is not None:
         data["transformation_key_id"] = definition.hmac_key_id
+    if definition.trial_indices:
+        data["trial_indices"] = list(definition.trial_indices)
+        data["model_input_sha256_by_trial"] = trial_hashes
     if fingerprint is not None:
         data["transformation_key_fingerprint"] = fingerprint
     return data
