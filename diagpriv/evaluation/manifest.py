@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 import json
 from pathlib import Path
 import re
@@ -12,6 +12,90 @@ from diagpriv.evaluation.providers import SanitizedAPIError
 from diagpriv.evaluation.response import ParsedResponse
 from diagpriv.evaluation.scoring import RCAScore
 from diagpriv.evaluation.scoring_v2 import RCAScoreV2
+
+
+@dataclass(frozen=True, slots=True)
+class RecoveryProvenance:
+    """Local provenance for one later attempt, never part of model input."""
+
+    recovery_protocol_version: str
+    recovery_attempt_index: int
+    recovery_of_trial_index: int
+    original_condition: str
+    original_seed: int
+    original_failure_type: str
+    original_experiment_id: str
+    original_result_artifact: str
+    original_result_artifact_sha256: str
+
+    def __post_init__(self) -> None:
+        if self.recovery_protocol_version != "incident-002-transport-recovery-v1":
+            raise ValueError("Unsupported recovery protocol")
+        if (
+            type(self.recovery_attempt_index) is not int
+            or self.recovery_attempt_index != 1
+        ):
+            raise ValueError("Recovery permits attempt index 1 only")
+        if (
+            type(self.recovery_of_trial_index) is not int
+            or self.recovery_of_trial_index not in {2, 3}
+        ):
+            raise ValueError("Recovery retains logical trial 2 or 3")
+        if self.original_condition not in {"redaction-v1", "tokenization-v1"}:
+            raise ValueError("Condition is not eligible for transport recovery")
+        if (
+            type(self.original_seed) is not int
+            or self.original_seed not in {1001, 1003, 1004, 1005, 1017}
+        ):
+            raise ValueError("Seed is not eligible for transport recovery")
+        if self.original_failure_type not in {"TimeoutError", "URLError"}:
+            raise ValueError("Recovery requires a recorded transport failure")
+        if (
+            not isinstance(self.original_experiment_id, str)
+            or not self.original_experiment_id
+        ):
+            raise ValueError("Recovery requires an original experiment ID")
+        artifact = Path(self.original_result_artifact)
+        if (
+            artifact.is_absolute()
+            or artifact.parts[:1] != ("results",)
+            or ".." in artifact.parts
+        ):
+            raise ValueError("Recovery source must be a relative results artifact")
+        if (
+            not isinstance(self.original_result_artifact_sha256, str)
+            or re.fullmatch(r"[0-9a-f]{64}", self.original_result_artifact_sha256) is None
+        ):
+            raise ValueError("Recovery requires an immutable source artifact SHA-256")
+
+    def to_dict(self) -> dict[str, object]:
+        return asdict(self)
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> Self:
+        return cls(**data)
+
+
+def validate_recovery_identity(
+    schema: str,
+    trial_index: int | None,
+    seed: int,
+    condition: str,
+    provenance: RecoveryProvenance | None,
+) -> None:
+    """Fail before invocation when recovery metadata and logical identity differ."""
+    if schema != "raw-rca-manifest-v8":
+        if provenance is not None:
+            raise ValueError("Recovery provenance is valid only in manifest schema v8")
+        return
+    if not isinstance(provenance, RecoveryProvenance):
+        raise ValueError("Manifest schema v8 requires recovery provenance")
+    if (trial_index, seed, condition) != (
+        provenance.recovery_of_trial_index,
+        provenance.original_seed,
+        provenance.original_condition,
+    ):
+        raise ValueError("Recovery provenance differs from logical trial identity")
 
 
 @dataclass(frozen=True, slots=True)
@@ -59,6 +143,7 @@ class ExperimentManifest:
     score: RCAScore | RCAScoreV2 | None
     model_input_sha256: str | None = None
     trial_index: int | None = None
+    recovery_provenance: RecoveryProvenance | None = None
 
     def __post_init__(self) -> None:
         if self.manifest_schema_version not in {
@@ -68,6 +153,7 @@ class ExperimentManifest:
             "raw-rca-manifest-v5",
             "raw-rca-manifest-v6",
             "raw-rca-manifest-v7",
+            "raw-rca-manifest-v8",
         }:
             raise ValueError(
                 f"Unsupported manifest schema: {self.manifest_schema_version}"
@@ -75,10 +161,13 @@ class ExperimentManifest:
         if self.manifest_schema_version in {
             "raw-rca-manifest-v6",
             "raw-rca-manifest-v7",
+            "raw-rca-manifest-v8",
         }:
             if not isinstance(self.model_input_sha256, str) or re.fullmatch(
                 r"[0-9a-f]{64}", self.model_input_sha256
             ) is None:
+                if self.manifest_schema_version == "raw-rca-manifest-v8":
+                    raise ValueError("Manifest schema v8 requires model_input_sha256")
                 raise ValueError(
                     "Manifest schema v6 or v7 requires model_input_sha256"
                 )
@@ -86,15 +175,26 @@ class ExperimentManifest:
             raise ValueError(
                 "model_input_sha256 is valid only in manifest schema v6 or v7"
             )
-        if self.manifest_schema_version == "raw-rca-manifest-v7":
+        if self.manifest_schema_version in {
+            "raw-rca-manifest-v7", "raw-rca-manifest-v8",
+        }:
             if (
                 isinstance(self.trial_index, bool)
                 or not isinstance(self.trial_index, int)
                 or self.trial_index < 1
             ):
+                if self.manifest_schema_version == "raw-rca-manifest-v8":
+                    raise ValueError("Manifest schema v8 requires a positive trial_index")
                 raise ValueError("Manifest schema v7 requires a positive trial_index")
         elif self.trial_index is not None:
             raise ValueError("trial_index is valid only in manifest schema v7")
+        validate_recovery_identity(
+            self.manifest_schema_version,
+            self.trial_index,
+            self.seed,
+            self.condition,
+            self.recovery_provenance,
+        )
 
     def to_dict(self) -> dict[str, object]:
         data: dict[str, object] = {
@@ -146,6 +246,8 @@ class ExperimentManifest:
             data["model_input_sha256"] = self.model_input_sha256
         if self.trial_index is not None:
             data["trial_index"] = self.trial_index
+        if self.recovery_provenance is not None:
+            data["recovery_provenance"] = self.recovery_provenance.to_dict()
         return data
 
     def to_json(self, *, indent: int | None = 2) -> str:
@@ -174,6 +276,9 @@ class ExperimentManifest:
             raise ValueError("Manifest sanitized API error must be an object or null")
         requested_model = data.get("requested_model", data.get("model"))
         model_version = data.get("model_version_metadata", data.get("model_version"))
+        recovery_data = data.get("recovery_provenance")
+        if recovery_data is not None and not isinstance(recovery_data, dict):
+            raise ValueError("Recovery provenance must be an object or null")
         return cls(
             manifest_schema_version=data.get(
                 "manifest_schema_version", "raw-rca-manifest-v5"
@@ -226,6 +331,11 @@ class ExperimentManifest:
             score=score,
             model_input_sha256=data.get("model_input_sha256"),
             trial_index=data.get("trial_index"),
+            recovery_provenance=(
+                None
+                if recovery_data is None
+                else RecoveryProvenance.from_dict(recovery_data)
+            ),
         )
 
     @classmethod

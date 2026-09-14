@@ -4,11 +4,12 @@ Last updated: 2026-09-14.
 
 ## Handoff point
 
-PR #6 has merged the Luna raw-development preparation checkpoint into `main`.
-The frozen Sol raw-qualification preparation is commit `71af881`, and its six
-completed observations are preserved locally. The four matched privacy
-conditions have now completed trial 1 and are frozen. The repeated-trial
-preparation adds trials 2 and 3 without replacing any existing observation.
+Incident 002 experimentation is complete for the current development stage.
+The frozen Sol raw observation, four matched privacy conditions, two added
+trials per seed-condition, and the separately labeled transport-recovery
+sensitivity attempt are complete. All observations remain immutable. The final
+primary and sensitivity findings, interpretation limits, and complete artifact
+ledger are frozen in `docs/INCIDENT_002_FINAL_FINDINGS.md`.
 
 No format-preserving validation or held-out provider observation exists. Do not
 rerun the development observation or tune the transformation after its 4/5
@@ -91,7 +92,47 @@ observation:
 The assessment is **mixed, with directional support for the preregistered
 hypothesis**. It is not confirmation or a statistically significant result.
 See `docs/INCIDENT_002_REPEATED_TRIALS.md` for the frozen artifact hashes and
-the prepared two-call extension to three total trials per seed-condition.
+the preregistered two-call extension to three total trials per seed-condition.
+
+## Frozen Incident 002 repeated-trial and recovery results
+
+The primary as-executed result has 80 valid responses across 90 planned
+observations, including trial 1. Ten transport failures remain missing RCA
+observations; none was retried or replaced. The assessment is **mixed / unstable**.
+
+| Condition | Valid /18 | Trigger correct | Mechanism correct | Exact RCA | Overall correct |
+|---|---:|---:|---:|---:|---:|
+| Raw | 18 | 15 | 15 | 9 | 9 |
+| Redaction v1 | 9 | 2 | 2 | 0 | 0 |
+| HMAC v1 | 18 | 1 | 1 | 1 | 1 |
+| Tokenization v1 | 17 | 2 | 2 | 0 | 0 |
+| Format-preserving v1 | 18 | 10 | 10 | 4 | 4 |
+
+Counts are observed correct answers across the 18 planned slots per condition;
+missing provider responses are not incorrect model diagnoses. Nine failures
+were redaction transport failures; one was a tokenization timeout. There were
+no parser, rate-limit, or refusal failures. All 60 model-input hashes matched
+trial 1. The original repeated-trial artifact hashes are frozen in the recovery
+protocol and its configuration.
+
+The separately preregistered recovery attempted each of those ten cells once
+and produced 10/10 valid responses. Recovery achieved 0/10 correct trigger,
+0/10 correct failure mechanism, 0/10 exact RCA, and 7/10 correct component,
+with no recovery failure and no second attempt. The sensitivity view therefore
+contains 18 valid observations per condition:
+
+| Condition | Valid | Trigger | Failure mechanism | Exact RCA | Component |
+|---|---:|---:|---:|---:|---:|
+| Raw | 18/18 | 15/18 | 15/18 | 9/18 | 12/18 |
+| Redaction-v1 | 18/18 | 2/18 | 2/18 | 0/18 | 10/18 |
+| HMAC-v1 | 18/18 | 1/18 | 1/18 | 1/18 | 13/18 |
+| Tokenization-v1 | 18/18 | 2/18 | 2/18 | 0/18 | 13/18 |
+| Format-preserving-v1 | 18/18 | 10/18 | 10/18 | 4/18 | 10/18 |
+
+The recovery records are sensitivity-analysis substitutions only. They do not
+revise the primary table above or replace the original failure records. See
+`docs/INCIDENT_002_FINAL_FINDINGS.md` for evidence metrics, scientific
+interpretation, and artifact hashes.
 
 ## Frozen Incident 001 protocol
 
@@ -177,6 +218,12 @@ experiment IDs.
 | `results/incident_002_hmac_v1_sol_development_gpt_5_6_sol_medium.jsonl` | `20f91837846ed9bac0d50d09671aee4166033e58d51622aed6905a628edb71ad` |
 | `results/incident_002_tokenization_v1_sol_development_gpt_5_6_sol_medium.jsonl` | `f6d0f56f65d44140692a6d5a3eebff6a662897356346d8872b4a804e55d694d3` |
 | `results/incident_002_format_preserving_v1_sol_development_gpt_5_6_sol_medium.jsonl` | `03cce974a6ac2ad9f5d7d393ab6b139fcbb6072d44ccb8a080e1a73056661fa0` |
+| `results/incident_002_raw_sol_repeated_trials_2_3.jsonl` | `ad8d8e059efdea20c7a25f325c1bf3f3ae5e65b7c2eb7eef6953f0039528026a` |
+| `results/incident_002_redaction_v1_sol_repeated_trials_2_3.jsonl` | `56f43a72ce4bdf8160cade695bfc83995ef29846ebbe0b10d887b6b87040ee15` |
+| `results/incident_002_hmac_v1_sol_repeated_trials_2_3.jsonl` | `b2fda91b0c958dcc11e405c30c4431a982735070f1667b86b155415f407f1b31` |
+| `results/incident_002_tokenization_v1_sol_repeated_trials_2_3.jsonl` | `441a603bb1e31f373ac4920eaf31e0882d3538f833b683e1c159f2ec7cde11df` |
+| `results/incident_002_format_preserving_v1_sol_repeated_trials_2_3.jsonl` | `cb1b17e8ad57ce4788ddb3d37e5249fde27263d912f16f03664dc506956df318` |
+| `results/incident_002_sol_transport_recovery.jsonl` | `87902fa3217aaca020cb2cd2df14effc19c8c97a6f823031ed171a6f0ef4747e` |
 
 Earlier raw-v1 HTTP failures and the seed-1000 taxonomy diagnostic remain local
 infrastructure/development history. The HTTP 400 attempts are not RCA
@@ -191,13 +238,14 @@ sensitive-value format for diagnosis. Consequently, the current result cannot
 establish whether format preservation adds utility beyond ordinary
 relationship-preserving pseudonymization.
 
-Incident Family 002 now makes visible external-reference structure explicitly
+Incident Family 002 makes visible external-reference structure explicitly
 necessary for its intended RCA by combining one shape anomaly with healthy
-controls and non-unique lookup-miss/latency/dependency distractors. It is an
-offline construction under review, not evidence that format preservation
-improves model utility. Its initial defect set is limited to transformations
-already represented by `format-preserving-v1`; semantic and check-digit defects
-remain out of scope.
+controls and non-unique lookup-miss/latency/dependency distractors. Repeated
+development observations provide directional support for the diagnostic-
+invariant hypothesis, but do not establish causality, statistical significance,
+general model behavior, Raw ≈ Format-preserving, or a universal method ranking.
+Its initial defect set is limited to transformations already represented by
+`format-preserving-v1`; semantic and check-digit defects remain out of scope.
 
 ## Immediate prohibitions
 
@@ -212,8 +260,16 @@ remain out of scope.
 
 ## Known limitations
 
-- Incident 002 has only one trial over six seeds per condition. Current scores
-  cannot establish generality, stability, or statistical significance.
+- Incident 002 has three logical trials on six development seeds per condition.
+  The primary analysis retains ten transport failures; later valid recovery
+  responses appear only in a separate sensitivity analysis. Neither view can
+  establish generality, statistical significance, or causality.
+- Evidence-overlap metrics did not track causal correctness, and component
+  ownership remained model-sensitive.
+- Format-preserving seed 1005 missed the causal explanation in all three trials
+  despite all applicable declared structural invariants being preserved.
+  Invariant preservation is not demonstrated to be sufficient for reliable
+  model use.
 - Development and validation samples are small and generated by one family.
 - No human difficulty or evidence-sufficiency study has been completed.
 - Provider determinism is not guaranteed even with fixed input and one call.

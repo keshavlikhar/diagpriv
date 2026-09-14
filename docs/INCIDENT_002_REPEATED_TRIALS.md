@@ -2,19 +2,20 @@
 
 ## Status and purpose
 
-This document preregisters two additional GPT-5.6 Sol observations for every
-Incident 002 development seed-condition pair. The purpose is to estimate
-model-output variability and assess whether the trial-1 transformation ordering
-is stable. It does not repair, replace, or reinterpret trial 1.
+Completed and frozen. This document originally preregistered two additional
+GPT-5.6 Sol observations for every Incident 002 development seed-condition
+pair. The execution attempted all 60 calls once and produced 50 valid responses
+and ten transport failures. It does not repair, replace, or reinterpret trial 1.
 
 The original hypothesis remains:
 
 `Raw ≈ Format-preserving > HMAC / Tokenization / Redaction`
 
-especially for `trigger` and `failure_mechanism`. The accepted trial-1
-assessment remains **mixed, with directional support for the preregistered
-hypothesis**. Three trials per cell remain development observations and do not
-support claims of statistical significance or general model behavior.
+especially for `trigger` and `failure_mechanism`. The final primary and
+transport-recovered sensitivity findings are frozen in
+`docs/INCIDENT_002_FINAL_FINDINGS.md`. Three trials per cell remain development
+observations and do not support claims of statistical significance, causality,
+or general model behavior.
 
 ## Frozen trial-1 observations and artifacts
 
@@ -53,9 +54,10 @@ namespaces, HMAC key protocol, and invariants are unchanged.
 - A provider, parser, rate-limit, or refusal failure remains its attempted
   observation. There is no application-level retry or replacement policy.
 
-This schedules exactly `6 seeds × 5 conditions × 2 trials = 60` new calls and
-creates 90 observations after combining the 30 immutable trial-1 observations
-with the 60 future observations.
+This scheduled exactly `6 seeds × 5 conditions × 2 trials = 60` new calls,
+creating 90 attempted observations after combining the 30 immutable trial-1
+observations with trials 2 and 3. Ten attempted repeated-trial observations
+were transport failures and remain missing in the primary analysis.
 
 ## Input identity
 
@@ -91,13 +93,13 @@ For every condition, report:
 Component localization is not combined with trigger/mechanism correctness into
 a new causal-core metric.
 
-## Configurations, result paths, and commands
+## Configurations, result paths, and historical commands
 
-Each future result path is append-only, ignored by Git, and contains both trial
-2 and trial 3 records for one condition. Execution refuses to start if that
-path already exists; interrupted or failed runs require separate human review.
+Each completed result path is append-only, ignored by Git, and contains both
+trial 2 and trial 3 records for one condition. The files must not be rerun,
+overwritten, or committed.
 
-| Condition | Configuration | Proposed result path |
+| Condition | Configuration | Frozen result path |
 |---|---|---|
 | Raw | `experiments/incident_002_raw_sol_repeated_trials.toml` | `results/incident_002_raw_sol_repeated_trials_2_3.jsonl` |
 | Redaction v1 | `experiments/incident_002_redaction_v1_sol_repeated_trials.toml` | `results/incident_002_redaction_v1_sol_repeated_trials_2_3.jsonl` |
@@ -105,7 +107,8 @@ path already exists; interrupted or failed runs require separate human review.
 | Tokenization v1 | `experiments/incident_002_tokenization_v1_sol_repeated_trials.toml` | `results/incident_002_tokenization_v1_sol_repeated_trials_2_3.jsonl` |
 | Format-preserving v1 | `experiments/incident_002_format_preserving_v1_sol_repeated_trials.toml` | `results/incident_002_format_preserving_v1_sol_repeated_trials_2_3.jsonl` |
 
-Future execution commands are:
+The commands used to create these frozen artifacts are retained only as
+protocol history. They are not authorization to rerun them:
 
 ```bash
 uv run python -m diagpriv.evaluation.cli run-pilot --config experiments/incident_002_raw_sol_repeated_trials.toml --results results/incident_002_raw_sol_repeated_trials_2_3.jsonl --execute
@@ -115,8 +118,32 @@ uv run python -m diagpriv.evaluation.cli run-pilot --config experiments/incident
 uv run python -m diagpriv.evaluation.cli run-pilot --config experiments/incident_002_format_preserving_v1_sol_repeated_trials.toml --results results/incident_002_format_preserving_v1_sol_repeated_trials_2_3.jsonl --execute
 ```
 
-No command is authorized until separate human approval after review of the
-preparation commit.
+No repeated-trial command is authorized again under these experiment IDs.
+
+## Frozen repeated-trial artifacts and primary result
+
+| Condition | Trials 2–3 artifact SHA-256 |
+|---|---|
+| Raw | `ad8d8e059efdea20c7a25f325c1bf3f3ae5e65b7c2eb7eef6953f0039528026a` |
+| Redaction-v1 | `56f43a72ce4bdf8160cade695bfc83995ef29846ebbe0b10d887b6b87040ee15` |
+| HMAC-v1 | `b2fda91b0c958dcc11e405c30c4431a982735070f1667b86b155415f407f1b31` |
+| Tokenization-v1 | `441a603bb1e31f373ac4920eaf31e0882d3538f833b683e1c159f2ec7cde11df` |
+| Format-preserving-v1 | `cb1b17e8ad57ce4788ddb3d37e5249fde27263d912f16f03664dc506956df318` |
+
+The primary as-executed result combines trial 1 with trials 2 and 3 while
+retaining the ten transport failures as missing responses:
+
+| Condition | Valid /18 | Trigger | Failure mechanism | Exact RCA | Overall correct |
+|---|---:|---:|---:|---:|---:|
+| Raw | 18 | 15 | 15 | 9 | 9 |
+| Redaction-v1 | 9 | 2 | 2 | 0 | 0 |
+| HMAC-v1 | 18 | 1 | 1 | 1 | 1 |
+| Tokenization-v1 | 17 | 2 | 2 | 0 | 0 |
+| Format-preserving-v1 | 18 | 10 | 10 | 4 | 4 |
+
+Recovery never changes this primary view. See
+`docs/INCIDENT_002_TRANSPORT_RECOVERY.md` for the separately labeled
+sensitivity protocol and outcome.
 
 ## Cost estimate
 

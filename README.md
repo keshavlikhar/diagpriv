@@ -22,14 +22,16 @@ observations, not proof of that hypothesis or evidence of production validity.
 | `tokenization-v1` | Development 1000–1004 | Frozen | 5/5 exact RCA |
 | `format-preserving-v1` | Development 1000–1004 | Frozen | 4/5 exact RCA |
 
-Incident Family 002 is now a reviewed offline benchmark in which reference
+Incident Family 002 is a reviewed synthetic benchmark in which reference
 structure is deliberately necessary to diagnose a missing provisioning effect.
-The active experiment branch has frozen its six-seed development comparison set
-and prepared—but not executed—the raw pilot. Incident 002 still has no provider,
-validation, or held-out observations. The earlier small development results are
-observations, not general conclusions. Do not rerun completed experiments, run
-a privacy condition on validation, or inspect held-out seeds without explicit
-research approval.
+Its six-seed, five-condition, three-trial development comparison and separate
+transport-recovery sensitivity analysis are complete and frozen. Raw achieved
+15/18 correct triggers and failure mechanisms; format-preserving-v1 achieved
+10/18; redaction-v1, HMAC-v1, and tokenization-v1 achieved 2/18, 1/18, and 2/18
+respectively. These are directional development observations, not causal or
+general conclusions. No Incident 002 validation or held-out observation exists.
+Do not rerun completed experiments, run a privacy condition on validation, or
+inspect held-out seeds without explicit research approval.
 
 See [CURRENT_STATUS](docs/CURRENT_STATUS.md) for immutable artifact hashes and
 known limitations, and [RESEARCH_PLAN](docs/RESEARCH_PLAN.md) for the roadmap.
@@ -83,6 +85,7 @@ uv run python -m diagbench.generators.incident_002 --seed 1001
 - [Tokenization baseline specification](docs/tokenization_v1.md)
 - [Format-preserving baseline specification](docs/format_preserving_v1.md)
 - [Incident 002 protocol](docs/incident_002_protocol.md)
+- [Incident 002 final development findings](docs/INCIDENT_002_FINAL_FINDINGS.md)
 
 ## Safety and scope
 
