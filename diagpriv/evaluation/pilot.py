@@ -66,6 +66,10 @@ class PilotDefinition:
     validation_seeds: tuple[int, ...]
     held_out_seeds: tuple[int, ...]
     calls_per_seed: int
+    trial_indices: tuple[int, ...]
+    repetition_protocol_version: str | None
+    historical_trial_count: int | None
+    target_total_trials: int | None
     requested_model: str
     model_version_metadata_environment_variable: str | None
     reasoning_effort: str
@@ -146,6 +150,10 @@ class PilotDefinition:
             validation_seeds=tuple(pilot["validation_seeds"]),
             held_out_seeds=tuple(pilot["held_out_seeds"]),
             calls_per_seed=pilot["calls_per_seed"],
+            trial_indices=tuple(pilot.get("trial_indices", ())),
+            repetition_protocol_version=pilot.get("repetition_protocol_version"),
+            historical_trial_count=pilot.get("historical_trial_count"),
+            target_total_trials=pilot.get("target_total_trials"),
             requested_model=model["requested_model"],
             model_version_metadata_environment_variable=model.get(
                 "version_metadata_environment_variable"
@@ -185,6 +193,7 @@ class PilotDefinition:
         if self.manifest_schema_version not in {
             "raw-rca-manifest-v5",
             "raw-rca-manifest-v6",
+            "raw-rca-manifest-v7",
         }:
             raise ValueError(
                 f"Unsupported manifest schema: {self.manifest_schema_version}"
@@ -214,6 +223,56 @@ class PilotDefinition:
             )
         if self.calls_per_seed < 1:
             raise ValueError("calls_per_seed must be positive")
+        if self.manifest_schema_version == "raw-rca-manifest-v7":
+            if not self.repetition_protocol_version:
+                raise ValueError(
+                    "Manifest schema v7 requires a repetition protocol version"
+                )
+            if (
+                isinstance(self.historical_trial_count, bool)
+                or not isinstance(self.historical_trial_count, int)
+                or self.historical_trial_count < 1
+                or isinstance(self.target_total_trials, bool)
+                or not isinstance(self.target_total_trials, int)
+                or self.target_total_trials <= self.historical_trial_count
+            ):
+                raise ValueError(
+                    "Manifest schema v7 requires valid historical and target trial counts"
+                )
+            expected_indices = tuple(
+                range(self.historical_trial_count + 1, self.target_total_trials + 1)
+            )
+            if self.trial_indices != expected_indices:
+                raise ValueError(
+                    "Trial indices must continue consecutively after historical trials"
+                )
+            if len(self.trial_indices) != self.calls_per_seed:
+                raise ValueError(
+                    "Manifest schema v7 requires one trial index per call"
+                )
+            if (
+                any(
+                    isinstance(index, bool)
+                    or not isinstance(index, int)
+                    or index < 1
+                    for index in self.trial_indices
+                )
+                or len(set(self.trial_indices)) != len(self.trial_indices)
+                or tuple(sorted(self.trial_indices)) != self.trial_indices
+            ):
+                raise ValueError(
+                    "Manifest schema v7 trial indices must be unique positive "
+                    "integers in ascending order"
+                )
+        elif any(
+            value is not None
+            for value in (
+                self.repetition_protocol_version,
+                self.historical_trial_count,
+                self.target_total_trials,
+            )
+        ) or self.trial_indices:
+            raise ValueError("Repeated-trial metadata requires manifest schema v7")
         if self.effective_temperature != _optional_temperature(
             self.decoding_settings.get("temperature")
         ):
@@ -265,8 +324,11 @@ class PilotDefinition:
                 raise ValueError(
                     "Incident 002 pilot requires the frozen seed-selection version"
                 )
-            if self.manifest_schema_version != "raw-rca-manifest-v6":
-                raise ValueError("Incident 002 pilot requires manifest schema v6")
+            if self.manifest_schema_version not in {
+                "raw-rca-manifest-v6",
+                "raw-rca-manifest-v7",
+            }:
+                raise ValueError("Incident 002 pilot requires manifest schema v6 or v7")
         elif self.development_seed_selection_version is not None:
             raise ValueError(
                 "Incident 002 seed-selection metadata is valid only for Incident 002"
@@ -352,6 +414,20 @@ class PilotDefinition:
             "validation_seeds": list(self.validation_seeds),
             "held_out_seeds": list(self.held_out_seeds),
             "calls_per_seed": self.calls_per_seed,
+            **(
+                {"trial_indices": list(self.trial_indices)}
+                if self.trial_indices
+                else {}
+            ),
+            **(
+                {
+                    "repetition_protocol_version": self.repetition_protocol_version,
+                    "historical_trial_count": self.historical_trial_count,
+                    "target_total_trials": self.target_total_trials,
+                }
+                if self.repetition_protocol_version is not None
+                else {}
+            ),
             "requested_model": self.requested_model,
             "model_version_metadata_environment_variable": (
                 self.model_version_metadata_environment_variable

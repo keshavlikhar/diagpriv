@@ -45,6 +45,14 @@ does not hash decoding settings, transport fields, credentials, or any hidden
 oracle data. Historical observations are not retroactively augmented or
 rewritten.
 
+Repeated Incident 002 observations use `raw-rca-manifest-v7`. Schema v7 keeps
+the v6 rendered-input hash and requires a positive integer `trial_index`.
+Historical schema-v6 observations do not acquire this field; the repeated-trial
+analysis protocol maps those frozen records to trial 1 externally. Trial index
+is provenance only and never enters the rendered prompt. The reviewed configs
+schedule only indices 2 and 3 and require them to continue consecutively after
+the one historical trial.
+
 The prompt exposes the complete fixed taxonomy but no family-specific answer.
 The required canonical dimensions are:
 
@@ -124,27 +132,34 @@ result produced 6/6 valid responses, 4/6 exact RCA, and 4/6
 `overall_correct`; its SHA-256 is
 `b8bdaef010a74bc5256363c818c914e146172160e3745bc7a8e9407e775e5c0f`.
 
-### Prepared Incident 002 Sol privacy comparison
+### Incident 002 Sol privacy comparison and repetition
 
-The four privacy configurations are prepared together on the six frozen seeds
+The four privacy configurations were executed together on the six frozen seeds
 using GPT-5.6 Sol, medium reasoning, omitted temperature, one call per seed,
 and unchanged v2 prompt, taxonomy, scorer, evidence, and manifest semantics.
-Each configuration preregisters the exact transformed `model_input_sha256` for
-every seed. Dry-run and execution preflight construct all six prompts and fail
-before provider setup on any digest mismatch. For HMAC, preflight also checks
-the established non-secret key fingerprint while keeping the key external.
+Each configuration preregistered the exact transformed `model_input_sha256` for
+every seed. HMAC also checked the established non-secret key fingerprint while
+keeping the key external.
 
-No new manifest version or transformed-ModelView hash is introduced: schema v6
-already records the exact rendered model input. Primary reporting remains exact
-RCA, `overall_correct`, each RCA dimension, evidence precision/recall/F1,
-response/failure counts, token usage, and cost. Trigger and failure mechanism
-are preregistered as the most diagnostic Incident 002 dimensions because raw
-Sol achieved 6/6 on both; component accuracy remains fully reported.
-
-The preregistered development hypothesis is
+Trial 1 yielded trigger/mechanism correctness of 6/6 raw, 2/6 redaction, 0/6
+HMAC, 1/6 tokenization, and 4/6 format-preserving. The accepted assessment is
+**mixed, with directional support for the preregistered hypothesis**. The
+preregistered development hypothesis remains
 `Raw ≈ Format-preserving > HMAC / Tokenization / Redaction`. Contrary results
-must be retained. Complete configuration paths, prospective result paths,
-transformed-input hashes, and the offline invariant matrix are in
+must be retained.
+
+The repeated-trial protocol schedules exactly two further calls for every one
+of the 30 seed-condition cells. Manifest v7 records trial indices 2 and 3; each
+index reconstructs the same frozen model input as trial 1. Primary reporting
+remains exact RCA, `overall_correct`, each RCA dimension, evidence
+precision/recall/F1, response/failure counts, token usage, and cost. Trigger and
+failure mechanism remain the preregistered primary Incident 002 diagnostic
+dimensions; component accuracy is reported separately and is not folded into a
+new post-hoc metric.
+
+See `docs/INCIDENT_002_REPEATED_TRIALS.md` for the trial-1 artifact ledger,
+configurations, proposed result paths, commands, and prespecified stability
+summaries. The offline invariant matrix remains in
 `docs/INCIDENT_002_PRIVACY_COMPARISON.md`.
 
 ## Evidence conditions

@@ -58,6 +58,7 @@ class ExperimentManifest:
     response: ParsedResponse
     score: RCAScore | RCAScoreV2 | None
     model_input_sha256: str | None = None
+    trial_index: int | None = None
 
     def __post_init__(self) -> None:
         if self.manifest_schema_version not in {
@@ -66,17 +67,34 @@ class ExperimentManifest:
             "raw-rca-manifest-v4",
             "raw-rca-manifest-v5",
             "raw-rca-manifest-v6",
+            "raw-rca-manifest-v7",
         }:
             raise ValueError(
                 f"Unsupported manifest schema: {self.manifest_schema_version}"
             )
-        if self.manifest_schema_version == "raw-rca-manifest-v6":
+        if self.manifest_schema_version in {
+            "raw-rca-manifest-v6",
+            "raw-rca-manifest-v7",
+        }:
             if not isinstance(self.model_input_sha256, str) or re.fullmatch(
                 r"[0-9a-f]{64}", self.model_input_sha256
             ) is None:
-                raise ValueError("Manifest schema v6 requires model_input_sha256")
+                raise ValueError(
+                    "Manifest schema v6 or v7 requires model_input_sha256"
+                )
         elif self.model_input_sha256 is not None:
-            raise ValueError("model_input_sha256 is valid only in manifest schema v6")
+            raise ValueError(
+                "model_input_sha256 is valid only in manifest schema v6 or v7"
+            )
+        if self.manifest_schema_version == "raw-rca-manifest-v7":
+            if (
+                isinstance(self.trial_index, bool)
+                or not isinstance(self.trial_index, int)
+                or self.trial_index < 1
+            ):
+                raise ValueError("Manifest schema v7 requires a positive trial_index")
+        elif self.trial_index is not None:
+            raise ValueError("trial_index is valid only in manifest schema v7")
 
     def to_dict(self) -> dict[str, object]:
         data: dict[str, object] = {
@@ -126,6 +144,8 @@ class ExperimentManifest:
             )
         if self.model_input_sha256 is not None:
             data["model_input_sha256"] = self.model_input_sha256
+        if self.trial_index is not None:
+            data["trial_index"] = self.trial_index
         return data
 
     def to_json(self, *, indent: int | None = 2) -> str:
@@ -205,6 +225,7 @@ class ExperimentManifest:
             ),
             score=score,
             model_input_sha256=data.get("model_input_sha256"),
+            trial_index=data.get("trial_index"),
         )
 
     @classmethod

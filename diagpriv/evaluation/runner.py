@@ -86,6 +86,7 @@ class RawRunConfig:
     transformation_key_id: str | None = None
     expected_model_input_sha256: str | None = None
     expected_transformation_key_fingerprint: str | None = None
+    trial_index: int | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -123,6 +124,15 @@ def run_raw_experiment(
     result_path: Path | None = None,
 ) -> ExperimentManifest:
     """Generate, prompt, invoke, parse, score, and optionally append one run."""
+    if config.manifest_schema_version == "raw-rca-manifest-v7":
+        if (
+            isinstance(config.trial_index, bool)
+            or not isinstance(config.trial_index, int)
+            or config.trial_index < 1
+        ):
+            raise ValueError("Manifest schema v7 requires a positive trial_index")
+    elif config.trial_index is not None:
+        raise ValueError("trial_index is valid only in manifest schema v7")
     prepared = prepare_model_input(config)
     response_parser = (
         parse_response_v2
@@ -193,9 +203,11 @@ def run_raw_experiment(
         score=score,
         model_input_sha256=(
             prepared.model_input_sha256
-            if config.manifest_schema_version == "raw-rca-manifest-v6"
+            if config.manifest_schema_version
+            in {"raw-rca-manifest-v6", "raw-rca-manifest-v7"}
             else None
         ),
+        trial_index=config.trial_index,
     )
     if result_path is not None:
         append_manifest(result_path, manifest)

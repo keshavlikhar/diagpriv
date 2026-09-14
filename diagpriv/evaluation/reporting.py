@@ -250,6 +250,11 @@ def inspection_records(path: Path) -> list[dict[str, object]]:
                 "manifest_schema_version": manifest.manifest_schema_version,
                 "incident_family": manifest.incident_family,
                 "seed": manifest.seed,
+                **(
+                    {"trial_index": manifest.trial_index}
+                    if manifest.trial_index is not None
+                    else {}
+                ),
                 "split": manifest.split,
                 "condition": manifest.condition,
                 "requested_model": manifest.requested_model,

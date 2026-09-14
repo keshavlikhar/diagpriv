@@ -1,0 +1,44 @@
+[pilot]
+pilot_id = "incident-002-raw-sol-repeated-trials-v1"
+provider = "openai-responses"
+incident_family = "incident_002_format_defect"
+manifest_schema_version = "raw-rca-manifest-v7"
+development_seed_selection_version = "incident-002-first-defect-class-occurrence-v1"
+condition = "raw"
+prompt_version = "raw-rca-v2"
+prompt_sha256 = "744f1f62b6db7e0655d52692b929c3a2a9c3d86f8beaaefb76526ab0b2ea8a2d"
+taxonomy_version = "rca-taxonomy-v2"
+scorer_version = "raw-rca-scorer-v2"
+seed_scope = "development_only"
+development_seeds = [1000, 1001, 1003, 1004, 1005, 1017]
+validation_seeds = []
+held_out_seeds = []
+calls_per_seed = 2
+trial_indices = [2, 3]
+repetition_protocol_version = "incident-002-three-trial-development-v1"
+historical_trial_count = 1
+target_total_trials = 3
+
+[model]
+requested_model = "gpt-5.6-sol"
+version_metadata_environment_variable = "DIAGPRIV_MODEL_VERSION_METADATA"
+reasoning_effort = "medium"
+
+[decoding]
+max_output_tokens = 4096
+
+[temperature_protocol_correction]
+intended = 0.0
+effective = "omitted"
+omission_reason = "Temperature is omitted to preserve the decoding protocol used by the matched GPT-5.6 Luna raw-development baseline; no claim is made that GPT-5.6 Sol rejects the parameter."
+
+[input_provenance.model_input_sha256_by_seed]
+"1000" = "68962f980e6db9ff4d5cf2e6aa0b340aa9a7b00a850d74efea96a741eb72f180"
+"1001" = "a6e9e920c2dc01691ba0a2562779adae6b82cc58fdf3fe2f12f2e9513907d88f"
+"1003" = "5664a2c545a4a76c59616cac90cba06b075cb96659a6e7f8b0ef21f88105241b"
+"1004" = "d8310f46c523b7be5af7de3666c9d506e554b9c7a6c2fd03f080e1ccd3434a59"
+"1005" = "8444d92ffeb1b40839bf57cd09e857b39bfc5919b8c77e7647d0f675ce3f7066"
+"1017" = "b9457535ba2a0fdab951cf6c68ee6e2dba05dd800f628c8d13dea30ad6041e7b"
+
+[pricing]
+snapshot = "pricing/openai_gpt_5_6_sol_2026-09-10.toml"

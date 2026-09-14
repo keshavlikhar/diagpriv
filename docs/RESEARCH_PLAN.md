@@ -17,7 +17,7 @@ a privacy guarantee.
 
 The current experimental unit is one deterministic instance of a DiagBench
 incident family under one evidence condition, prompt, model configuration, and
-call index. Primary and secondary outcomes are defined in
+provider trial index. Primary and secondary outcomes are defined in
 `docs/EXPERIMENT_PROTOCOL.md`.
 
 The benchmark contains Incident Family 001: a timeout followed by a re-arrival
@@ -68,9 +68,13 @@ provisioning effect. All data is fictional and synthetic.
     GPT-5.6 Luna and GPT-5.6 Sol each produced 4/6 exact RCA. Sol corrected the
     Luna trigger/mechanism errors but showed two component-localization errors.
     These are development observations, not general conclusions.
-11. **Matched privacy preparation:** all four existing privacy baselines are
-    configured and invariant-audited together for the same Incident 002 seeds
-    and GPT-5.6 Sol. No privacy-condition provider observation exists yet.
+11. **Matched Incident 002 privacy trial 1:** all four privacy baselines were
+    compared with the raw Sol baseline. Trigger/mechanism correctness was 6/6
+    raw, 2/6 redaction, 0/6 HMAC, 1/6 tokenization, and 4/6
+    format-preserving. The assessment is mixed, with directional support for
+    the preregistered hypothesis.
+12. **Repeated-trial preparation:** two additional calls per seed-condition are
+    configured to measure output variability without replacing trial 1.
 
 ## Roadmap and decision gates
 
