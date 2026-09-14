@@ -79,6 +79,8 @@ class PilotDefinition:
     matched_input_baseline_pilot_id: str | None
     matched_input_baseline_result_sha256: str | None
     matched_model_input_sha256_by_seed: dict[int, str]
+    expected_model_input_sha256_by_seed: dict[int, str]
+    expected_transformation_key_fingerprint: str | None
 
     @classmethod
     def load(cls, path: Path) -> Self:
@@ -88,13 +90,21 @@ class PilotDefinition:
         pricing = data["pricing"]
         transformation = data.get("transformation", {})
         matched_input = data.get("matched_input", {})
+        input_provenance = data.get("input_provenance", {})
         if not isinstance(transformation, dict):
             raise ValueError("transformation must be a table")
         if not isinstance(matched_input, dict):
             raise ValueError("matched_input must be a table")
+        if not isinstance(input_provenance, dict):
+            raise ValueError("input_provenance must be a table")
         matched_hashes = matched_input.get("model_input_sha256_by_seed", {})
         if not isinstance(matched_hashes, dict):
             raise ValueError("matched input hashes must be a table")
+        expected_hashes = input_provenance.get(
+            "model_input_sha256_by_seed", {}
+        )
+        if not isinstance(expected_hashes, dict):
+            raise ValueError("Input-provenance hashes must be a table")
         protocol = FROZEN_PROTOCOLS.get(pilot["prompt_version"])
         default_taxonomy = None if protocol is None else protocol[1]
         default_scorer = None if protocol is None else protocol[2]
@@ -159,6 +169,12 @@ class PilotDefinition:
             matched_model_input_sha256_by_seed={
                 int(seed): digest for seed, digest in matched_hashes.items()
             },
+            expected_model_input_sha256_by_seed={
+                int(seed): digest for seed, digest in expected_hashes.items()
+            },
+            expected_transformation_key_fingerprint=input_provenance.get(
+                "transformation_key_fingerprint"
+            ),
         )
         definition.validate()
         return definition
@@ -256,6 +272,7 @@ class PilotDefinition:
                 "Incident 002 seed-selection metadata is valid only for Incident 002"
             )
         self._validate_matched_inputs()
+        self._validate_input_provenance()
         if not self.pricing_snapshot_path.is_file():
             raise ValueError("Pilot pricing snapshot does not exist")
 
@@ -288,6 +305,33 @@ class PilotDefinition:
                 raise ValueError(
                     f"Matched model input differs from baseline for seed {seed}"
                 )
+
+    def _validate_input_provenance(self) -> None:
+        hashes = self.expected_model_input_sha256_by_seed
+        fingerprint = self.expected_transformation_key_fingerprint
+        if not hashes and fingerprint is None:
+            return
+        if not hashes:
+            raise ValueError("Input provenance requires model-input hashes")
+        configured_seeds = (*self.development_seeds, *self.validation_seeds)
+        if set(hashes) != set(configured_seeds):
+            raise ValueError(
+                "Input-provenance hashes must cover exactly the pilot seeds"
+            )
+        for seed, digest in hashes.items():
+            if not isinstance(digest, str) or not _is_sha256(digest):
+                raise ValueError(
+                    f"Input-provenance SHA-256 is invalid for seed {seed}"
+                )
+        if self.condition == "hmac-v1":
+            if not isinstance(fingerprint, str) or not _is_sha256(fingerprint):
+                raise ValueError(
+                    "HMAC input provenance requires a valid key fingerprint"
+                )
+        elif fingerprint is not None:
+            raise ValueError(
+                "Transformation-key fingerprint is valid only for hmac-v1"
+            )
 
     def to_dict(self) -> dict[str, Any]:
         data: dict[str, Any] = {
@@ -343,6 +387,20 @@ class PilotDefinition:
                     )
                 },
             }
+        if self.expected_model_input_sha256_by_seed:
+            input_provenance: dict[str, object] = {
+                "model_input_sha256_by_seed": {
+                    str(seed): digest
+                    for seed, digest in sorted(
+                        self.expected_model_input_sha256_by_seed.items()
+                    )
+                }
+            }
+            if self.expected_transformation_key_fingerprint is not None:
+                input_provenance["transformation_key_fingerprint"] = (
+                    self.expected_transformation_key_fingerprint
+                )
+            data["input_provenance"] = input_provenance
         return data
 
 
