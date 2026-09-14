@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import hashlib
 from pathlib import Path
 import tomllib
 from typing import Any, Literal, Self
@@ -14,6 +15,7 @@ from diagpriv.evaluation.incident_families import (
     INCIDENT_002_SEED_SELECTION_VERSION,
     SUPPORTED_INCIDENT_FAMILIES,
     evaluation_seed_split,
+    generate_evaluation_incident,
 )
 from diagpriv.evaluation.prompt import (
     PROMPT_SHA256 as PROMPT_SHA256_V1,
@@ -22,6 +24,7 @@ from diagpriv.evaluation.prompt import (
 from diagpriv.evaluation.prompt_v2 import (
     PROMPT_SHA256 as PROMPT_SHA256_V2,
     PROMPT_VERSION as PROMPT_VERSION_V2,
+    build_prompt_v2,
 )
 
 FROZEN_PROTOCOLS = {
@@ -73,6 +76,9 @@ class PilotDefinition:
     pricing_snapshot_path: Path
     hmac_key_environment_variable: str | None
     hmac_key_id: str | None
+    matched_input_baseline_pilot_id: str | None
+    matched_input_baseline_result_sha256: str | None
+    matched_model_input_sha256_by_seed: dict[int, str]
 
     @classmethod
     def load(cls, path: Path) -> Self:
@@ -81,8 +87,14 @@ class PilotDefinition:
         model = data["model"]
         pricing = data["pricing"]
         transformation = data.get("transformation", {})
+        matched_input = data.get("matched_input", {})
         if not isinstance(transformation, dict):
             raise ValueError("transformation must be a table")
+        if not isinstance(matched_input, dict):
+            raise ValueError("matched_input must be a table")
+        matched_hashes = matched_input.get("model_input_sha256_by_seed", {})
+        if not isinstance(matched_hashes, dict):
+            raise ValueError("matched input hashes must be a table")
         protocol = FROZEN_PROTOCOLS.get(pilot["prompt_version"])
         default_taxonomy = None if protocol is None else protocol[1]
         default_scorer = None if protocol is None else protocol[2]
@@ -138,6 +150,15 @@ class PilotDefinition:
                 "key_environment_variable"
             ),
             hmac_key_id=transformation.get("key_id"),
+            matched_input_baseline_pilot_id=matched_input.get(
+                "baseline_pilot_id"
+            ),
+            matched_input_baseline_result_sha256=matched_input.get(
+                "baseline_result_sha256"
+            ),
+            matched_model_input_sha256_by_seed={
+                int(seed): digest for seed, digest in matched_hashes.items()
+            },
         )
         definition.validate()
         return definition
@@ -234,8 +255,39 @@ class PilotDefinition:
             raise ValueError(
                 "Incident 002 seed-selection metadata is valid only for Incident 002"
             )
+        self._validate_matched_inputs()
         if not self.pricing_snapshot_path.is_file():
             raise ValueError("Pilot pricing snapshot does not exist")
+
+    def _validate_matched_inputs(self) -> None:
+        metadata = (
+            self.matched_input_baseline_pilot_id,
+            self.matched_input_baseline_result_sha256,
+            self.matched_model_input_sha256_by_seed,
+        )
+        if not any(metadata):
+            return
+        if not all(metadata):
+            raise ValueError("Matched-input metadata must be complete")
+        if self.condition != "raw" or self.prompt_version != PROMPT_VERSION_V2:
+            raise ValueError("Matched-input verification currently requires raw-rca-v2")
+        baseline_digest = self.matched_input_baseline_result_sha256
+        if not isinstance(baseline_digest, str) or not _is_sha256(baseline_digest):
+            raise ValueError("Matched-input baseline result SHA-256 is invalid")
+        configured_seeds = (*self.development_seeds, *self.validation_seeds)
+        if set(self.matched_model_input_sha256_by_seed) != set(configured_seeds):
+            raise ValueError("Matched-input hashes must cover exactly the pilot seeds")
+        for seed in configured_seeds:
+            expected = self.matched_model_input_sha256_by_seed[seed]
+            if not isinstance(expected, str) or not _is_sha256(expected):
+                raise ValueError(f"Matched-input SHA-256 is invalid for seed {seed}")
+            incident = generate_evaluation_incident(self.incident_family, seed)
+            prompt = build_prompt_v2(incident.model_view())
+            actual = hashlib.sha256(prompt.encode("utf-8")).hexdigest()
+            if actual != expected:
+                raise ValueError(
+                    f"Matched model input differs from baseline for seed {seed}"
+                )
 
     def to_dict(self) -> dict[str, Any]:
         data: dict[str, Any] = {
@@ -278,6 +330,19 @@ class PilotDefinition:
                 "key_environment_variable": self.hmac_key_environment_variable,
                 "key_id": self.hmac_key_id,
             }
+        if self.matched_input_baseline_pilot_id is not None:
+            data["matched_input"] = {
+                "baseline_pilot_id": self.matched_input_baseline_pilot_id,
+                "baseline_result_sha256": (
+                    self.matched_input_baseline_result_sha256
+                ),
+                "model_input_sha256_by_seed": {
+                    str(seed): digest
+                    for seed, digest in sorted(
+                        self.matched_model_input_sha256_by_seed.items()
+                    )
+                },
+            }
         return data
 
 
@@ -285,3 +350,9 @@ def _optional_temperature(value: object) -> float | None:
     if isinstance(value, bool) or not isinstance(value, (int, float)):
         return None
     return float(value)
+
+
+def _is_sha256(value: str) -> bool:
+    return len(value) == 64 and all(
+        character in "0123456789abcdef" for character in value
+    )
