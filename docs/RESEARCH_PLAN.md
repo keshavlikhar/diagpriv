@@ -62,10 +62,15 @@ provisioning effect. All data is fictional and synthetic.
    invariant-tested, and run on the five development seeds, producing 4/5 exact
    RCA. The only error was component localization; the protocol was not changed.
 9. **Format-dependent benchmark construction:** Incident Family 002 implemented
-   offline with versioned structural signatures, a canonical development
-   fixture, shape ablation, anti-shortcut controls, and transformation
-   expectation audits. It has no provider observations and remains under human
-   review.
+   with versioned structural signatures, a canonical development fixture, shape
+   ablation, anti-shortcut controls, and transformation expectation audits.
+10. **Incident 002 raw qualification:** frozen six-seed development runs for
+    GPT-5.6 Luna and GPT-5.6 Sol each produced 4/6 exact RCA. Sol corrected the
+    Luna trigger/mechanism errors but showed two component-localization errors.
+    These are development observations, not general conclusions.
+11. **Matched privacy preparation:** all four existing privacy baselines are
+    configured and invariant-audited together for the same Incident 002 seeds
+    and GPT-5.6 Sol. No privacy-condition provider observation exists yet.
 
 ## Roadmap and decision gates
 

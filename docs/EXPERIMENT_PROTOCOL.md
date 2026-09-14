@@ -22,10 +22,11 @@ run requires both explicit human approval and the `--execute` flag.
 | Temperature | omitted |
 | Calls per configured seed | one |
 
-The provider rejected the originally intended `temperature=0` parameter. The
-request therefore omits temperature entirely, while manifests retain the
-intended value and the reason for omission. Do not substitute another decoding
-parameter silently.
+The Luna provider rejected the originally intended `temperature=0` parameter.
+Luna requests therefore omit temperature while retaining the intended value
+and reason in metadata. Matched GPT-5.6 Sol experiments also omit temperature
+to preserve the decoding protocol; this does not claim that Sol rejects the
+parameter. Do not substitute another decoding parameter silently.
 
 The historical manifest/config field named `prompt_sha256` is specifically the
 SHA-256 of the frozen UTF-8 `raw_rca_v2.txt` **template before**
@@ -118,8 +119,33 @@ frozen Luna `model_input_sha256` for each seed. Loading the configuration
 reconstructs every raw prompt and fails closed if any digest differs, before a
 provider is configured. Temperature remains omitted; no Sol-specific decoding
 parameter is introduced. The omission preserves the matched Luna decoding
-protocol and does not claim that GPT-5.6 Sol rejects temperature. This
-qualification requires separate execution approval.
+protocol and does not claim that GPT-5.6 Sol rejects temperature. Its frozen
+result produced 6/6 valid responses, 4/6 exact RCA, and 4/6
+`overall_correct`; its SHA-256 is
+`b8bdaef010a74bc5256363c818c914e146172160e3745bc7a8e9407e775e5c0f`.
+
+### Prepared Incident 002 Sol privacy comparison
+
+The four privacy configurations are prepared together on the six frozen seeds
+using GPT-5.6 Sol, medium reasoning, omitted temperature, one call per seed,
+and unchanged v2 prompt, taxonomy, scorer, evidence, and manifest semantics.
+Each configuration preregisters the exact transformed `model_input_sha256` for
+every seed. Dry-run and execution preflight construct all six prompts and fail
+before provider setup on any digest mismatch. For HMAC, preflight also checks
+the established non-secret key fingerprint while keeping the key external.
+
+No new manifest version or transformed-ModelView hash is introduced: schema v6
+already records the exact rendered model input. Primary reporting remains exact
+RCA, `overall_correct`, each RCA dimension, evidence precision/recall/F1,
+response/failure counts, token usage, and cost. Trigger and failure mechanism
+are preregistered as the most diagnostic Incident 002 dimensions because raw
+Sol achieved 6/6 on both; component accuracy remains fully reported.
+
+The preregistered development hypothesis is
+`Raw ≈ Format-preserving > HMAC / Tokenization / Redaction`. Contrary results
+must be retained. Complete configuration paths, prospective result paths,
+transformed-input hashes, and the offline invariant matrix are in
+`docs/INCIDENT_002_PRIVACY_COMPARISON.md`.
 
 ## Evidence conditions
 

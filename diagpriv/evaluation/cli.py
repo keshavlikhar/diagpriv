@@ -11,7 +11,11 @@ from diagpriv.evaluation.pilot import PilotDefinition
 from diagpriv.evaluation.pricing import PricingSnapshot
 from diagpriv.evaluation.providers import OpenAIResponsesProvider
 from diagpriv.evaluation.reporting import inspection_json, summarize_path
-from diagpriv.evaluation.runner import RawRunConfig, run_raw_experiment
+from diagpriv.evaluation.runner import (
+    RawRunConfig,
+    prepare_model_input,
+    run_raw_experiment,
+)
 from diagpriv.transformations import parse_hmac_key_hex
 
 
@@ -50,15 +54,29 @@ def _external_hmac_key(definition: PilotDefinition) -> bytes | None:
 def _run_pilot(args: argparse.Namespace) -> None:
     definition = PilotDefinition.load(args.config)
     if not args.execute:
+        input_preflight = None
+        if definition.expected_model_input_sha256_by_seed:
+            input_preflight = _input_preflight(
+                definition,
+                hmac_key=_external_hmac_key(definition),
+            )
+        payload: dict[str, object] = {
+            "execution": "pending",
+            "pilot": definition.to_dict(),
+        }
+        if input_preflight is not None:
+            payload["input_preflight"] = input_preflight
         print(
             json.dumps(
-                {"execution": "pending", "pilot": definition.to_dict()},
+                payload,
                 indent=2,
                 sort_keys=True,
             )
         )
         return
     hmac_key = _external_hmac_key(definition)
+    if definition.expected_model_input_sha256_by_seed:
+        _input_preflight(definition, hmac_key=hmac_key)
     provider, model_version = _openai_provider(definition)
 
     for seed in (*definition.development_seeds, *definition.validation_seeds):
@@ -85,12 +103,64 @@ def _run_pilot(args: argparse.Namespace) -> None:
                     prompt_version=definition.prompt_version,
                     hmac_key=hmac_key,
                     transformation_key_id=definition.hmac_key_id,
+                    expected_model_input_sha256=(
+                        definition.expected_model_input_sha256_by_seed.get(seed)
+                    ),
+                    expected_transformation_key_fingerprint=(
+                        definition.expected_transformation_key_fingerprint
+                    ),
                 ),
                 provider,
                 result_path=args.results,
             )
     pricing = PricingSnapshot.load(definition.pricing_snapshot_path)
     print(summarize_path(args.results, pricing).to_json(), end="")
+
+
+def _input_preflight(
+    definition: PilotDefinition, *, hmac_key: bytes | None
+) -> dict[str, object]:
+    hashes: dict[str, str] = {}
+    fingerprint: str | None = None
+    for seed in (*definition.development_seeds, *definition.validation_seeds):
+        prepared = prepare_model_input(
+            RawRunConfig(
+                experiment_id=f"{definition.pilot_id}-input-preflight-{seed}",
+                seed=seed,
+                model=definition.requested_model,
+                model_version=None,
+                incident_family=definition.incident_family,
+                manifest_schema_version=definition.manifest_schema_version,
+                reasoning_effort=definition.reasoning_effort,
+                condition=definition.condition,
+                decoding_settings=dict(definition.decoding_settings),
+                intended_temperature=definition.intended_temperature,
+                temperature_omission_reason=(
+                    definition.temperature_omission_reason
+                ),
+                prompt_version=definition.prompt_version,
+                hmac_key=hmac_key,
+                transformation_key_id=definition.hmac_key_id,
+                expected_model_input_sha256=(
+                    definition.expected_model_input_sha256_by_seed[seed]
+                ),
+                expected_transformation_key_fingerprint=(
+                    definition.expected_transformation_key_fingerprint
+                ),
+            )
+        )
+        hashes[str(seed)] = prepared.model_input_sha256
+        if prepared.transformation_key_fingerprint is not None:
+            fingerprint = prepared.transformation_key_fingerprint
+    data: dict[str, object] = {
+        "status": "verified",
+        "model_input_sha256_by_seed": hashes,
+    }
+    if definition.hmac_key_id is not None:
+        data["transformation_key_id"] = definition.hmac_key_id
+    if fingerprint is not None:
+        data["transformation_key_fingerprint"] = fingerprint
+    return data
 
 
 def _run_diagnostic(args: argparse.Namespace) -> None:

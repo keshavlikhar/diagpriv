@@ -8,6 +8,7 @@ import hashlib
 from pathlib import Path
 from typing import Literal
 
+from diagbench.schema import Incident, ModelView
 from diagbench.generators.incident_001 import (
     DEVELOPMENT_SEEDS,
     VALIDATION_SEEDS,
@@ -83,6 +84,23 @@ class RawRunConfig:
     timestamp: str | None = None
     hmac_key: bytes | None = field(default=None, repr=False, compare=False)
     transformation_key_id: str | None = None
+    expected_model_input_sha256: str | None = None
+    expected_transformation_key_fingerprint: str | None = None
+
+
+@dataclass(frozen=True, slots=True)
+class PreparedModelInput:
+    """Exact provider input and non-secret provenance prepared without a call."""
+
+    split: str
+    incident: Incident
+    model_view: ModelView
+    prompt: str
+    prompt_sha256: str
+    taxonomy_version: str
+    scorer_version: str
+    model_input_sha256: str
+    transformation_key_fingerprint: str | None
 
 
 def pilot_seed_plan(
@@ -105,6 +123,87 @@ def run_raw_experiment(
     result_path: Path | None = None,
 ) -> ExperimentManifest:
     """Generate, prompt, invoke, parse, score, and optionally append one run."""
+    prepared = prepare_model_input(config)
+    response_parser = (
+        parse_response_v2
+        if config.prompt_version == PROMPT_VERSION_V2
+        else parse_response
+    )
+    invocation = provider.invoke(
+        ModelRequest(
+            prompt=prepared.prompt,
+            model=config.model,
+            model_version=config.model_version,
+            decoding_settings=dict(config.decoding_settings),
+            reasoning_effort=config.reasoning_effort,
+        )
+    )
+    if invocation.status in {"provider_error", "rate_limited", "refusal"}:
+        parsed = ParsedResponse(
+            invocation.status,
+            invocation.raw_output,
+            error=invocation.error or "Unspecified provider error",
+        )
+    else:
+        parsed = response_parser(invocation.raw_output)
+    if parsed.response is None:
+        score = None
+    elif config.prompt_version == PROMPT_VERSION_V2:
+        score = score_response_v2(prepared.incident, parsed.response)
+    else:
+        score = score_response(prepared.incident, parsed.response)
+
+    manifest = ExperimentManifest(
+        manifest_schema_version=config.manifest_schema_version,
+        experiment_id=config.experiment_id,
+        benchmark_version=str(prepared.incident.metadata["benchmark_version"]),
+        incident_family=config.incident_family,
+        seed=config.seed,
+        split=prepared.split,
+        condition=config.condition,
+        requested_model=config.model,
+        provider_returned_model=invocation.provider_returned_model,
+        model_version_metadata=config.model_version,
+        reasoning_effort=config.reasoning_effort,
+        temperature=_temperature(config.decoding_settings.get("temperature")),
+        intended_temperature=config.intended_temperature,
+        temperature_omission_reason=config.temperature_omission_reason,
+        prompt_version=config.prompt_version,
+        prompt_sha256=prepared.prompt_sha256,
+        taxonomy_version=prepared.taxonomy_version,
+        scorer_version=prepared.scorer_version,
+        transformation_key_id=config.transformation_key_id,
+        transformation_key_fingerprint=(
+            prepared.transformation_key_fingerprint
+        ),
+        decoding_settings=dict(config.decoding_settings),
+        timestamp=config.timestamp or datetime.now(UTC).isoformat(),
+        response_id=invocation.response_id,
+        provider_timestamp=invocation.provider_timestamp,
+        input_token_count=invocation.input_token_count,
+        cached_input_token_count=invocation.cached_input_token_count,
+        cache_write_input_token_count=invocation.cache_write_input_token_count,
+        output_token_count=invocation.output_token_count,
+        reasoning_token_count=invocation.reasoning_token_count,
+        total_token_count=invocation.total_token_count,
+        provider_response_status=invocation.response_status,
+        provider_service_tier=invocation.service_tier,
+        sanitized_api_error=invocation.sanitized_api_error,
+        response=parsed,
+        score=score,
+        model_input_sha256=(
+            prepared.model_input_sha256
+            if config.manifest_schema_version == "raw-rca-manifest-v6"
+            else None
+        ),
+    )
+    if result_path is not None:
+        append_manifest(result_path, manifest)
+    return manifest
+
+
+def prepare_model_input(config: RawRunConfig) -> PreparedModelInput:
+    """Construct and verify the exact model-visible input without invoking a model."""
     split = evaluation_seed_split(config.incident_family, config.seed)
     if split == "evaluation" and not config.allow_held_out:
         raise ProtectedSeedError(
@@ -124,13 +223,11 @@ def run_raw_experiment(
 
     if config.prompt_version == PROMPT_VERSION_V1:
         prompt_builder = build_prompt
-        response_parser = parse_response
         prompt_sha256 = PROMPT_SHA256_V1
         taxonomy_version = TAXONOMY_VERSION_V1
         scorer_version = SCORER_VERSION_V1
     elif config.prompt_version == PROMPT_VERSION_V2:
         prompt_builder = build_prompt_v2
-        response_parser = parse_response_v2
         prompt_sha256 = PROMPT_SHA256_V2
         taxonomy_version = TAXONOMY_VERSION_V2
         scorer_version = SCORER_VERSION_V2
@@ -159,75 +256,33 @@ def run_raw_experiment(
 
     prompt = prompt_builder(model_view)
     model_input_sha256 = hashlib.sha256(prompt.encode("utf-8")).hexdigest()
-    invocation = provider.invoke(
-        ModelRequest(
-            prompt=prompt,
-            model=config.model,
-            model_version=config.model_version,
-            decoding_settings=dict(config.decoding_settings),
-            reasoning_effort=config.reasoning_effort,
+    if (
+        config.expected_model_input_sha256 is not None
+        and model_input_sha256 != config.expected_model_input_sha256
+    ):
+        raise ValueError(
+            f"Prepared model input differs from frozen provenance for seed "
+            f"{config.seed}"
         )
-    )
-    if invocation.status in {"provider_error", "rate_limited", "refusal"}:
-        parsed = ParsedResponse(
-            invocation.status,
-            invocation.raw_output,
-            error=invocation.error or "Unspecified provider error",
+    if (
+        config.expected_transformation_key_fingerprint is not None
+        and transformation_key_fingerprint
+        != config.expected_transformation_key_fingerprint
+    ):
+        raise ValueError(
+            "HMAC key fingerprint differs from frozen input provenance"
         )
-    else:
-        parsed = response_parser(invocation.raw_output)
-    if parsed.response is None:
-        score = None
-    elif config.prompt_version == PROMPT_VERSION_V2:
-        score = score_response_v2(incident, parsed.response)
-    else:
-        score = score_response(incident, parsed.response)
-
-    manifest = ExperimentManifest(
-        manifest_schema_version=config.manifest_schema_version,
-        experiment_id=config.experiment_id,
-        benchmark_version=str(incident.metadata["benchmark_version"]),
-        incident_family=config.incident_family,
-        seed=config.seed,
+    return PreparedModelInput(
         split=split,
-        condition=config.condition,
-        requested_model=config.model,
-        provider_returned_model=invocation.provider_returned_model,
-        model_version_metadata=config.model_version,
-        reasoning_effort=config.reasoning_effort,
-        temperature=_temperature(config.decoding_settings.get("temperature")),
-        intended_temperature=config.intended_temperature,
-        temperature_omission_reason=config.temperature_omission_reason,
-        prompt_version=config.prompt_version,
+        incident=incident,
+        model_view=model_view,
+        prompt=prompt,
         prompt_sha256=prompt_sha256,
         taxonomy_version=taxonomy_version,
         scorer_version=scorer_version,
-        transformation_key_id=config.transformation_key_id,
         transformation_key_fingerprint=transformation_key_fingerprint,
-        decoding_settings=dict(config.decoding_settings),
-        timestamp=config.timestamp or datetime.now(UTC).isoformat(),
-        response_id=invocation.response_id,
-        provider_timestamp=invocation.provider_timestamp,
-        input_token_count=invocation.input_token_count,
-        cached_input_token_count=invocation.cached_input_token_count,
-        cache_write_input_token_count=invocation.cache_write_input_token_count,
-        output_token_count=invocation.output_token_count,
-        reasoning_token_count=invocation.reasoning_token_count,
-        total_token_count=invocation.total_token_count,
-        provider_response_status=invocation.response_status,
-        provider_service_tier=invocation.service_tier,
-        sanitized_api_error=invocation.sanitized_api_error,
-        response=parsed,
-        score=score,
-        model_input_sha256=(
-            model_input_sha256
-            if config.manifest_schema_version == "raw-rca-manifest-v6"
-            else None
-        ),
+        model_input_sha256=model_input_sha256,
     )
-    if result_path is not None:
-        append_manifest(result_path, manifest)
-    return manifest
 
 
 def _temperature(value: object) -> float | None:
