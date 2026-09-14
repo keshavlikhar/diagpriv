@@ -53,6 +53,15 @@ is provenance only and never enters the rendered prompt. The reviewed configs
 schedule only indices 2 and 3 and require them to continue consecutively after
 the one historical trial.
 
+Transport-recovery records use `raw-rca-manifest-v8`, preserving logical trial
+2 or 3 and requiring a separate `recovery_provenance` object. It records attempt
+1, the recovery protocol, original condition/seed/trial, original failure type,
+source experiment ID, and immutable source-artifact reference/SHA-256.
+Recovery metadata never enters the prompt. Historical schemas and JSONLs are
+unchanged. The dedicated sparse runner verifies all original failures and
+input hashes before provider setup and reserves a new fixed result path before
+the first call. See `docs/INCIDENT_002_TRANSPORT_RECOVERY.md`.
+
 The prompt exposes the complete fixed taxonomy but no family-specific answer.
 The required canonical dimensions are:
 
@@ -161,6 +170,13 @@ See `docs/INCIDENT_002_REPEATED_TRIALS.md` for the trial-1 artifact ledger,
 configurations, proposed result paths, commands, and prespecified stability
 summaries. The offline invariant matrix remains in
 `docs/INCIDENT_002_PRIVACY_COMPARISON.md`.
+
+The completed repeated-trial primary analysis retains its ten missing transport
+responses. A separately preregistered transport-recovery sensitivity view may
+use one later valid response for an eligible missing cell, never for an
+originally valid cell. Both source failure and recovery records remain intact.
+No new metric or composite score is introduced, and recovery never becomes the
+primary as-executed analysis. Recovery preparation makes no provider calls.
 
 ## Evidence conditions
 

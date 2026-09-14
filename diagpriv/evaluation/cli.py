@@ -16,6 +16,7 @@ from diagpriv.evaluation.runner import (
     prepare_model_input,
     run_raw_experiment,
 )
+from diagpriv.evaluation.transport_recovery import RecoveryDefinition, prepare_recovery
 from diagpriv.transformations import parse_hmac_key_hex
 
 
@@ -265,6 +266,36 @@ def _summarize(args: argparse.Namespace) -> None:
     print(summarize_path(args.results, pricing).to_json(), end="")
 
 
+def _run_recovery(args: argparse.Namespace) -> None:
+    definition = RecoveryDefinition.load(args.config)
+    definition.check_result_path(args.results)
+    configs, report = prepare_recovery(definition)
+    pricing = PricingSnapshot.load(definition.pricing_path)
+    if not args.execute:
+        print(json.dumps(report, indent=2, sort_keys=True))
+        return
+    # No provider setup before the entire sparse schedule and all hashes pass.
+    provider = OpenAIResponsesProvider()
+    if not provider.is_configured:
+        raise SystemExit("Required environment variable is not set: OPENAI_API_KEY")
+    args.results.parent.mkdir(parents=True, exist_ok=True)
+    # Reserve atomically before the first call. Even an empty/partial artifact
+    # prevents a second launch after an uncertain or interrupted invocation.
+    with args.results.open("x", encoding="utf-8"):
+        pass
+    for config in configs:
+        run_raw_experiment(config, provider, result_path=args.results)
+    print(json.dumps(
+        {
+            "analysis_role": "transport-recovery sensitivity analysis",
+            "recovery_attempts": len(configs),
+            "summary": summarize_path(args.results, pricing).to_dict(),
+        },
+        indent=2,
+        sort_keys=True,
+    ))
+
+
 def _inspect(args: argparse.Namespace) -> None:
     print(inspection_json(args.results), end="")
 
@@ -282,6 +313,18 @@ def build_parser() -> argparse.ArgumentParser:
         help="Explicitly authorize real provider calls; omission is a dry run",
     )
     run_parser.set_defaults(handler=_run_pilot)
+
+    recovery_parser = subparsers.add_parser(
+        "run-recovery", help="Prepare or execute the ten frozen transport-recovery cells"
+    )
+    recovery_parser.add_argument("--config", type=Path, required=True)
+    recovery_parser.add_argument("--results", type=Path, required=True)
+    recovery_parser.add_argument(
+        "--execute",
+        action="store_true",
+        help="Authorize the one recovery attempt per cell; omission is a dry run",
+    )
+    recovery_parser.set_defaults(handler=_run_recovery)
 
     diagnostic_parser = subparsers.add_parser(
         "run-diagnostic", help="Run exactly one configured development seed"

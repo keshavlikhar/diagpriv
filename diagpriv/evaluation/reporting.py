@@ -256,6 +256,11 @@ def inspection_records(path: Path) -> list[dict[str, object]]:
                     else {}
                 ),
                 "split": manifest.split,
+                **(
+                    {"recovery_provenance": manifest.recovery_provenance.to_dict()}
+                    if manifest.recovery_provenance is not None
+                    else {}
+                ),
                 "condition": manifest.condition,
                 "requested_model": manifest.requested_model,
                 "provider_returned_model": manifest.provider_returned_model,

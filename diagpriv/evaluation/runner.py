@@ -21,7 +21,12 @@ from diagpriv.evaluation.incident_families import (
     evaluation_seed_split,
     generate_evaluation_incident,
 )
-from diagpriv.evaluation.manifest import ExperimentManifest, append_manifest
+from diagpriv.evaluation.manifest import (
+    ExperimentManifest,
+    RecoveryProvenance,
+    append_manifest,
+    validate_recovery_identity,
+)
 from diagpriv.evaluation.prompt import (
     PROMPT_SHA256 as PROMPT_SHA256_V1,
     PROMPT_VERSION as PROMPT_VERSION_V1,
@@ -87,6 +92,7 @@ class RawRunConfig:
     expected_model_input_sha256: str | None = None
     expected_transformation_key_fingerprint: str | None = None
     trial_index: int | None = None
+    recovery_provenance: RecoveryProvenance | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -124,15 +130,24 @@ def run_raw_experiment(
     result_path: Path | None = None,
 ) -> ExperimentManifest:
     """Generate, prompt, invoke, parse, score, and optionally append one run."""
-    if config.manifest_schema_version == "raw-rca-manifest-v7":
+    if config.manifest_schema_version in {"raw-rca-manifest-v7", "raw-rca-manifest-v8"}:
         if (
             isinstance(config.trial_index, bool)
             or not isinstance(config.trial_index, int)
             or config.trial_index < 1
         ):
+            if config.manifest_schema_version == "raw-rca-manifest-v8":
+                raise ValueError("Manifest schema v8 requires a positive trial_index")
             raise ValueError("Manifest schema v7 requires a positive trial_index")
     elif config.trial_index is not None:
         raise ValueError("trial_index is valid only in manifest schema v7")
+    validate_recovery_identity(
+        config.manifest_schema_version,
+        config.trial_index,
+        config.seed,
+        config.condition,
+        config.recovery_provenance,
+    )
     prepared = prepare_model_input(config)
     response_parser = (
         parse_response_v2
@@ -204,10 +219,11 @@ def run_raw_experiment(
         model_input_sha256=(
             prepared.model_input_sha256
             if config.manifest_schema_version
-            in {"raw-rca-manifest-v6", "raw-rca-manifest-v7"}
+            in {"raw-rca-manifest-v6", "raw-rca-manifest-v7", "raw-rca-manifest-v8"}
             else None
         ),
         trial_index=config.trial_index,
+        recovery_provenance=config.recovery_provenance,
     )
     if result_path is not None:
         append_manifest(result_path, manifest)

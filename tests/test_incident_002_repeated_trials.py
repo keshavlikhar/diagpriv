@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import replace
 import json
 from pathlib import Path
+import subprocess
 
 import pytest
 
@@ -307,7 +308,13 @@ def test_repeated_trial_execution_refuses_an_existing_result_before_provider(
     assert provider_started is False
 
 
-def test_repeated_trial_result_paths_are_ignored_and_not_created() -> None:
+def test_repeated_trial_result_paths_are_ignored_and_untracked() -> None:
     assert "results/*" in (ROOT / ".gitignore").read_text(encoding="utf-8")
     assert all(path.relative_to(ROOT).parts[0] == "results" for path in RESULTS.values())
-    assert all(not path.exists() for path in RESULTS.values())
+    for path in RESULTS.values():
+        assert subprocess.run(
+            ["git", "check-ignore", "-q", str(path)], cwd=ROOT, check=False
+        ).returncode == 0
+        assert not subprocess.check_output(
+            ["git", "ls-files", "--", str(path)], cwd=ROOT
+        ).strip()

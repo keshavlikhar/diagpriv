@@ -1,0 +1,124 @@
+# Preparation only; run-recovery requires --execute and refuses an existing result.
+[recovery]
+protocol_version = "incident-002-transport-recovery-v1"
+attempt_index = 1
+manifest_schema_version = "raw-rca-manifest-v8"
+source_checkpoint = "e1bd3c125ae2042b81b5ad88d5c0093d6bd553eb"
+result_path = "results/incident_002_sol_transport_recovery.jsonl"
+seed_scope = "development_only"
+validation_seeds = []
+held_out_seeds = []
+
+[settings]
+incident_family = "incident_002_format_defect"
+requested_model = "gpt-5.6-sol"
+reasoning_effort = "medium"
+temperature = "omitted"
+max_output_tokens = 4096
+prompt_version = "raw-rca-v2"
+prompt_sha256 = "744f1f62b6db7e0655d52692b929c3a2a9c3d86f8beaaefb76526ab0b2ea8a2d"
+taxonomy_version = "rca-taxonomy-v2"
+scorer_version = "raw-rca-scorer-v2"
+
+[pricing]
+snapshot = "pricing/openai_gpt_5_6_sol_2026-09-10.toml"
+
+[sources."raw"]
+repeated_path = "results/incident_002_raw_sol_repeated_trials_2_3.jsonl"
+repeated_sha256 = "ad8d8e059efdea20c7a25f325c1bf3f3ae5e65b7c2eb7eef6953f0039528026a"
+trial_one_path = "results/incident_002_raw_sol_development_gpt_5_6_sol_medium.jsonl"
+trial_one_sha256 = "b8bdaef010a74bc5256363c818c914e146172160e3745bc7a8e9407e775e5c0f"
+
+[sources."redaction-v1"]
+repeated_path = "results/incident_002_redaction_v1_sol_repeated_trials_2_3.jsonl"
+repeated_sha256 = "56f43a72ce4bdf8160cade695bfc83995ef29846ebbe0b10d887b6b87040ee15"
+trial_one_path = "results/incident_002_redaction_v1_sol_development_gpt_5_6_sol_medium.jsonl"
+trial_one_sha256 = "aaaad02bc5bdaa6dd07cbe5785d92d6a38e9475b34bf13c4191a52072e611f33"
+
+[sources."hmac-v1"]
+repeated_path = "results/incident_002_hmac_v1_sol_repeated_trials_2_3.jsonl"
+repeated_sha256 = "b2fda91b0c958dcc11e405c30c4431a982735070f1667b86b155415f407f1b31"
+trial_one_path = "results/incident_002_hmac_v1_sol_development_gpt_5_6_sol_medium.jsonl"
+trial_one_sha256 = "20f91837846ed9bac0d50d09671aee4166033e58d51622aed6905a628edb71ad"
+
+[sources."tokenization-v1"]
+repeated_path = "results/incident_002_tokenization_v1_sol_repeated_trials_2_3.jsonl"
+repeated_sha256 = "441a603bb1e31f373ac4920eaf31e0882d3538f833b683e1c159f2ec7cde11df"
+trial_one_path = "results/incident_002_tokenization_v1_sol_development_gpt_5_6_sol_medium.jsonl"
+trial_one_sha256 = "f6d0f56f65d44140692a6d5a3eebff6a662897356346d8872b4a804e55d694d3"
+
+[sources."format-preserving-v1"]
+repeated_path = "results/incident_002_format_preserving_v1_sol_repeated_trials_2_3.jsonl"
+repeated_sha256 = "cb1b17e8ad57ce4788ddb3d37e5249fde27263d912f16f03664dc506956df318"
+trial_one_path = "results/incident_002_format_preserving_v1_sol_development_gpt_5_6_sol_medium.jsonl"
+trial_one_sha256 = "03cce974a6ac2ad9f5d7d393ab6b139fcbb6072d44ccb8a080e1a73056661fa0"
+
+[[cells]]
+condition = "redaction-v1"
+seed = 1001
+trial_index = 3
+failure_type = "TimeoutError"
+model_input_sha256 = "10e655bd365b063109c269e9ae0e54020e1958072b7bba91ee67d503fec0155e"
+
+[[cells]]
+condition = "redaction-v1"
+seed = 1003
+trial_index = 2
+failure_type = "URLError"
+model_input_sha256 = "10eddbe3ea2f86c6fe57f218f3df329a8c19872f955423c8aeae3609e11a34d8"
+
+[[cells]]
+condition = "redaction-v1"
+seed = 1003
+trial_index = 3
+failure_type = "URLError"
+model_input_sha256 = "10eddbe3ea2f86c6fe57f218f3df329a8c19872f955423c8aeae3609e11a34d8"
+
+[[cells]]
+condition = "redaction-v1"
+seed = 1004
+trial_index = 2
+failure_type = "URLError"
+model_input_sha256 = "a23e5deb3ba1935af72874bf595fc87e388d0d8f29d5cc3fbbab67409d629193"
+
+[[cells]]
+condition = "redaction-v1"
+seed = 1004
+trial_index = 3
+failure_type = "URLError"
+model_input_sha256 = "a23e5deb3ba1935af72874bf595fc87e388d0d8f29d5cc3fbbab67409d629193"
+
+[[cells]]
+condition = "redaction-v1"
+seed = 1005
+trial_index = 2
+failure_type = "URLError"
+model_input_sha256 = "3d66f5311dc08b9c59e9d67ac1a1b15441824d4ed81d966150f02ec9117826f0"
+
+[[cells]]
+condition = "redaction-v1"
+seed = 1005
+trial_index = 3
+failure_type = "URLError"
+model_input_sha256 = "3d66f5311dc08b9c59e9d67ac1a1b15441824d4ed81d966150f02ec9117826f0"
+
+[[cells]]
+condition = "redaction-v1"
+seed = 1017
+trial_index = 2
+failure_type = "URLError"
+model_input_sha256 = "33eab7a6961ad57b109e7ff73b2e2342c005cc44b465992b90e973ca8d8645e4"
+
+[[cells]]
+condition = "redaction-v1"
+seed = 1017
+trial_index = 3
+failure_type = "URLError"
+model_input_sha256 = "33eab7a6961ad57b109e7ff73b2e2342c005cc44b465992b90e973ca8d8645e4"
+
+[[cells]]
+condition = "tokenization-v1"
+seed = 1001
+trial_index = 2
+failure_type = "TimeoutError"
+model_input_sha256 = "6bb0c75d95dbc0eb34da6b92c0968af818e2ffdf3365dcc2e2a37926a94e228c"
