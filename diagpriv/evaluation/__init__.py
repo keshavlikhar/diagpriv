@@ -13,8 +13,10 @@ from diagpriv.evaluation.response import (
     ParsedResponse,
     RCAResponse,
     RCAResponseV2,
+    RCAResponseV3,
     parse_response,
     parse_response_v2,
+    parse_response_v3,
 )
 from diagpriv.evaluation.reporting import (
     PilotSummary,
@@ -28,6 +30,7 @@ from diagpriv.evaluation.scoring_v2 import (
     RCAScoreV2,
     score_response_v2,
 )
+from diagpriv.evaluation.scoring_v3 import RCAScoreV3, score_response_v3
 
 __all__ = [
     "ExperimentManifest",
@@ -41,15 +44,19 @@ __all__ = [
     "PricingSnapshot",
     "RCAResponse",
     "RCAResponseV2",
+    "RCAResponseV3",
     "RCAScore",
     "RCAScoreV2",
+    "RCAScoreV3",
     "RawRunConfig",
     "parse_response",
     "parse_response_v2",
+    "parse_response_v3",
     "pilot_seed_plan",
     "run_raw_experiment",
     "score_response",
     "score_response_v2",
+    "score_response_v3",
     "ProtocolVersionError",
     "inspection_records",
     "summarize_manifests",

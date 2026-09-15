@@ -1,0 +1,107 @@
+Investigate the supplied operational evidence and identify the most likely causal explanation for the reported incident. Base your diagnosis only on the supplied evidence.
+
+Choose exactly one canonical value for each categorical field. Apply these dimension rules independently:
+
+- observed_outcome: the externally meaningful failure or contradictory state that occurred.
+- trigger: the event or condition that directly initiated the causal sequence. A later reaction belongs under subsequent_action.
+- subsequent_action: the first post-trigger action necessary to propagate the failure. Use no_follow_on_action when no distinct later action is necessary.
+- failure_mechanism: the most proximal defective or missing system control that allowed the sequence to produce the outcome.
+- affected_component: the architectural role that owns that control, not a normal participant or symptom reporter.
+
+Allowed observed_outcome values and definitions:
+
+- degraded_performance: The service completes work but with materially reduced performance.
+- delayed_effect: The intended effect occurs later than its required time.
+- duplicate_effect: One logical operation produces more than one externally meaningful effect.
+- incorrect_effect: An effect occurs, but its content, target, or value is wrong.
+- inconsistent_state: Recorded states or externally visible effects contradict one another.
+- missing_effect: A required externally meaningful effect does not occur.
+- partial_effect: Only part of a required multi-part effect occurs.
+- service_unavailable: The service cannot provide its intended operation.
+- unauthorized_effect: An effect occurs without the required authorization or policy permission.
+- unknown_outcome: The supplied evidence does not establish a more specific outcome.
+
+Allowed trigger values and definitions:
+
+- concurrent_activity: Overlapping activity directly initiates the causal sequence.
+- dependency_error: An upstream or downstream dependency error initiates the causal sequence.
+- deployment_or_configuration_change: A deployment or configuration change initiates the causal sequence.
+- malformed_or_unexpected_input: Input with an unexpected value or structure initiates the causal sequence.
+- operator_action: A human operational action initiates the causal sequence.
+- process_restart_or_failover: A restart, crash recovery, or failover initiates the causal sequence.
+- resource_exhaustion: Exhaustion of a bounded resource initiates the causal sequence.
+- scheduled_event: A time-scheduled job or event initiates the causal sequence.
+- timeout_or_deadline: A timeout or deadline crossing initiates the causal sequence. A later retry, replay, or compensation belongs under subsequent_action.
+- traffic_or_load_change: A material change in traffic or load initiates the causal sequence.
+- unknown_trigger: The supplied evidence does not establish a more specific trigger.
+
+Allowed subsequent_action values and definitions:
+
+- compensation_or_rollback: A compensation or rollback action follows the trigger and propagates the failure.
+- concurrent_duplicate_submission: A separate overlapping submission of the same intended work follows or accompanies the trigger.
+- failover_or_reroute: A failover or reroute follows the trigger and propagates the failure.
+- manual_reprocessing: Human-initiated reprocessing follows the trigger.
+- message_redelivery_or_replay: Automated delivery infrastructure redelivers or replays a message after the trigger.
+- no_follow_on_action: No distinct post-trigger action is necessary to produce the outcome.
+- retry_or_rearrival: A retry or repeated request arrival follows the trigger.
+- scheduled_reprocessing: Scheduled reprocessing follows the trigger.
+- unknown_follow_on_action: The supplied evidence does not establish a more specific subsequent action.
+
+Allowed failure_mechanism values and definitions:
+
+- authorization_or_policy_failure: Authorization or policy enforcement is absent, incorrect, or bypassed.
+- configuration_or_routing_error: Incorrect configuration or routing directs the system into the failure.
+- data_integrity_failure: Stored or transmitted data violates a required integrity constraint.
+- dependency_contract_failure: A component relies on dependency behavior that violates or is absent from the dependency contract.
+- incorrect_concurrency_control: Overlapping actors can both proceed or commit because coordination is absent or ineffective. This includes missing or ineffective fencing, locking, serialization, cancellation enforcement, compare-and-set, or version checking.
+- incorrect_retry_policy: The decision to retry, its timing, or its retry bounds are themselves defective. Use this only when the retry decision remains defective assuming effective idempotency.
+- incorrect_state_transition: A lifecycle edge is allowed from an invalid source state or without a required state precondition, and the edge remains invalid under serialized execution.
+- missing_or_ineffective_idempotency: Repeated execution of one logical identity is not suppressed or safely replayed, and correct deduplication or safe replay alone would prevent the duplicate outcome.
+- non_atomic_commit_or_rollback: A logically indivisible multi-part commit or rollback can partially apply during serialized execution; it does not require overlapping actors.
+- resource_management_failure: Resource allocation, release, capacity, or lifetime management is defective.
+- stale_or_inconsistent_data: A decision uses stale, mutually inconsistent, or insufficiently synchronized data.
+- validation_or_input_handling_failure: Input validation, normalization, parsing, or lookup handling is missing or incorrect.
+- unknown_failure_mechanism: The supplied evidence does not establish a more specific mechanism.
+
+Failure-mechanism decision guidance:
+
+- When repeated executions share one logical identity and effective deduplication or safe replay alone would prevent a duplicate outcome, choose missing_or_ineffective_idempotency over generic retry or concurrency framing.
+- Choose incorrect_concurrency_control when the failure requires overlapping actors and correct fencing, locking, serialization, cancellation enforcement, compare-and-set, or version checking would prevent it.
+- Choose incorrect_state_transition when an invalid lifecycle edge remains invalid under serialized execution.
+- When a state inconsistency exists only because concurrent work was not controlled, choose incorrect_concurrency_control over incorrect_state_transition.
+- Choose non_atomic_commit_or_rollback when a serialized, logically indivisible multi-part operation can partially apply without concurrent actors.
+- Choose incorrect_retry_policy only when the retry decision remains defective assuming effective idempotency.
+
+Allowed affected_component values and definitions:
+
+- client_or_caller: The calling client owns the defective or missing control.
+- control_plane: A control-plane component owns the defective or missing control.
+- external_dependency: An external dependency owns the defective or missing control.
+- identity_or_policy_service: An identity, authorization, or policy service owns the defective or missing control.
+- message_delivery_layer: The queue, broker, or delivery layer owns the defective or missing control.
+- multiple_components: The mechanism is jointly owned by multiple components and no single owner is defensible.
+- observability_pipeline: Telemetry collection, processing, or presentation owns the defective or missing control.
+- operation_executor: The component applying the domain operation or effect owns the defective or missing control.
+- request_ingress: The ingress, gateway, or request-admission layer owns the defective or missing control.
+- scheduler: The scheduler or timed-job system owns the defective or missing control.
+- state_store: The persistent state store or its consistency control owns the defect.
+- workflow_orchestrator: The workflow coordinator owns the defective transition, timing, compensation, or coordination control.
+- unknown_component: The supplied evidence does not establish a more specific owning component.
+
+Return exactly one JSON object:
+
+{
+  "observed_outcome": "one allowed observed_outcome value",
+  "trigger": "one allowed trigger value",
+  "subsequent_action": "one allowed subsequent_action value",
+  "failure_mechanism": "one allowed failure_mechanism value",
+  "affected_component": "one allowed affected_component value",
+  "supporting_evidence": ["evidence_id", "evidence_id"],
+  "explanation": "brief explanation connecting the trigger, subsequent action, mechanism, component, and outcome",
+  "confidence": 0.0
+}
+
+Use an unknown value only when the supplied evidence does not support a more specific category. Use a confidence value from 0.0 through 1.0. Every supporting-evidence value must be an evidence_id present in the supplied evidence. Do not add markdown fences or text outside the JSON object.
+
+Operational evidence:
+{{MODEL_VIEW_JSON}}

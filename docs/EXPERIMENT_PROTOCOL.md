@@ -3,8 +3,9 @@
 ## Purpose
 
 This document is the operational handoff for running DiagPriv experiments. It
-describes the current v2 protocol and execution controls. Historical details for
-the original raw-v1 harness remain in `docs/evaluation_protocol.md`.
+describes the frozen v2 protocol, the offline v3 protocol, and execution
+controls. Historical details for the original raw-v1 harness remain in
+`docs/evaluation_protocol.md`.
 
 No command in this document grants permission to make provider calls. A real
 run requires both explicit human approval and the `--execute` flag.
@@ -76,6 +77,52 @@ recall, and F1 compare cited model-visible evidence IDs with oracle expected
 evidence IDs. `evidence_supported` requires at least one expected visible ID and
 no nonexistent ID. `overall_correct` requires exact RCA and supported evidence.
 No LLM grader participates in primary scoring.
+
+## Offline RCA v3 protocol
+
+RCA v3 is implemented but not provider-qualified. Its identifiers are:
+
+| Item | Value |
+|---|---|
+| Prompt | `raw-rca-v3` |
+| Prompt template SHA-256 | `a2fc07481c9cd33776086d16cd76fafaa27c2fdf162f4ae634885187d0d22139` |
+| Taxonomy | `rca-taxonomy-v3` |
+| Scorer | `raw-rca-scorer-v3` |
+| Evidence protocol | `evidence-support-v3` |
+| Manifest schema | `raw-rca-manifest-v9` |
+
+The canonical labels remain stable, while v3 adds operational definitions,
+inclusion and exclusion notes, nearest confusables, and explicit decision
+guidance. The model-facing prompt contains concise definitions and precedence
+rules but no concrete positive or contrastive examples. Researcher-facing
+metadata remains outside ModelView.
+
+Mechanism adjudication applies these counterfactuals in order: effective
+idempotency wins when it alone prevents repeated execution of one logical
+identity; concurrency control applies when overlap is required and fencing,
+locking, serialization, cancellation enforcement, compare-and-set, or version
+checking prevents the result; state transition applies when the invalid edge
+remains invalid when serialized; non-atomic commit/rollback applies when a
+serialized multi-part operation can partially apply; retry policy applies only
+when the retry decision remains defective assuming effective idempotency.
+
+Evidence v3 scores preregistered semantic proof obligations rather than one
+exact list of evidence IDs. Incident 003 v2 has six essential requirements,
+two contrast requirements, and five supportive requirements, with deterministic
+structured and lifecycle-log paths. The primary fields are essential, contrast,
+and supportive requirement coverage; useful-citation precision; invalid,
+wrong-subject, and redundant citation counts/rates; and
+`evidence_supported`. `evidence_supported` requires all essential obligations
+and no nonexistent citation. Acceptable paths bind all facts to the intended
+operation, so wrong-subject evidence cannot satisfy an essential obligation.
+Legacy precision/recall/F1 are retained only as secondary derived fields for
+reporting compatibility. `overall_correct` requires exact five-label RCA and
+`evidence_supported`.
+
+Schema v9 preserves `prompt_sha256` as the template digest and requires
+`model_input_sha256` for the exact rendered model-visible input. It adds no
+oracle content to the manifest or model request. Historical schemas and
+observations are not rewritten.
 
 ## Seed policy
 
@@ -149,11 +196,27 @@ v1 oracle's `incorrect_state_transition`. Offline adjudication found both labels
 defensible under v2's undefined boundary and classified the result as taxonomy
 ambiguity. The result was not retroactively rescored.
 
-The approved but unimplemented v3 methodology, including a fresh unobserved
+The implemented offline v3 methodology, including a fresh unobserved
 development set and semantic evidence requirements, is specified in
 `docs/RCA_V3_METHODOLOGY.md`. The frozen v1 findings are in
 `docs/INCIDENT_003_V1_RAW_FINDINGS.md`. No Incident 003 privacy comparison or
 validation/held-out provider observation exists.
+
+Incident 003 v2 is routed separately as
+`incident_003_temporal_compensation_v2`, uses
+`incident-003-generator-v2` and `incident-003-temporal-protocol-v2`, and keeps
+the frozen v1 ModelView construction unchanged. Its fresh development selection
+procedure is `incident-003-v2-first-two-per-temporal-template-unobserved-v1`.
+Starting at seed 1019, it retains the first two ascending seeds for each of the
+four temporal templates and stops at 1028:
+
+`1019, 1020, 1021, 1022, 1023, 1025, 1026, 1028`.
+
+The registry rejects every other seed for this protocol. The offline config
+`experiments/incident_003_v2_raw_sol_development.toml` contains an empty
+validation and held-out set, freezes every rendered-input hash, requires a new
+result path, and cannot execute without `--execute`. Its presence is protocol
+preparation, not authorization to make provider calls.
 
 Its reusable timestamp semantics are versioned as `temporal-semantics-v1`, and
 its mandatory causal-information audit as

@@ -16,6 +16,9 @@ from diagpriv.evaluation.incident_families import (
     INCIDENT_003_DEVELOPMENT_SEEDS,
     INCIDENT_003_FAMILY,
     INCIDENT_003_SEED_SELECTION_VERSION,
+    INCIDENT_003_V2_DEVELOPMENT_SEEDS,
+    INCIDENT_003_V2_FAMILY,
+    INCIDENT_003_V2_SEED_SELECTION_VERSION,
     SUPPORTED_INCIDENT_FAMILIES,
     evaluation_seed_split,
     generate_evaluation_incident,
@@ -29,6 +32,10 @@ from diagpriv.evaluation.prompt_v2 import (
     PROMPT_VERSION as PROMPT_VERSION_V2,
     build_prompt_v2,
 )
+from diagpriv.evaluation.prompt_v3 import (
+    PROMPT_SHA256 as PROMPT_SHA256_V3,
+    PROMPT_VERSION as PROMPT_VERSION_V3,
+)
 
 FROZEN_PROTOCOLS = {
     PROMPT_VERSION_V1: (
@@ -40,6 +47,11 @@ FROZEN_PROTOCOLS = {
         PROMPT_SHA256_V2,
         "rca-taxonomy-v2",
         "raw-rca-scorer-v2",
+    ),
+    PROMPT_VERSION_V3: (
+        PROMPT_SHA256_V3,
+        "rca-taxonomy-v3",
+        "raw-rca-scorer-v3",
     ),
 }
 
@@ -201,6 +213,7 @@ class PilotDefinition:
             "raw-rca-manifest-v5",
             "raw-rca-manifest-v6",
             "raw-rca-manifest-v7",
+            "raw-rca-manifest-v9",
         }:
             raise ValueError(
                 f"Unsupported manifest schema: {self.manifest_schema_version}"
@@ -358,6 +371,32 @@ class PilotDefinition:
                 raise ValueError(
                     "Incident 003 pilot requires a previously absent result path"
                 )
+        elif self.incident_family == INCIDENT_003_V2_FAMILY:
+            if self.seed_scope != "development_only":
+                raise ValueError("Incident 003 v2 pilot must be development-only")
+            if self.development_seeds != INCIDENT_003_V2_DEVELOPMENT_SEEDS:
+                raise ValueError(
+                    "Incident 003 v2 pilot must use exactly the frozen fresh "
+                    "development seeds"
+                )
+            if (
+                self.development_seed_selection_version
+                != INCIDENT_003_V2_SEED_SELECTION_VERSION
+            ):
+                raise ValueError(
+                    "Incident 003 v2 pilot requires the frozen fresh "
+                    "seed-selection version"
+                )
+            if self.manifest_schema_version != "raw-rca-manifest-v9":
+                raise ValueError("Incident 003 v2 pilot requires manifest schema v9")
+            if self.prompt_version != PROMPT_VERSION_V3:
+                raise ValueError("Incident 003 v2 pilot requires raw-rca-v3")
+            if self.condition != "raw":
+                raise ValueError("Incident 003 v2 qualification must use raw evidence")
+            if not self.result_path_must_not_exist:
+                raise ValueError(
+                    "Incident 003 v2 pilot requires a previously absent result path"
+                )
         elif self.development_seed_selection_version is not None:
             if (
                 self.development_seed_selection_version
@@ -372,6 +411,14 @@ class PilotDefinition:
             ):
                 raise ValueError(
                     "Incident 003 seed-selection metadata is valid only for Incident 003"
+                )
+            if (
+                self.development_seed_selection_version
+                == INCIDENT_003_V2_SEED_SELECTION_VERSION
+            ):
+                raise ValueError(
+                    "Incident 003 v2 seed-selection metadata is valid only for "
+                    "Incident 003 v2"
                 )
             raise ValueError("Unknown family-specific seed-selection metadata")
         self._validate_matched_inputs()

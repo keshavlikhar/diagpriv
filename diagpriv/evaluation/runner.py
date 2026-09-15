@@ -20,6 +20,8 @@ from diagpriv.evaluation.incident_families import (
     INCIDENT_002_FAMILY,
     INCIDENT_003_DEVELOPMENT_SEEDS,
     INCIDENT_003_FAMILY,
+    INCIDENT_003_V2_DEVELOPMENT_SEEDS,
+    INCIDENT_003_V2_FAMILY,
     evaluation_seed_split,
     generate_evaluation_incident,
 )
@@ -39,16 +41,25 @@ from diagpriv.evaluation.prompt_v2 import (
     PROMPT_VERSION as PROMPT_VERSION_V2,
     build_prompt_v2,
 )
+from diagpriv.evaluation.prompt_v3 import (
+    PROMPT_SHA256 as PROMPT_SHA256_V3,
+    PROMPT_VERSION as PROMPT_VERSION_V3,
+    build_prompt_v3,
+)
 from diagpriv.evaluation.providers import ModelProvider, ModelRequest
 from diagpriv.evaluation.response import (
     ParsedResponse,
     parse_response,
     parse_response_v2,
+    parse_response_v3,
 )
 from diagpriv.evaluation.scoring import score_response
 from diagpriv.evaluation.scoring_v2 import SCORER_VERSION as SCORER_VERSION_V2
 from diagpriv.evaluation.scoring_v2 import score_response_v2
+from diagpriv.evaluation.scoring_v3 import SCORER_VERSION as SCORER_VERSION_V3
+from diagpriv.evaluation.scoring_v3 import score_response_v3
 from diagpriv.evaluation.taxonomy_v2 import TAXONOMY_VERSION as TAXONOMY_VERSION_V2
+from diagpriv.evaluation.taxonomy_v3 import TAXONOMY_VERSION as TAXONOMY_VERSION_V3
 from diagpriv.transformations import (
     format_preserving_incident,
     hmac_incident,
@@ -151,11 +162,11 @@ def run_raw_experiment(
         config.recovery_provenance,
     )
     prepared = prepare_model_input(config)
-    response_parser = (
-        parse_response_v2
-        if config.prompt_version == PROMPT_VERSION_V2
-        else parse_response
-    )
+    response_parser = {
+        PROMPT_VERSION_V1: parse_response,
+        PROMPT_VERSION_V2: parse_response_v2,
+        PROMPT_VERSION_V3: parse_response_v3,
+    }[config.prompt_version]
     invocation = provider.invoke(
         ModelRequest(
             prompt=prepared.prompt,
@@ -177,6 +188,8 @@ def run_raw_experiment(
         score = None
     elif config.prompt_version == PROMPT_VERSION_V2:
         score = score_response_v2(prepared.incident, parsed.response)
+    elif config.prompt_version == PROMPT_VERSION_V3:
+        score = score_response_v3(prepared.incident, parsed.response)
     else:
         score = score_response(prepared.incident, parsed.response)
 
@@ -221,11 +234,21 @@ def run_raw_experiment(
         model_input_sha256=(
             prepared.model_input_sha256
             if config.manifest_schema_version
-            in {"raw-rca-manifest-v6", "raw-rca-manifest-v7", "raw-rca-manifest-v8"}
+            in {
+                "raw-rca-manifest-v6",
+                "raw-rca-manifest-v7",
+                "raw-rca-manifest-v8",
+                "raw-rca-manifest-v9",
+            }
             else None
         ),
         trial_index=config.trial_index,
         recovery_provenance=config.recovery_provenance,
+        evidence_support_version=(
+            str(prepared.incident.metadata["evidence_support_version"])
+            if config.manifest_schema_version == "raw-rca-manifest-v9"
+            else None
+        ),
     )
     if result_path is not None:
         append_manifest(result_path, manifest)
@@ -257,6 +280,24 @@ def prepare_model_input(config: RawRunConfig) -> PreparedModelInput:
         raise ProtectedSeedError(
             "Incident 003 evaluation is restricted to its frozen development seeds"
         )
+    if (
+        config.incident_family == INCIDENT_003_V2_FAMILY
+        and config.seed not in INCIDENT_003_V2_DEVELOPMENT_SEEDS
+    ):
+        raise ProtectedSeedError(
+            "Incident 003 v2 evaluation is restricted to its frozen development seeds"
+        )
+
+    if (
+        config.prompt_version == PROMPT_VERSION_V3
+        and config.incident_family != INCIDENT_003_V2_FAMILY
+    ):
+        raise ValueError("raw-rca-v3 currently requires Incident 003 v2")
+    if (
+        config.incident_family == INCIDENT_003_V2_FAMILY
+        and config.prompt_version != PROMPT_VERSION_V3
+    ):
+        raise ValueError("Incident 003 v2 requires raw-rca-v3")
 
     if config.prompt_version == PROMPT_VERSION_V1:
         prompt_builder = build_prompt
@@ -268,6 +309,11 @@ def prepare_model_input(config: RawRunConfig) -> PreparedModelInput:
         prompt_sha256 = PROMPT_SHA256_V2
         taxonomy_version = TAXONOMY_VERSION_V2
         scorer_version = SCORER_VERSION_V2
+    elif config.prompt_version == PROMPT_VERSION_V3:
+        prompt_builder = build_prompt_v3
+        prompt_sha256 = PROMPT_SHA256_V3
+        taxonomy_version = TAXONOMY_VERSION_V3
+        scorer_version = SCORER_VERSION_V3
     else:
         raise ValueError(f"Unsupported raw RCA prompt version: {config.prompt_version}")
 

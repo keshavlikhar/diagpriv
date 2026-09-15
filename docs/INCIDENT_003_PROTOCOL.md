@@ -14,6 +14,13 @@ Construction is restricted to development seeds `1000–1999`. The 200-instance
 audit used only seeds `1000–1199`. No validation or held-out instance was
 constructed or inspected.
 
+Incident 003 v2 is a separate offline protocol wrapper identified by
+`incident_003_temporal_compensation_v2`, `incident-003-generator-v2`, and
+`incident-003-temporal-protocol-v2`. It delegates evidence construction to the
+frozen v1 generator so the ModelView, diagnostic invariants, and
+`incident-003-temporal-ablation-v1` result remain identical for the same seed.
+It does not mutate or reinterpret v1.
+
 ## Causal story and oracle
 
 The target workflow dispatches an operation whose downstream execution starts
@@ -36,6 +43,30 @@ transition. The executor records only execution progress/result and the
 original effect. The evidence therefore avoids assigning deadline or
 compensation policy to the executor, reducing the component-ownership ambiguity
 observed in earlier families.
+
+The separate Incident 003 v2 oracle for `rca-taxonomy-v3` is:
+
+```text
+observed_outcome = inconsistent_state
+trigger = timeout_or_deadline
+subsequent_action = compensation_or_rollback
+failure_mechanism = incorrect_concurrency_control
+affected_component = workflow_orchestrator
+```
+
+V3 selects concurrency control because the inconsistent outcome requires
+original execution and compensation to overlap and both take effect. Correct
+fencing, serialization, or cancellation enforcement would prevent that result.
+The edge is not classified as a state-transition defect because the
+inconsistency does not persist under serialized execution.
+
+The fresh v2 development set is selected by
+`incident-003-v2-first-two-per-temporal-template-unobserved-v1`: scan from 1019
+in ascending order, retain only the first two instances for each temporal
+template, and stop when all four templates have two. The frozen set is 1019,
+1020, 1021, 1022, 1023, 1025, 1026, and 1028. These instances have not been sent
+to a provider. No validation or held-out Incident 003 v2 instance has been
+generated or inspected.
 
 ## ModelView schema
 

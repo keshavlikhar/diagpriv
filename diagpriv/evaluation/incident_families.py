@@ -13,6 +13,10 @@ from diagbench.generators.incident_003 import (
     FAMILY_ID as INCIDENT_003_FAMILY,
     generate_incident_003,
 )
+from diagbench.generators.incident_003_v2 import (
+    FAMILY_ID as INCIDENT_003_V2_FAMILY,
+    generate_incident_003_v2,
+)
 from diagbench.schema import Incident
 
 INCIDENT_001_FAMILY = "incident_001"
@@ -20,6 +24,7 @@ SUPPORTED_INCIDENT_FAMILIES = (
     INCIDENT_001_FAMILY,
     INCIDENT_002_FAMILY,
     INCIDENT_003_FAMILY,
+    INCIDENT_003_V2_FAMILY,
 )
 
 # Frozen by ascending first occurrence of each Incident 002 generator-side defect
@@ -45,10 +50,27 @@ INCIDENT_003_SEED_SELECTION_VERSION = (
     "incident-003-first-two-per-temporal-template-v1"
 )
 
+# Frozen before any v3 provider observation. Starting at seed 1019, retain the
+# first two seeds per temporal template and stop once all four have two.
+INCIDENT_003_V2_DEVELOPMENT_SEEDS = (
+    1019,
+    1020,
+    1021,
+    1022,
+    1023,
+    1025,
+    1026,
+    1028,
+)
+INCIDENT_003_V2_SEED_SELECTION_VERSION = (
+    "incident-003-v2-first-two-per-temporal-template-unobserved-v1"
+)
+
 IncidentFamily = Literal[
     "incident_001",
     "incident_002_format_defect",
     "incident_003_temporal_compensation",
+    "incident_003_temporal_compensation_v2",
 ]
 
 
@@ -60,6 +82,8 @@ def generate_evaluation_incident(family: str, seed: int) -> Incident:
         return generate_incident_002(seed)
     if family == INCIDENT_003_FAMILY:
         return generate_incident_003(seed)
+    if family == INCIDENT_003_V2_FAMILY:
+        return generate_incident_003_v2(seed)
     raise ValueError(f"Unsupported incident family: {family}")
 
 
@@ -77,6 +101,12 @@ def evaluation_seed_split(family: str, seed: int) -> str:
         return (
             "development"
             if seed in INCIDENT_003_DEVELOPMENT_SEEDS
+            else "unassigned"
+        )
+    if family == INCIDENT_003_V2_FAMILY:
+        return (
+            "development"
+            if seed in INCIDENT_003_V2_DEVELOPMENT_SEEDS
             else "unassigned"
         )
     raise ValueError(f"Unsupported incident family: {family}")

@@ -9,6 +9,7 @@ import hashlib
 from typing import Callable, Iterable
 
 from diagbench.generators.incident_003 import FAMILY_ID, generate_incident_003
+from diagbench.generators.incident_003_v2 import FAMILY_ID as FAMILY_ID_V2
 from diagbench.schema import Incident, ModelView
 from diagbench.schema.models import JSONValue
 from diagbench.temporal import (
@@ -65,7 +66,7 @@ def temporally_ablated_model_view(incident: Incident) -> ModelView:
     messages, aliases, effects, compensation presence, dependency observations,
     and all other non-temporal data remain byte-for-byte equivalent.
     """
-    if incident.incident_id != FAMILY_ID:
+    if incident.incident_id not in {FAMILY_ID, FAMILY_ID_V2}:
         raise ValueError("Temporal ablation v1 supports Incident 003 only")
     data = deepcopy(incident.model_view().to_dict())
     structured = data["structured_evidence"]

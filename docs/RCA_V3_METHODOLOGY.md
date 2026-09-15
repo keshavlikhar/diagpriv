@@ -2,13 +2,18 @@
 
 ## Status
 
-This document records an approved design decision. None of the versions below
-is implemented yet:
+This document records the approved design and its offline implementation. The
+following versions are implemented and tested but have not been sent to a
+provider:
 
 - `rca-taxonomy-v3`
 - `raw-rca-v3`
 - `raw-rca-scorer-v3`
 - `evidence-support-v3`
+
+New observations use `raw-rca-manifest-v9`. The frozen `raw-rca-v3` template
+SHA-256 is
+`a2fc07481c9cd33776086d16cd76fafaa27c2fdf162f4ae634885187d0d22139`.
 
 The frozen v2 taxonomy, prompt, scorer, manifests, incident oracles, and
 historical observations remain unchanged. In particular, the Incident 003 v1
@@ -83,6 +88,26 @@ Idempotency remains a more specific control when repeated executions share one
 logical identity and correct deduplication or safe replay alone would prevent a
 duplicate outcome.
 
+## Other mechanism boundaries
+
+### `missing_or_ineffective_idempotency`
+
+Use when repeated executions share one logical identity and suppression or safe
+replay alone would prevent the duplicate outcome. It takes precedence over
+generic retry and concurrency framing when that counterfactual is satisfied.
+
+### `non_atomic_commit_or_rollback`
+
+Use when a logically indivisible multi-part commit or rollback can partially
+apply under serialized execution. If the failure requires overlapping actors,
+the concurrency-control category applies instead.
+
+### `incorrect_retry_policy`
+
+Use only when the retry decision, timing, or bounds remain defective assuming
+effective idempotency. A harmless retry that becomes harmful only because
+deduplication is missing is an idempotency failure, not a retry-policy failure.
+
 ## Blinded mapping of existing families
 
 The accepted mapping uses construction facts only, not model predictions.
@@ -93,20 +118,20 @@ The accepted mapping uses construction facts only, not model predictions.
 | Incident 002 | `missing_effect` | `malformed_or_unexpected_input` | `no_follow_on_action` | `validation_or_input_handling_failure` | `operation_executor` | None |
 | Incident 003 v1 construction under v3 | `inconsistent_state` | `timeout_or_deadline` | `compensation_or_rollback` | `incorrect_concurrency_control` | `workflow_orchestrator` | Mechanism only |
 
-Under the proposed v3 boundary, Incident 003 is no longer ambiguous: its
+Under the v3 boundary, Incident 003 is no longer ambiguous: its
 outcome depends on overlapping execution and compensation both taking effect,
 and fencing or cancellation enforcement would prevent that outcome.
 
-## Planned Incident 003 v2
+## Incident 003 v2 offline implementation
 
-Future implementation should version the protocol and generator instead of
-mutating v1. Planned identifiers are:
+The protocol and generator are versioned instead of mutating v1. Identifiers
+are:
 
 - `incident-003-generator-v2`
 - `incident-003-temporal-protocol-v2`
 
 `temporal-semantics-v1`, the model-visible construction, diagnostic invariants,
-and temporal ablation remain unchanged. The planned oracle is:
+and temporal ablation remain unchanged. The implemented v3 oracle is:
 
 ```text
 observed_outcome = inconsistent_state
@@ -116,11 +141,13 @@ failure_mechanism = incorrect_concurrency_control
 affected_component = workflow_orchestrator
 ```
 
-This planned oracle is not implemented or empirically qualified.
+This oracle is implemented offline but not empirically qualified. The v1
+instance's v2 oracle remains present and unchanged; no historical observation
+is relabelled or rescored.
 
 ## Model-facing prompt boundary
 
-The future `raw-rca-v3` prompt may contain only:
+The `raw-rca-v3` prompt contains only:
 
 - task and dimension definitions;
 - canonical labels with concise operational definitions;
@@ -171,7 +198,7 @@ Supportive requirements may cover orchestrator ownership, executor ownership,
 dependency availability, warning comparison, and additional target lifecycle
 corroboration.
 
-### Planned primary evidence metrics
+### Primary evidence metrics
 
 - `essential_requirement_coverage`
 - `contrast_requirement_coverage`
@@ -189,7 +216,7 @@ satisfied, essential subject bindings are consistent, no nonexistent citation
 is used, and no wrong-target or contradictory evidence is used to satisfy an
 essential requirement. Contrast coverage is not required.
 
-The planned overall criterion is:
+The implemented overall criterion is:
 
 ```text
 overall_correct_v3 = exact five-dimensional RCA AND evidence_supported
@@ -199,13 +226,18 @@ No opaque composite evidence measure will replace the primary metrics. A
 derived F1 may be secondary analysis only. Historical v2 exact-ID evidence
 precision, recall, and F1 remain unchanged.
 
+The implementation retains secondary `evidence_precision`, `evidence_recall`,
+and `evidence_f1` fields solely for reporting compatibility. They are derived
+from useful-citation precision and essential-requirement coverage and do not
+replace the primary semantic metrics.
+
 ## Fresh Incident 003 development policy
 
 The eight v1 provider-observed seeds are historical, regression, or protocol-
 debugging inputs only. They may not be presented as fresh qualification evidence
 for a revised protocol.
 
-The future selection rule is
+The implemented selection rule is
 `incident-003-v2-first-two-per-temporal-template-unobserved-v1`: begin at seed
 1019, inspect only temporal-template metadata in ascending order, retain the
 first two previously unobserved seeds for each of the four templates, and stop
@@ -218,8 +250,8 @@ The frozen future set is:
 1019, 1020, 1021, 1022, 1023, 1025, 1026, 1028
 ```
 
-These seeds have not been sent to a provider. No v3 implementation or provider
-qualification is authorized by this document.
+These seeds have not been sent to a provider. The offline implementation and
+configuration do not authorize provider qualification.
 
 ## Compatibility policy
 
