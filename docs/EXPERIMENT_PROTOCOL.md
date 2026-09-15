@@ -129,21 +129,31 @@ the separately reviewed eight-seed set selected by
 
 Starting at 1000, the selection retained the first two ascending occurrences
 of every temporal template and stopped at 1018. These seeds are frozen for the
-raw qualification and future matched Incident 003 development conditions.
-Every other Incident 003 seed is unassigned at the evaluation boundary.
+completed v1 raw qualification. They are historical, regression, or protocol-
+debugging inputs only under a revised protocol and cannot be presented as fresh
+qualification evidence.
 
-`experiments/incident_003_raw_sol_development.toml` prepares exactly one raw
+`experiments/incident_003_raw_sol_development.toml` specified exactly one raw
 GPT-5.6 Sol call per frozen seed using medium reasoning, omitted temperature,
 the unchanged v2 prompt/taxonomy/scorer, and manifest schema v6. The config
-freezes all eight rendered `model_input_sha256` values and requires the result
+froze all eight rendered `model_input_sha256` values and required the result
 path to be absent. Input reconstruction and path collision checks occur before
-provider setup. The approved future result path is
-`results/incident_003_raw_sol_development_gpt_5_6_sol_medium.jsonl`.
+provider setup. The completed ignored result is
+`results/incident_003_raw_sol_development_gpt_5_6_sol_medium.jsonl`, SHA-256
+`4f24b8a5bb593fb491307544796bc6d75b85c32b761e5ee09d79bdb802e8f66b`.
 
-This is a diagnostic qualification with no post-hoc threshold. Required
-reporting uses only the existing metrics. Trigger, subsequent action, and
-failure mechanism are the family-specific causal dimensions of interest;
-component accuracy is still reported normally. No provider result exists yet.
+The frozen result is 8/8 valid and 0/8 exact under v2. Outcome, trigger,
+subsequent action, and component are each correct in 8/8; mechanism is correct
+in 0/8. Every response selected `incorrect_concurrency_control` rather than the
+v1 oracle's `incorrect_state_transition`. Offline adjudication found both labels
+defensible under v2's undefined boundary and classified the result as taxonomy
+ambiguity. The result was not retroactively rescored.
+
+The approved but unimplemented v3 methodology, including a fresh unobserved
+development set and semantic evidence requirements, is specified in
+`docs/RCA_V3_METHODOLOGY.md`. The frozen v1 findings are in
+`docs/INCIDENT_003_V1_RAW_FINDINGS.md`. No Incident 003 privacy comparison or
+validation/held-out provider observation exists.
 
 Its reusable timestamp semantics are versioned as `temporal-semantics-v1`, and
 its mandatory causal-information audit as
