@@ -13,6 +13,9 @@ from diagpriv.evaluation.incident_families import (
     INCIDENT_002_DEVELOPMENT_SEEDS,
     INCIDENT_002_FAMILY,
     INCIDENT_002_SEED_SELECTION_VERSION,
+    INCIDENT_003_DEVELOPMENT_SEEDS,
+    INCIDENT_003_FAMILY,
+    INCIDENT_003_SEED_SELECTION_VERSION,
     SUPPORTED_INCIDENT_FAMILIES,
     evaluation_seed_split,
     generate_evaluation_incident,
@@ -66,6 +69,7 @@ class PilotDefinition:
     validation_seeds: tuple[int, ...]
     held_out_seeds: tuple[int, ...]
     calls_per_seed: int
+    result_path_must_not_exist: bool
     trial_indices: tuple[int, ...]
     repetition_protocol_version: str | None
     historical_trial_count: int | None
@@ -150,6 +154,9 @@ class PilotDefinition:
             validation_seeds=tuple(pilot["validation_seeds"]),
             held_out_seeds=tuple(pilot["held_out_seeds"]),
             calls_per_seed=pilot["calls_per_seed"],
+            result_path_must_not_exist=pilot.get(
+                "result_path_must_not_exist", False
+            ),
             trial_indices=tuple(pilot.get("trial_indices", ())),
             repetition_protocol_version=pilot.get("repetition_protocol_version"),
             historical_trial_count=pilot.get("historical_trial_count"),
@@ -223,6 +230,8 @@ class PilotDefinition:
             )
         if self.calls_per_seed < 1:
             raise ValueError("calls_per_seed must be positive")
+        if not isinstance(self.result_path_must_not_exist, bool):
+            raise ValueError("result_path_must_not_exist must be a boolean")
         if self.manifest_schema_version == "raw-rca-manifest-v7":
             if not self.repetition_protocol_version:
                 raise ValueError(
@@ -329,10 +338,42 @@ class PilotDefinition:
                 "raw-rca-manifest-v7",
             }:
                 raise ValueError("Incident 002 pilot requires manifest schema v6 or v7")
+        elif self.incident_family == INCIDENT_003_FAMILY:
+            if self.seed_scope != "development_only":
+                raise ValueError("Incident 003 pilot must be development-only")
+            if self.development_seeds != INCIDENT_003_DEVELOPMENT_SEEDS:
+                raise ValueError(
+                    "Incident 003 pilot must use exactly the frozen development seeds"
+                )
+            if (
+                self.development_seed_selection_version
+                != INCIDENT_003_SEED_SELECTION_VERSION
+            ):
+                raise ValueError(
+                    "Incident 003 pilot requires the frozen seed-selection version"
+                )
+            if self.manifest_schema_version != "raw-rca-manifest-v6":
+                raise ValueError("Incident 003 pilot requires manifest schema v6")
+            if not self.result_path_must_not_exist:
+                raise ValueError(
+                    "Incident 003 pilot requires a previously absent result path"
+                )
         elif self.development_seed_selection_version is not None:
-            raise ValueError(
-                "Incident 002 seed-selection metadata is valid only for Incident 002"
-            )
+            if (
+                self.development_seed_selection_version
+                == INCIDENT_002_SEED_SELECTION_VERSION
+            ):
+                raise ValueError(
+                    "Incident 002 seed-selection metadata is valid only for Incident 002"
+                )
+            if (
+                self.development_seed_selection_version
+                == INCIDENT_003_SEED_SELECTION_VERSION
+            ):
+                raise ValueError(
+                    "Incident 003 seed-selection metadata is valid only for Incident 003"
+                )
+            raise ValueError("Unknown family-specific seed-selection metadata")
         self._validate_matched_inputs()
         self._validate_input_provenance()
         if not self.pricing_snapshot_path.is_file():
@@ -414,6 +455,11 @@ class PilotDefinition:
             "validation_seeds": list(self.validation_seeds),
             "held_out_seeds": list(self.held_out_seeds),
             "calls_per_seed": self.calls_per_seed,
+            **(
+                {"result_path_must_not_exist": True}
+                if self.result_path_must_not_exist
+                else {}
+            ),
             **(
                 {"trial_indices": list(self.trial_indices)}
                 if self.trial_indices

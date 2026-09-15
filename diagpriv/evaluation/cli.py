@@ -54,6 +54,10 @@ def _external_hmac_key(definition: PilotDefinition) -> bytes | None:
 
 def _run_pilot(args: argparse.Namespace) -> None:
     definition = PilotDefinition.load(args.config)
+    if definition.result_path_must_not_exist and args.results.exists():
+        raise SystemExit(
+            "Configured result path already exists; refusing to call provider"
+        )
     if not args.execute:
         input_preflight = None
         if definition.expected_model_input_sha256_by_seed:

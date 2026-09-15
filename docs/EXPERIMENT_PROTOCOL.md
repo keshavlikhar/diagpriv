@@ -117,15 +117,43 @@ DiagPriv condition. They must not be replaced after observing model behavior.
 The evaluation registry rejects every other seed for Incident 002; its current
 pilot configuration also requires an empty validation and held-out set.
 
-### Incident 003 offline construction boundary
+### Incident 003 raw development qualification
 
-Incident 003 (`incident_003_temporal_compensation`) is currently an offline
-construction only under `incident-003-temporal-protocol-v1` and
-`diagbench-v0.4`. Its generator accepts development seeds `1000–1999`; the
-review audit uses only `1000–1199`. It is deliberately absent from the provider
-evaluation registry and has no pilot configuration or result path. Adding an
-experiment requires a later, explicit protocol review rather than treating the
-generator's existence as execution authorization.
+Incident 003 (`incident_003_temporal_compensation`) remains versioned under
+`incident-003-temporal-protocol-v1` and `diagbench-v0.4`. Its construction audit
+used only development seeds `1000–1199`. Provider evaluation is restricted to
+the separately reviewed eight-seed set selected by
+`incident-003-first-two-per-temporal-template-v1`:
+
+`1000, 1001, 1002, 1003, 1004, 1015, 1017, 1018`.
+
+Starting at 1000, the selection retained the first two ascending occurrences
+of every temporal template and stopped at 1018. These seeds are frozen for the
+completed v1 raw qualification. They are historical, regression, or protocol-
+debugging inputs only under a revised protocol and cannot be presented as fresh
+qualification evidence.
+
+`experiments/incident_003_raw_sol_development.toml` specified exactly one raw
+GPT-5.6 Sol call per frozen seed using medium reasoning, omitted temperature,
+the unchanged v2 prompt/taxonomy/scorer, and manifest schema v6. The config
+froze all eight rendered `model_input_sha256` values and required the result
+path to be absent. Input reconstruction and path collision checks occur before
+provider setup. The completed ignored result is
+`results/incident_003_raw_sol_development_gpt_5_6_sol_medium.jsonl`, SHA-256
+`4f24b8a5bb593fb491307544796bc6d75b85c32b761e5ee09d79bdb802e8f66b`.
+
+The frozen result is 8/8 valid and 0/8 exact under v2. Outcome, trigger,
+subsequent action, and component are each correct in 8/8; mechanism is correct
+in 0/8. Every response selected `incorrect_concurrency_control` rather than the
+v1 oracle's `incorrect_state_transition`. Offline adjudication found both labels
+defensible under v2's undefined boundary and classified the result as taxonomy
+ambiguity. The result was not retroactively rescored.
+
+The approved but unimplemented v3 methodology, including a fresh unobserved
+development set and semantic evidence requirements, is specified in
+`docs/RCA_V3_METHODOLOGY.md`. The frozen v1 findings are in
+`docs/INCIDENT_003_V1_RAW_FINDINGS.md`. No Incident 003 privacy comparison or
+validation/held-out provider observation exists.
 
 Its reusable timestamp semantics are versioned as `temporal-semantics-v1`, and
 its mandatory causal-information audit as

@@ -80,6 +80,11 @@ provisioning effect. All data is fictional and synthetic.
     for each of the ten failed cells. All ten were valid; they enter only a
     sensitivity view and do not revise the primary result. The final frozen
     findings are in `docs/INCIDENT_002_FINAL_FINDINGS.md`.
+14. **Incident 003 raw qualification and adjudication:** the frozen eight-seed
+    GPT-5.6 Sol run produced 0/8 exact RCA under v2 despite recovering the
+    temporal chain in all eight observations. Offline review classified the
+    systematic mechanism disagreement as taxonomy ambiguity. RCA v3 methodology
+    and fresh development seeds are designed but not implemented or qualified.
 
 ## Roadmap and decision gates
 

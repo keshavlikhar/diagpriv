@@ -1,0 +1,43 @@
+[pilot]
+pilot_id = "incident-003-raw-sol-development-v1"
+provider = "openai-responses"
+incident_family = "incident_003_temporal_compensation"
+manifest_schema_version = "raw-rca-manifest-v6"
+development_seed_selection_version = "incident-003-first-two-per-temporal-template-v1"
+condition = "raw"
+prompt_version = "raw-rca-v2"
+prompt_sha256 = "744f1f62b6db7e0655d52692b929c3a2a9c3d86f8beaaefb76526ab0b2ea8a2d"
+taxonomy_version = "rca-taxonomy-v2"
+scorer_version = "raw-rca-scorer-v2"
+seed_scope = "development_only"
+development_seeds = [1000, 1001, 1002, 1003, 1004, 1015, 1017, 1018]
+validation_seeds = []
+held_out_seeds = []
+calls_per_seed = 1
+result_path_must_not_exist = true
+
+[model]
+requested_model = "gpt-5.6-sol"
+version_metadata_environment_variable = "DIAGPRIV_MODEL_VERSION_METADATA"
+reasoning_effort = "medium"
+
+[decoding]
+max_output_tokens = 4096
+
+[temperature_protocol_correction]
+intended = 0.0
+effective = "omitted"
+omission_reason = "Temperature is omitted to preserve the established GPT-5.6 Sol development decoding protocol; no claim is made that GPT-5.6 Sol rejects the parameter."
+
+[input_provenance.model_input_sha256_by_seed]
+"1000" = "9c9ef3c804ef9204262a9e9469004289714c8fe32cf70b6f982d0ee4982b5c55"
+"1001" = "e6130243472f0e688c39bffbc76e4dbd932004770ca4413ae05dd4484dad3fba"
+"1002" = "ab2c1b87e74f973b4c1746284e2d2e2a4e31f5d9a05093271dbdd8470643a5be"
+"1003" = "7822bddef226d46e5991011f7f7af772aa2ea4d565541d99b76ac0011fe68184"
+"1004" = "2fe36fe6ac7dd4a2585dc16910683b37978903f816c36c907db26fa4144bbc9d"
+"1015" = "99d18bfdd30e5a012dcae97ec9d34469833ef4b243d6ab8660caf9f19e01d002"
+"1017" = "8e2fabbc9be83c07314ca05161b9a0e673b01bec5925933aad1f428236eb9cbf"
+"1018" = "0252355478316de3a15a401ae8de24bfa55802ac5a732e576582cc4cf5923458"
+
+[pricing]
+snapshot = "pricing/openai_gpt_5_6_sol_2026-09-10.toml"

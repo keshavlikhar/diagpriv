@@ -3,7 +3,7 @@
 DiagPriv is an academic research project studying whether privacy
 transformations can remove sensitive identity from operational troubleshooting
 evidence while retaining the relationships an LLM needs for root-cause
-analysis (RCA). Its companion benchmark, DiagBench, contains two fully
+analysis (RCA). Its companion benchmark, DiagBench, contains three fully
 synthetic incident families; no production or customer data is used.
 
 The central hypothesis is that a transformation which preserves explicitly
@@ -32,6 +32,14 @@ respectively. These are directional development observations, not causal or
 general conclusions. No Incident 002 validation or held-out observation exists.
 Do not rerun completed experiments, run a privacy condition on validation, or
 inspect held-out seeds without explicit research approval.
+
+Incident Family 003 studies temporal causality. Its frozen raw Sol development
+run recovered the temporal chain in all eight observations but scored 0/8 exact
+under RCA v2 because every response selected `incorrect_concurrency_control`
+instead of the v1 oracle's `incorrect_state_transition`. Offline adjudication
+classified the disagreement as taxonomy ambiguity. RCA v3 methodology is
+designed but not implemented; no Incident 003 privacy, validation, or held-out
+observation exists.
 
 See [CURRENT_STATUS](docs/CURRENT_STATUS.md) for immutable artifact hashes and
 known limitations, and [RESEARCH_PLAN](docs/RESEARCH_PLAN.md) for the roadmap.
@@ -74,6 +82,8 @@ uv run python -m diagbench.generators.incident_002 --seed 1001
 - [Research plan](docs/RESEARCH_PLAN.md)
 - [Current status and artifact ledger](docs/CURRENT_STATUS.md)
 - [Experiment protocol](docs/EXPERIMENT_PROTOCOL.md)
+- [Incident 003 v1 raw findings](docs/INCIDENT_003_V1_RAW_FINDINGS.md)
+- [RCA v3 methodology decision](docs/RCA_V3_METHODOLOGY.md)
 - [Threat model](docs/THREAT_MODEL.md)
 - [Architecture](docs/ARCHITECTURE.md)
 - [Contributing guide](CONTRIBUTING.md)

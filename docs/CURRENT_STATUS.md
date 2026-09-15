@@ -1,6 +1,6 @@
 # Current Status
 
-Last updated: 2026-09-14.
+Last updated: 2026-09-15.
 
 ## Handoff point
 
@@ -18,15 +18,58 @@ seed-selection scan generated seeds 1000–1017 while applying the frozen
 first-occurrence rule; it did not generate or inspect validation or held-out
 instances.
 
-Incident 003 is now implemented only as an offline benchmark candidate on the
-`feat/incident-family-003-temporal-causality` branch. It has no experiment
-configuration, provider observation, or result JSONL. Its 200-instance
-development construction audit over seeds `1000–1199` passed all 5,400 check
-evaluations and all 200 temporal-ablation checks with no identifier collision.
-The proposed family, oracle, invariant classifications, transformation audit,
-and limitations are recorded in `docs/INCIDENT_003_PROTOCOL.md` and remain
-subject to methodology review. No validation or held-out Incident 003 instance
-has been constructed or inspected.
+Incident 003 v1 raw GPT-5.6 Sol qualification is complete and frozen. Its eight
+mechanically selected development seeds were 1000, 1001, 1002, 1003, 1004,
+1015, 1017, and 1018 under
+`incident-003-first-two-per-temporal-template-v1`. The run produced 8/8 valid
+responses but 0/8 exact RCA under the frozen v2 taxonomy because every response
+selected `incorrect_concurrency_control` instead of the v1 oracle's
+`incorrect_state_transition`. Outcome, trigger, action, and component were each
+correct in 8/8. The run has not been retroactively rescored.
+
+Offline adjudication classified the systematic disagreement as **B. Taxonomy
+ambiguity**, driven substantially by taxonomy-definition insufficiency. RCA v3
+methodology is designed but not implemented. No Incident 003 privacy comparison
+has occurred, no `relative-time-v1` transformation exists, and no validation or
+held-out Incident 003 instance has been constructed or inspected. See
+`docs/INCIDENT_003_V1_RAW_FINDINGS.md`, `docs/RCA_V3_METHODOLOGY.md`, and
+`docs/INCIDENT_003_PROTOCOL.md`.
+
+## Frozen Incident 003 v1 raw qualification
+
+The development-only raw Sol observation produced:
+
+| Metric | Result |
+|---|---:|
+| Valid responses | 8/8 |
+| Exact RCA under v2 | 0/8 |
+| `overall_correct` under v2 | 0/8 |
+| Observed outcome | 8/8 |
+| Trigger | 8/8 |
+| Subsequent action | 8/8 |
+| Failure mechanism | 0/8 |
+| Affected component | 8/8 |
+| Evidence precision | 0.083333 |
+| Evidence recall | 0.071429 |
+| Evidence F1 | 0.076923 |
+
+All eight responses recovered the deadline, compensation, overlap, late-success,
+inconsistent-state, and orchestrator-ownership chain. The disagreement was the
+mechanism label. Seven responses cited valid alternative lifecycle logs rather
+than the single frozen structured-row evidence path. Citation coverage was
+incomplete, but the exact-ID rubric also omitted semantically equivalent paths.
+No cited ID was nonexistent.
+
+The local ignored artifact has SHA-256
+`4f24b8a5bb593fb491307544796bc6d75b85c32b761e5ee09d79bdb802e8f66b`.
+The raw run remains 0/8 exact under v2 and must not be regenerated, relabelled,
+or presented as a successful exact qualification.
+
+The planned, unimplemented v3 mapping changes only Incident 003's mechanism to
+`incorrect_concurrency_control`. Its fresh future development set is 1019,
+1020, 1021, 1022, 1023, 1025, 1026, and 1028 under
+`incident-003-v2-first-two-per-temporal-template-unobserved-v1`. Those seeds
+have not been sent to a provider.
 
 ## Frozen Incident 002 development seeds
 
@@ -234,6 +277,7 @@ experiment IDs.
 | `results/incident_002_tokenization_v1_sol_repeated_trials_2_3.jsonl` | `441a603bb1e31f373ac4920eaf31e0882d3538f833b683e1c159f2ec7cde11df` |
 | `results/incident_002_format_preserving_v1_sol_repeated_trials_2_3.jsonl` | `cb1b17e8ad57ce4788ddb3d37e5249fde27263d912f16f03664dc506956df318` |
 | `results/incident_002_sol_transport_recovery.jsonl` | `87902fa3217aaca020cb2cd2df14effc19c8c97a6f823031ed171a6f0ef4747e` |
+| `results/incident_003_raw_sol_development_gpt_5_6_sol_medium.jsonl` | `4f24b8a5bb593fb491307544796bc6d75b85c32b761e5ee09d79bdb802e8f66b` |
 
 Earlier raw-v1 HTTP failures and the seed-1000 taxonomy diagnostic remain local
 infrastructure/development history. The HTTP 400 attempts are not RCA
@@ -287,5 +331,7 @@ Its initial defect set is limited to transformations already represented by
   dimensions.
 - Result artifacts are local/ignored; a collaboration-safe distribution policy
   remains to be chosen.
-- The evaluation registry currently supports only Incident Families 001 and
-  002; adding another family requires explicit routing and seed-policy review.
+- Incident 003 v1 raw qualification failed exact RCA under the frozen v2
+  taxonomy despite recovering the temporal chain. The accepted ambiguity and
+  prospective v3 methodology are development findings, not a retroactive score
+  correction or empirical v3 qualification.
