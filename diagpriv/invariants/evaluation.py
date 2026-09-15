@@ -3,12 +3,17 @@
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass
-from datetime import datetime
 from typing import Literal
 
 from diagbench.schema import DiagnosticInvariant, EvidenceReference, Incident, ModelView
 from diagbench.schema.models import JSONValue
 from diagbench.structural import structural_defect_matches, structural_signature
+from diagbench.temporal import (
+    interval_duration_seconds,
+    intervals_overlap,
+    ordered_sequence,
+    paired_before,
+)
 
 InvariantStatus = Literal[
     "genuine_preservation",
@@ -195,13 +200,23 @@ def _invariant_holds(
             value not in after[:index] for index, value in enumerate(after)
         )
     if invariant.relation == "ordered_before":
-        timestamps = tuple(_as_datetime(value) for value in after)
-        return all(first < second for first, second in zip(timestamps, timestamps[1:]))
+        return ordered_sequence(tuple(_timestamp_string(value) for value in after))
+    if invariant.relation == "paired_before":
+        return paired_before(tuple(_timestamp_string(value) for value in after))
     if invariant.relation == "interval_seconds":
         if len(after) != 2:
             return False
-        interval = (_as_datetime(after[1]) - _as_datetime(after[0])).total_seconds()
+        interval = interval_duration_seconds(
+            _timestamp_string(after[0]), _timestamp_string(after[1])
+        )
         return interval == invariant.expected
+    if invariant.relation == "intervals_overlap":
+        if len(after) != 4 or not isinstance(invariant.expected, bool):
+            return False
+        overlap = intervals_overlap(
+            *tuple(_timestamp_string(value) for value in after)
+        )
+        return overlap is invariant.expected
     if invariant.relation == "row_count":
         return len(after) == invariant.expected
     if invariant.relation == "preserve_literal":
@@ -265,7 +280,7 @@ def _match_count(model_view: ModelView, invariant: DiagnosticInvariant) -> int:
     )
 
 
-def _as_datetime(value: JSONValue) -> datetime:
+def _timestamp_string(value: JSONValue) -> str:
     if not isinstance(value, str):
         raise ValueError(f"Timestamp invariant operand must be a string: {value!r}")
-    return datetime.fromisoformat(value.replace("Z", "+00:00"))
+    return value
