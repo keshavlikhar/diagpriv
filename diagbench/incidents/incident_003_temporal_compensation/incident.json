@@ -1,0 +1,2109 @@
+{
+  "category": "workflow_state_inconsistency",
+  "component_mappings": [
+    {
+      "canonical_role": "workflow_orchestrator",
+      "visible_names": [
+        "workflow-controller"
+      ]
+    },
+    {
+      "canonical_role": "operation_executor",
+      "visible_names": [
+        "action-runner"
+      ]
+    },
+    {
+      "canonical_role": "external_dependency",
+      "visible_names": [
+        "remote-ledger"
+      ]
+    }
+  ],
+  "description": "A workflow deadline initiates compensation while original execution remains in progress; the original success and compensation leave contradictory state.",
+  "diagnostic_invariants": [
+    {
+      "description": "The orchestrator deadline occurs before original execution completion.",
+      "expected": true,
+      "name": "target_deadline_precedes_original_completion",
+      "necessity": "essential",
+      "operands": [
+        {
+          "field": "deadline_at",
+          "selector": {
+            "evidence_id": "EV-90477655"
+          },
+          "source": "workflow_attempts"
+        },
+        {
+          "field": "completed_at",
+          "selector": {
+            "evidence_id": "EV-24751686"
+          },
+          "source": "execution_observations"
+        }
+      ],
+      "relation": "ordered_before"
+    },
+    {
+      "description": "Target compensation begins after the workflow deadline.",
+      "expected": true,
+      "name": "target_compensation_after_deadline",
+      "necessity": "essential",
+      "operands": [
+        {
+          "field": "deadline_at",
+          "selector": {
+            "evidence_id": "EV-90477655"
+          },
+          "source": "workflow_attempts"
+        },
+        {
+          "field": "started_at",
+          "selector": {
+            "evidence_id": "EV-29726942"
+          },
+          "source": "compensation_records"
+        }
+      ],
+      "relation": "ordered_before"
+    },
+    {
+      "description": "Compensation begins before original execution completes.",
+      "expected": true,
+      "name": "target_compensation_precedes_original_completion",
+      "necessity": "essential",
+      "operands": [
+        {
+          "field": "started_at",
+          "selector": {
+            "evidence_id": "EV-29726942"
+          },
+          "source": "compensation_records"
+        },
+        {
+          "field": "completed_at",
+          "selector": {
+            "evidence_id": "EV-24751686"
+          },
+          "source": "execution_observations"
+        }
+      ],
+      "relation": "ordered_before"
+    },
+    {
+      "description": "Original execution and compensation overlap for a positive duration.",
+      "expected": true,
+      "name": "target_execution_compensation_overlap",
+      "necessity": "essential",
+      "operands": [
+        {
+          "field": "started_at",
+          "selector": {
+            "evidence_id": "EV-24751686"
+          },
+          "source": "execution_observations"
+        },
+        {
+          "field": "completed_at",
+          "selector": {
+            "evidence_id": "EV-24751686"
+          },
+          "source": "execution_observations"
+        },
+        {
+          "field": "started_at",
+          "selector": {
+            "evidence_id": "EV-29726942"
+          },
+          "source": "compensation_records"
+        },
+        {
+          "field": "completed_at",
+          "selector": {
+            "evidence_id": "EV-29726942"
+          },
+          "source": "compensation_records"
+        }
+      ],
+      "relation": "intervals_overlap"
+    },
+    {
+      "description": "The successful target effect is recorded after compensation starts.",
+      "expected": true,
+      "name": "target_success_after_compensation_start",
+      "necessity": "essential",
+      "operands": [
+        {
+          "field": "started_at",
+          "selector": {
+            "evidence_id": "EV-29726942"
+          },
+          "source": "compensation_records"
+        },
+        {
+          "field": "created_at",
+          "selector": {
+            "evidence_id": "EV-90949378"
+          },
+          "source": "effect_records"
+        }
+      ],
+      "relation": "ordered_before"
+    },
+    {
+      "description": "Every successful control completes before its own deadline.",
+      "expected": true,
+      "name": "control_completion_precedes_deadline",
+      "necessity": "essential",
+      "operands": [
+        {
+          "field": "completed_at",
+          "selector": {
+            "evidence_id": "EV-98510474"
+          },
+          "source": "execution_observations"
+        },
+        {
+          "field": "deadline_at",
+          "selector": {
+            "evidence_id": "EV-11975091"
+          },
+          "source": "workflow_attempts"
+        },
+        {
+          "field": "completed_at",
+          "selector": {
+            "evidence_id": "EV-92574044"
+          },
+          "source": "execution_observations"
+        },
+        {
+          "field": "deadline_at",
+          "selector": {
+            "evidence_id": "EV-64792154"
+          },
+          "source": "workflow_attempts"
+        },
+        {
+          "field": "completed_at",
+          "selector": {
+            "evidence_id": "EV-89176281"
+          },
+          "source": "execution_observations"
+        },
+        {
+          "field": "deadline_at",
+          "selector": {
+            "evidence_id": "EV-21731321"
+          },
+          "source": "workflow_attempts"
+        },
+        {
+          "field": "completed_at",
+          "selector": {
+            "evidence_id": "EV-52133289"
+          },
+          "source": "execution_observations"
+        },
+        {
+          "field": "deadline_at",
+          "selector": {
+            "evidence_id": "EV-42182236"
+          },
+          "source": "workflow_attempts"
+        }
+      ],
+      "relation": "paired_before"
+    },
+    {
+      "description": "Successful controls require no compensation.",
+      "expected": "not_started",
+      "name": "control_no_compensation",
+      "necessity": "essential",
+      "operands": [
+        {
+          "field": "compensation_state",
+          "selector": {
+            "evidence_id": "EV-11975091"
+          },
+          "source": "workflow_attempts"
+        },
+        {
+          "field": "compensation_state",
+          "selector": {
+            "evidence_id": "EV-64792154"
+          },
+          "source": "workflow_attempts"
+        },
+        {
+          "field": "compensation_state",
+          "selector": {
+            "evidence_id": "EV-21731321"
+          },
+          "source": "workflow_attempts"
+        },
+        {
+          "field": "compensation_state",
+          "selector": {
+            "evidence_id": "EV-42182236"
+          },
+          "source": "workflow_attempts"
+        }
+      ],
+      "relation": "equal"
+    },
+    {
+      "description": "The target follows dispatch, start, deadline, compensation, completion order.",
+      "expected": true,
+      "name": "target_event_order",
+      "necessity": "essential",
+      "operands": [
+        {
+          "field": "dispatched_at",
+          "selector": {
+            "evidence_id": "EV-90477655"
+          },
+          "source": "workflow_attempts"
+        },
+        {
+          "field": "started_at",
+          "selector": {
+            "evidence_id": "EV-24751686"
+          },
+          "source": "execution_observations"
+        },
+        {
+          "field": "deadline_at",
+          "selector": {
+            "evidence_id": "EV-90477655"
+          },
+          "source": "workflow_attempts"
+        },
+        {
+          "field": "started_at",
+          "selector": {
+            "evidence_id": "EV-29726942"
+          },
+          "source": "compensation_records"
+        },
+        {
+          "field": "completed_at",
+          "selector": {
+            "evidence_id": "EV-24751686"
+          },
+          "source": "execution_observations"
+        }
+      ],
+      "relation": "ordered_before"
+    },
+    {
+      "description": "Completed compensation coexists with a successful active original effect.",
+      "expected": [
+        "compensated",
+        "success",
+        "completed",
+        "active"
+      ],
+      "name": "target_inconsistent_state",
+      "necessity": "essential",
+      "operands": [
+        {
+          "field": "workflow_state",
+          "selector": {
+            "evidence_id": "EV-90477655"
+          },
+          "source": "workflow_attempts"
+        },
+        {
+          "field": "result",
+          "selector": {
+            "evidence_id": "EV-24751686"
+          },
+          "source": "execution_observations"
+        },
+        {
+          "field": "result",
+          "selector": {
+            "evidence_id": "EV-29726942"
+          },
+          "source": "compensation_records"
+        },
+        {
+          "field": "state",
+          "selector": {
+            "evidence_id": "EV-90949378"
+          },
+          "source": "effect_records"
+        }
+      ],
+      "relation": "sequence_equals"
+    },
+    {
+      "description": "The target original execution created an active effect.",
+      "expected": "active",
+      "name": "target_effect_presence",
+      "necessity": "essential",
+      "operands": [
+        {
+          "field": "state",
+          "selector": {
+            "evidence_id": "EV-90949378"
+          },
+          "source": "effect_records"
+        }
+      ],
+      "relation": "equal"
+    },
+    {
+      "description": "The original target execution ultimately succeeded.",
+      "expected": "success",
+      "name": "target_execution_success_state",
+      "necessity": "essential",
+      "operands": [
+        {
+          "field": "result",
+          "selector": {
+            "evidence_id": "EV-24751686"
+          },
+          "source": "execution_observations"
+        }
+      ],
+      "relation": "equal"
+    },
+    {
+      "description": "Target, successful controls, and compensated control remain distinct.",
+      "expected": true,
+      "name": "target_and_control_operation_distinctness",
+      "necessity": "essential",
+      "operands": [
+        {
+          "field": "operation_id",
+          "selector": {
+            "evidence_id": "EV-90477655"
+          },
+          "source": "workflow_attempts"
+        },
+        {
+          "field": "operation_id",
+          "selector": {
+            "evidence_id": "EV-11975091"
+          },
+          "source": "workflow_attempts"
+        },
+        {
+          "field": "operation_id",
+          "selector": {
+            "evidence_id": "EV-64792154"
+          },
+          "source": "workflow_attempts"
+        },
+        {
+          "field": "operation_id",
+          "selector": {
+            "evidence_id": "EV-21731321"
+          },
+          "source": "workflow_attempts"
+        },
+        {
+          "field": "operation_id",
+          "selector": {
+            "evidence_id": "EV-42182236"
+          },
+          "source": "workflow_attempts"
+        },
+        {
+          "field": "operation_id",
+          "selector": {
+            "evidence_id": "EV-25290455"
+          },
+          "source": "workflow_attempts"
+        }
+      ],
+      "relation": "all_distinct"
+    },
+    {
+      "description": "Target workflow, execution, effect, compensation, and health rows link.",
+      "expected": true,
+      "name": "target_operation_cross_source_identity",
+      "necessity": "essential",
+      "operands": [
+        {
+          "field": "operation_id",
+          "selector": {
+            "evidence_id": "EV-90477655"
+          },
+          "source": "workflow_attempts"
+        },
+        {
+          "field": "operation_id",
+          "selector": {
+            "evidence_id": "EV-24751686"
+          },
+          "source": "execution_observations"
+        },
+        {
+          "field": "operation_id",
+          "selector": {
+            "evidence_id": "EV-90949378"
+          },
+          "source": "effect_records"
+        },
+        {
+          "field": "operation_id",
+          "selector": {
+            "evidence_id": "EV-29726942"
+          },
+          "source": "compensation_records"
+        },
+        {
+          "field": "operation_id",
+          "selector": {
+            "evidence_id": "EV-43935972"
+          },
+          "source": "dependency_health"
+        }
+      ],
+      "relation": "equal"
+    },
+    {
+      "description": "Every healthy control execution succeeds.",
+      "expected": "success",
+      "name": "control_execution_success_state",
+      "necessity": "essential",
+      "operands": [
+        {
+          "field": "result",
+          "selector": {
+            "evidence_id": "EV-98510474"
+          },
+          "source": "execution_observations"
+        },
+        {
+          "field": "result",
+          "selector": {
+            "evidence_id": "EV-92574044"
+          },
+          "source": "execution_observations"
+        },
+        {
+          "field": "result",
+          "selector": {
+            "evidence_id": "EV-89176281"
+          },
+          "source": "execution_observations"
+        },
+        {
+          "field": "result",
+          "selector": {
+            "evidence_id": "EV-52133289"
+          },
+          "source": "execution_observations"
+        }
+      ],
+      "relation": "equal"
+    },
+    {
+      "description": "One visible orchestrator role owns deadlines, compensation, and state.",
+      "expected": "workflow-controller",
+      "name": "shared_orchestrator_role",
+      "necessity": "supportive",
+      "operands": [
+        {
+          "field": "orchestrator_alias",
+          "selector": {
+            "evidence_id": "EV-90477655"
+          },
+          "source": "workflow_attempts"
+        },
+        {
+          "field": "orchestrator_alias",
+          "selector": {
+            "evidence_id": "EV-11975091"
+          },
+          "source": "workflow_attempts"
+        },
+        {
+          "field": "orchestrator_alias",
+          "selector": {
+            "evidence_id": "EV-64792154"
+          },
+          "source": "workflow_attempts"
+        },
+        {
+          "field": "orchestrator_alias",
+          "selector": {
+            "evidence_id": "EV-21731321"
+          },
+          "source": "workflow_attempts"
+        },
+        {
+          "field": "orchestrator_alias",
+          "selector": {
+            "evidence_id": "EV-42182236"
+          },
+          "source": "workflow_attempts"
+        },
+        {
+          "field": "orchestrator_alias",
+          "selector": {
+            "evidence_id": "EV-25290455"
+          },
+          "source": "workflow_attempts"
+        },
+        {
+          "field": "orchestrator_alias",
+          "selector": {
+            "evidence_id": "EV-29726942"
+          },
+          "source": "compensation_records"
+        },
+        {
+          "field": "orchestrator_alias",
+          "selector": {
+            "evidence_id": "EV-19634740"
+          },
+          "source": "compensation_records"
+        }
+      ],
+      "relation": "equal"
+    },
+    {
+      "description": "The executor role performs original operations without owning deadlines.",
+      "expected": "action-runner",
+      "name": "shared_executor_role",
+      "necessity": "supportive",
+      "operands": [
+        {
+          "field": "executor_alias",
+          "selector": {
+            "evidence_id": "EV-24751686"
+          },
+          "source": "execution_observations"
+        },
+        {
+          "field": "executor_alias",
+          "selector": {
+            "evidence_id": "EV-98510474"
+          },
+          "source": "execution_observations"
+        },
+        {
+          "field": "executor_alias",
+          "selector": {
+            "evidence_id": "EV-92574044"
+          },
+          "source": "execution_observations"
+        },
+        {
+          "field": "executor_alias",
+          "selector": {
+            "evidence_id": "EV-89176281"
+          },
+          "source": "execution_observations"
+        },
+        {
+          "field": "executor_alias",
+          "selector": {
+            "evidence_id": "EV-52133289"
+          },
+          "source": "execution_observations"
+        },
+        {
+          "field": "executor_alias",
+          "selector": {
+            "evidence_id": "EV-72970351"
+          },
+          "source": "execution_observations"
+        }
+      ],
+      "relation": "equal"
+    },
+    {
+      "description": "All dependency samples remain available despite bounded warnings.",
+      "expected": "available",
+      "name": "dependency_remained_available",
+      "necessity": "supportive",
+      "operands": [
+        {
+          "field": "availability_state",
+          "selector": {
+            "evidence_id": "EV-81917458"
+          },
+          "source": "dependency_health"
+        },
+        {
+          "field": "availability_state",
+          "selector": {
+            "evidence_id": "EV-89905750"
+          },
+          "source": "dependency_health"
+        },
+        {
+          "field": "availability_state",
+          "selector": {
+            "evidence_id": "EV-34434658"
+          },
+          "source": "dependency_health"
+        },
+        {
+          "field": "availability_state",
+          "selector": {
+            "evidence_id": "EV-24453670"
+          },
+          "source": "dependency_health"
+        },
+        {
+          "field": "availability_state",
+          "selector": {
+            "evidence_id": "EV-43935972"
+          },
+          "source": "dependency_health"
+        },
+        {
+          "field": "availability_state",
+          "selector": {
+            "evidence_id": "EV-83200827"
+          },
+          "source": "dependency_health"
+        },
+        {
+          "field": "availability_state",
+          "selector": {
+            "evidence_id": "EV-43468898"
+          },
+          "source": "dependency_health"
+        },
+        {
+          "field": "availability_state",
+          "selector": {
+            "evidence_id": "EV-82866411"
+          },
+          "source": "dependency_health"
+        },
+        {
+          "field": "availability_state",
+          "selector": {
+            "evidence_id": "EV-89654434"
+          },
+          "source": "dependency_health"
+        },
+        {
+          "field": "availability_state",
+          "selector": {
+            "evidence_id": "EV-43767435"
+          },
+          "source": "dependency_health"
+        },
+        {
+          "field": "availability_state",
+          "selector": {
+            "evidence_id": "EV-35514741"
+          },
+          "source": "dependency_health"
+        }
+      ],
+      "relation": "equal"
+    },
+    {
+      "description": "Successful controls occur before and after the target dispatch.",
+      "expected": true,
+      "name": "successful_controls_bracket_target_chronologically",
+      "necessity": "supportive",
+      "operands": [
+        {
+          "field": "dispatched_at",
+          "selector": {
+            "evidence_id": "EV-64792154"
+          },
+          "source": "workflow_attempts"
+        },
+        {
+          "field": "dispatched_at",
+          "selector": {
+            "evidence_id": "EV-90477655"
+          },
+          "source": "workflow_attempts"
+        },
+        {
+          "field": "dispatched_at",
+          "selector": {
+            "evidence_id": "EV-21731321"
+          },
+          "source": "workflow_attempts"
+        }
+      ],
+      "relation": "ordered_before"
+    },
+    {
+      "description": "The warned slow control still succeeds before its deadline.",
+      "expected": true,
+      "name": "benign_slow_control_succeeds_before_deadline",
+      "necessity": "supportive",
+      "operands": [
+        {
+          "field": "completed_at",
+          "selector": {
+            "evidence_id": "EV-92574044"
+          },
+          "source": "execution_observations"
+        },
+        {
+          "field": "deadline_at",
+          "selector": {
+            "evidence_id": "EV-64792154"
+          },
+          "source": "workflow_attempts"
+        }
+      ],
+      "relation": "ordered_before"
+    },
+    {
+      "description": "A non-target successful control carries a latency warning.",
+      "expected": "latency_elevated",
+      "name": "benign_slow_control_warning",
+      "necessity": "supportive",
+      "operands": [
+        {
+          "field": "warning",
+          "selector": {
+            "evidence_id": "EV-24453670"
+          },
+          "source": "dependency_health"
+        }
+      ],
+      "relation": "equal"
+    },
+    {
+      "description": "A completed target compensation record exists.",
+      "expected": "completed",
+      "name": "target_compensation_record_presence",
+      "necessity": "supportive",
+      "operands": [
+        {
+          "field": "result",
+          "selector": {
+            "evidence_id": "EV-29726942"
+          },
+          "source": "compensation_records"
+        }
+      ],
+      "relation": "equal"
+    },
+    {
+      "description": "The compensated control confirms cancellation before compensation.",
+      "expected": true,
+      "name": "legitimate_compensation_event_order",
+      "necessity": "supportive",
+      "operands": [
+        {
+          "field": "dispatched_at",
+          "selector": {
+            "evidence_id": "EV-25290455"
+          },
+          "source": "workflow_attempts"
+        },
+        {
+          "field": "started_at",
+          "selector": {
+            "evidence_id": "EV-72970351"
+          },
+          "source": "execution_observations"
+        },
+        {
+          "field": "deadline_at",
+          "selector": {
+            "evidence_id": "EV-25290455"
+          },
+          "source": "workflow_attempts"
+        },
+        {
+          "field": "completed_at",
+          "selector": {
+            "evidence_id": "EV-72970351"
+          },
+          "source": "execution_observations"
+        },
+        {
+          "field": "started_at",
+          "selector": {
+            "evidence_id": "EV-19634740"
+          },
+          "source": "compensation_records"
+        },
+        {
+          "field": "completed_at",
+          "selector": {
+            "evidence_id": "EV-19634740"
+          },
+          "source": "compensation_records"
+        }
+      ],
+      "relation": "ordered_before"
+    },
+    {
+      "description": "A cancelled execution is cleanly compensated without original success.",
+      "expected": [
+        "cancelled",
+        "completed",
+        "compensated"
+      ],
+      "name": "legitimate_compensation_terminal_state",
+      "necessity": "supportive",
+      "operands": [
+        {
+          "field": "result",
+          "selector": {
+            "evidence_id": "EV-72970351"
+          },
+          "source": "execution_observations"
+        },
+        {
+          "field": "result",
+          "selector": {
+            "evidence_id": "EV-19634740"
+          },
+          "source": "compensation_records"
+        },
+        {
+          "field": "workflow_state",
+          "selector": {
+            "evidence_id": "EV-25290455"
+          },
+          "source": "workflow_attempts"
+        }
+      ],
+      "relation": "sequence_equals"
+    },
+    {
+      "description": "No original effect exists for the legitimately compensated control.",
+      "expected": 0,
+      "name": "legitimate_compensation_effect_absence",
+      "necessity": "supportive",
+      "operands": [
+        {
+          "field": null,
+          "selector": {
+            "operation_id": "OP-71667738"
+          },
+          "source": "effect_records"
+        }
+      ],
+      "relation": "match_count"
+    },
+    {
+      "description": "Exactly one final workflow row identifies the target state.",
+      "expected": 1,
+      "name": "target_workflow_state_cardinality",
+      "necessity": "supportive",
+      "operands": [
+        {
+          "field": null,
+          "selector": {
+            "operation_id": "OP-87743914"
+          },
+          "source": "workflow_attempts"
+        }
+      ],
+      "relation": "match_count"
+    },
+    {
+      "description": "The original target calendar timestamp is unnecessary for RCA.",
+      "expected": false,
+      "name": "literal_target_dispatch_timestamp",
+      "necessity": "discardable",
+      "operands": [
+        {
+          "field": "dispatched_at",
+          "selector": {
+            "evidence_id": "EV-90477655"
+          },
+          "source": "workflow_attempts"
+        }
+      ],
+      "relation": "preserve_literal"
+    },
+    {
+      "description": "The original target wall-clock deadline value is unnecessary for RCA.",
+      "expected": false,
+      "name": "literal_target_deadline_timestamp",
+      "necessity": "discardable",
+      "operands": [
+        {
+          "field": "deadline_at",
+          "selector": {
+            "evidence_id": "EV-90477655"
+          },
+          "source": "workflow_attempts"
+        }
+      ],
+      "relation": "preserve_literal"
+    },
+    {
+      "description": "The exact deadline duration is not required beyond its causal ordering.",
+      "expected": 47,
+      "name": "exact_target_deadline_interval",
+      "necessity": "discardable",
+      "operands": [
+        {
+          "field": "dispatched_at",
+          "selector": {
+            "evidence_id": "EV-90477655"
+          },
+          "source": "workflow_attempts"
+        },
+        {
+          "field": "deadline_at",
+          "selector": {
+            "evidence_id": "EV-90477655"
+          },
+          "source": "workflow_attempts"
+        }
+      ],
+      "relation": "interval_seconds"
+    }
+  ],
+  "difficulty": "hard",
+  "expected_evidence": [
+    {
+      "description": "Target deadline, execution completion, and compensation timing establish overlap.",
+      "references": [
+        {
+          "field": null,
+          "selector": {
+            "evidence_id": "EV-90477655"
+          },
+          "source": "workflow_attempts"
+        },
+        {
+          "field": null,
+          "selector": {
+            "evidence_id": "EV-24751686"
+          },
+          "source": "execution_observations"
+        },
+        {
+          "field": null,
+          "selector": {
+            "evidence_id": "EV-29726942"
+          },
+          "source": "compensation_records"
+        }
+      ]
+    },
+    {
+      "description": "Target success and active effect coexist with compensated workflow state.",
+      "references": [
+        {
+          "field": null,
+          "selector": {
+            "evidence_id": "EV-90949378"
+          },
+          "source": "effect_records"
+        }
+      ]
+    },
+    {
+      "description": "Healthy and legitimately compensated controls distinguish deadline behavior.",
+      "references": [
+        {
+          "field": null,
+          "selector": {
+            "evidence_id": "EV-64792154"
+          },
+          "source": "workflow_attempts"
+        },
+        {
+          "field": null,
+          "selector": {
+            "evidence_id": "EV-92574044"
+          },
+          "source": "execution_observations"
+        },
+        {
+          "field": null,
+          "selector": {
+            "evidence_id": "EV-19634740"
+          },
+          "source": "compensation_records"
+        }
+      ]
+    }
+  ],
+  "ground_truth": {
+    "affected_component": "workflow_orchestrator",
+    "explanation": "The orchestrator compensated at its deadline while the original execution was still in progress, then that execution succeeded and created an effect.",
+    "failure_mechanism": "compensation_overlapped_original_success",
+    "logical_operation_repeated": false,
+    "outcome": "inconsistent_workflow_effect_state",
+    "trigger": "workflow_deadline"
+  },
+  "ground_truth_v2": {
+    "affected_component": "workflow_orchestrator",
+    "explanation": "The workflow orchestrator transitioned into compensation at the deadline before original execution completed, allowing a later success to coexist with the compensated workflow state.",
+    "failure_mechanism": "incorrect_state_transition",
+    "logical_operation_repeated": false,
+    "observed_outcome": "inconsistent_state",
+    "subsequent_action": "compensation_or_rollback",
+    "trigger": "timeout_or_deadline"
+  },
+  "incident_id": "incident_003_temporal_compensation",
+  "log_evidence": [
+    {
+      "attributes": {
+        "event_kind": "dispatch_recorded",
+        "operation_id": "OP-76031565"
+      },
+      "evidence_id": "EV-89474878",
+      "level": "INFO",
+      "message": "Operation dispatch recorded",
+      "service": "workflow-controller",
+      "timestamp": "2036-05-13T14:00:22.461Z"
+    },
+    {
+      "attributes": {
+        "event_kind": "execution_started",
+        "operation_id": "OP-76031565"
+      },
+      "evidence_id": "EV-67619004",
+      "level": "INFO",
+      "message": "Execution lifecycle update",
+      "service": "action-runner",
+      "timestamp": "2036-05-13T14:00:23.567Z"
+    },
+    {
+      "attributes": {
+        "event_kind": "dependency_observed",
+        "operation_id": "OP-76031565",
+        "warning": "none"
+      },
+      "evidence_id": "EV-45997675",
+      "level": "INFO",
+      "message": "Backend sample recorded",
+      "service": "remote-ledger",
+      "timestamp": "2036-05-13T14:00:26.710Z"
+    },
+    {
+      "attributes": {
+        "event_kind": "execution_progress",
+        "operation_id": "OP-76031565"
+      },
+      "evidence_id": "EV-23368133",
+      "level": "INFO",
+      "message": "Execution progress sample",
+      "service": "action-runner",
+      "timestamp": "2036-05-13T14:00:28.282Z"
+    },
+    {
+      "attributes": {
+        "event_kind": "dependency_observed",
+        "operation_id": "OP-76031565",
+        "warning": "none"
+      },
+      "evidence_id": "EV-86189059",
+      "level": "INFO",
+      "message": "Backend sample recorded",
+      "service": "remote-ledger",
+      "timestamp": "2036-05-13T14:00:29.854Z"
+    },
+    {
+      "attributes": {
+        "event_kind": "execution_completed",
+        "operation_id": "OP-76031565",
+        "result": "success"
+      },
+      "evidence_id": "EV-72243445",
+      "level": "INFO",
+      "message": "Worker result recorded",
+      "service": "action-runner",
+      "timestamp": "2036-05-13T14:00:32.997Z"
+    },
+    {
+      "attributes": {
+        "effect_id": "EF-52698034",
+        "event_kind": "effect_recorded",
+        "operation_id": "OP-76031565",
+        "state": "active"
+      },
+      "evidence_id": "EV-30225544",
+      "level": "INFO",
+      "message": "Operation effect stored",
+      "service": "action-runner",
+      "timestamp": "2036-05-13T14:00:33.091Z"
+    },
+    {
+      "attributes": {
+        "event_kind": "workflow_state_recorded",
+        "operation_id": "OP-76031565",
+        "workflow_state": "completed"
+      },
+      "evidence_id": "EV-39894611",
+      "level": "INFO",
+      "message": "Process state recorded",
+      "service": "workflow-controller",
+      "timestamp": "2036-05-13T14:00:33.391Z"
+    },
+    {
+      "attributes": {
+        "event_kind": "workflow_checkpoint",
+        "operation_id": "OP-76031565",
+        "workflow_state": "completed"
+      },
+      "evidence_id": "EV-83679773",
+      "level": "INFO",
+      "message": "Workflow observation recorded",
+      "service": "workflow-controller",
+      "timestamp": "2036-05-13T14:01:02.961Z"
+    },
+    {
+      "attributes": {
+        "event_kind": "dispatch_recorded",
+        "operation_id": "OP-70021753"
+      },
+      "evidence_id": "EV-91497368",
+      "level": "INFO",
+      "message": "Workflow dispatch recorded",
+      "service": "workflow-controller",
+      "timestamp": "2036-05-13T14:03:22.213Z"
+    },
+    {
+      "attributes": {
+        "event_kind": "execution_started",
+        "operation_id": "OP-70021753"
+      },
+      "evidence_id": "EV-34881825",
+      "level": "INFO",
+      "message": "Worker lifecycle update",
+      "service": "action-runner",
+      "timestamp": "2036-05-13T14:03:23.039Z"
+    },
+    {
+      "attributes": {
+        "event_kind": "dependency_observed",
+        "operation_id": "OP-70021753",
+        "warning": "latency_elevated"
+      },
+      "evidence_id": "EV-47745944",
+      "level": "WARN",
+      "message": "Backend sample recorded",
+      "service": "remote-ledger",
+      "timestamp": "2036-05-13T14:03:33.334Z"
+    },
+    {
+      "attributes": {
+        "event_kind": "execution_progress",
+        "operation_id": "OP-70021753"
+      },
+      "evidence_id": "EV-20408070",
+      "level": "INFO",
+      "message": "Worker progress sample",
+      "service": "action-runner",
+      "timestamp": "2036-05-13T14:03:38.482Z"
+    },
+    {
+      "attributes": {
+        "event_kind": "dependency_observed",
+        "operation_id": "OP-70021753",
+        "warning": "none"
+      },
+      "evidence_id": "EV-50927243",
+      "level": "INFO",
+      "message": "Backend sample recorded",
+      "service": "remote-ledger",
+      "timestamp": "2036-05-13T14:03:43.629Z"
+    },
+    {
+      "attributes": {
+        "event_kind": "execution_completed",
+        "operation_id": "OP-70021753",
+        "result": "success"
+      },
+      "evidence_id": "EV-44489638",
+      "level": "INFO",
+      "message": "Execution result recorded",
+      "service": "action-runner",
+      "timestamp": "2036-05-13T14:03:53.924Z"
+    },
+    {
+      "attributes": {
+        "effect_id": "EF-78081697",
+        "event_kind": "effect_recorded",
+        "operation_id": "OP-70021753",
+        "state": "active"
+      },
+      "evidence_id": "EV-30881948",
+      "level": "INFO",
+      "message": "Operation effect stored",
+      "service": "action-runner",
+      "timestamp": "2036-05-13T14:03:54.121Z"
+    },
+    {
+      "attributes": {
+        "event_kind": "workflow_state_recorded",
+        "operation_id": "OP-70021753",
+        "workflow_state": "completed"
+      },
+      "evidence_id": "EV-87987967",
+      "level": "INFO",
+      "message": "Workflow state recorded",
+      "service": "workflow-controller",
+      "timestamp": "2036-05-13T14:03:54.421Z"
+    },
+    {
+      "attributes": {
+        "event_kind": "workflow_checkpoint",
+        "operation_id": "OP-70021753",
+        "workflow_state": "completed"
+      },
+      "evidence_id": "EV-99025068",
+      "level": "INFO",
+      "message": "Process observation recorded",
+      "service": "workflow-controller",
+      "timestamp": "2036-05-13T14:03:57.713Z"
+    },
+    {
+      "attributes": {
+        "event_kind": "dispatch_recorded",
+        "operation_id": "OP-87743914"
+      },
+      "evidence_id": "EV-81811678",
+      "level": "INFO",
+      "message": "Workflow dispatch recorded",
+      "service": "workflow-controller",
+      "timestamp": "2036-05-13T14:06:22.578Z"
+    },
+    {
+      "attributes": {
+        "event_kind": "execution_started",
+        "operation_id": "OP-87743914"
+      },
+      "evidence_id": "EV-85883498",
+      "level": "INFO",
+      "message": "Execution lifecycle update",
+      "service": "action-runner",
+      "timestamp": "2036-05-13T14:06:24.287Z"
+    },
+    {
+      "attributes": {
+        "event_kind": "dependency_observed",
+        "operation_id": "OP-87743914",
+        "warning": "latency_elevated"
+      },
+      "evidence_id": "EV-12181951",
+      "level": "WARN",
+      "message": "Backend sample recorded",
+      "service": "remote-ledger",
+      "timestamp": "2036-05-13T14:06:56.932Z"
+    },
+    {
+      "attributes": {
+        "event_kind": "deadline_reached",
+        "operation_id": "OP-87743914"
+      },
+      "evidence_id": "EV-80298231",
+      "level": "INFO",
+      "message": "Deadline checkpoint reached",
+      "service": "workflow-controller",
+      "timestamp": "2036-05-13T14:07:09.578Z"
+    },
+    {
+      "attributes": {
+        "compensation_id": "CP-54952079",
+        "event_kind": "compensation_started",
+        "operation_id": "OP-87743914",
+        "phase": "started"
+      },
+      "evidence_id": "EV-12670254",
+      "level": "INFO",
+      "message": "Compensation lifecycle update",
+      "service": "workflow-controller",
+      "timestamp": "2036-05-13T14:07:15.578Z"
+    },
+    {
+      "attributes": {
+        "event_kind": "execution_completed",
+        "operation_id": "OP-87743914",
+        "result": "success"
+      },
+      "evidence_id": "EV-78889736",
+      "level": "INFO",
+      "message": "Execution result recorded",
+      "service": "action-runner",
+      "timestamp": "2036-05-13T14:07:29.578Z"
+    },
+    {
+      "attributes": {
+        "effect_id": "EF-34391539",
+        "event_kind": "effect_recorded",
+        "operation_id": "OP-87743914",
+        "state": "active"
+      },
+      "evidence_id": "EV-55941705",
+      "level": "INFO",
+      "message": "Operation effect stored",
+      "service": "action-runner",
+      "timestamp": "2036-05-13T14:07:29.812Z"
+    },
+    {
+      "attributes": {
+        "compensation_id": "CP-54952079",
+        "event_kind": "compensation_completed",
+        "operation_id": "OP-87743914",
+        "result": "completed"
+      },
+      "evidence_id": "EV-80359687",
+      "level": "INFO",
+      "message": "Compensation result recorded",
+      "service": "workflow-controller",
+      "timestamp": "2036-05-13T14:07:41.578Z"
+    },
+    {
+      "attributes": {
+        "event_kind": "workflow_state_recorded",
+        "operation_id": "OP-87743914",
+        "workflow_state": "compensated"
+      },
+      "evidence_id": "EV-98404943",
+      "level": "INFO",
+      "message": "Workflow state recorded",
+      "service": "workflow-controller",
+      "timestamp": "2036-05-13T14:07:42.578Z"
+    },
+    {
+      "attributes": {
+        "event_kind": "dispatch_recorded",
+        "operation_id": "OP-96639983"
+      },
+      "evidence_id": "EV-66020549",
+      "level": "INFO",
+      "message": "Workflow dispatch recorded",
+      "service": "workflow-controller",
+      "timestamp": "2036-05-13T14:09:22.491Z"
+    },
+    {
+      "attributes": {
+        "event_kind": "execution_started",
+        "operation_id": "OP-96639983"
+      },
+      "evidence_id": "EV-76957119",
+      "level": "INFO",
+      "message": "Worker lifecycle update",
+      "service": "action-runner",
+      "timestamp": "2036-05-13T14:09:24.435Z"
+    },
+    {
+      "attributes": {
+        "event_kind": "dependency_observed",
+        "operation_id": "OP-96639983",
+        "warning": "none"
+      },
+      "evidence_id": "EV-23071910",
+      "level": "INFO",
+      "message": "Backend sample recorded",
+      "service": "remote-ledger",
+      "timestamp": "2036-05-13T14:09:27.910Z"
+    },
+    {
+      "attributes": {
+        "event_kind": "execution_progress",
+        "operation_id": "OP-96639983"
+      },
+      "evidence_id": "EV-86279210",
+      "level": "INFO",
+      "message": "Execution progress sample",
+      "service": "action-runner",
+      "timestamp": "2036-05-13T14:09:29.648Z"
+    },
+    {
+      "attributes": {
+        "event_kind": "dependency_observed",
+        "operation_id": "OP-96639983",
+        "warning": "none"
+      },
+      "evidence_id": "EV-88510907",
+      "level": "INFO",
+      "message": "Backend sample recorded",
+      "service": "remote-ledger",
+      "timestamp": "2036-05-13T14:09:31.385Z"
+    },
+    {
+      "attributes": {
+        "event_kind": "execution_completed",
+        "operation_id": "OP-96639983",
+        "result": "success"
+      },
+      "evidence_id": "EV-29152420",
+      "level": "INFO",
+      "message": "Worker result recorded",
+      "service": "action-runner",
+      "timestamp": "2036-05-13T14:09:34.860Z"
+    },
+    {
+      "attributes": {
+        "effect_id": "EF-91865722",
+        "event_kind": "effect_recorded",
+        "operation_id": "OP-96639983",
+        "state": "active"
+      },
+      "evidence_id": "EV-33499611",
+      "level": "INFO",
+      "message": "Operation effect stored",
+      "service": "action-runner",
+      "timestamp": "2036-05-13T14:09:35.014Z"
+    },
+    {
+      "attributes": {
+        "event_kind": "workflow_state_recorded",
+        "operation_id": "OP-96639983",
+        "workflow_state": "completed"
+      },
+      "evidence_id": "EV-34446962",
+      "level": "INFO",
+      "message": "Workflow state recorded",
+      "service": "workflow-controller",
+      "timestamp": "2036-05-13T14:09:35.314Z"
+    },
+    {
+      "attributes": {
+        "event_kind": "workflow_checkpoint",
+        "operation_id": "OP-96639983",
+        "workflow_state": "completed"
+      },
+      "evidence_id": "EV-53281088",
+      "level": "INFO",
+      "message": "Workflow observation recorded",
+      "service": "workflow-controller",
+      "timestamp": "2036-05-13T14:10:06.991Z"
+    },
+    {
+      "attributes": {
+        "event_kind": "dispatch_recorded",
+        "operation_id": "OP-25476047"
+      },
+      "evidence_id": "EV-37412810",
+      "level": "INFO",
+      "message": "Operation dispatch recorded",
+      "service": "workflow-controller",
+      "timestamp": "2036-05-13T14:12:22.818Z"
+    },
+    {
+      "attributes": {
+        "event_kind": "execution_started",
+        "operation_id": "OP-25476047"
+      },
+      "evidence_id": "EV-77468078",
+      "level": "INFO",
+      "message": "Execution lifecycle update",
+      "service": "action-runner",
+      "timestamp": "2036-05-13T14:12:23.852Z"
+    },
+    {
+      "attributes": {
+        "event_kind": "dependency_observed",
+        "operation_id": "OP-25476047",
+        "warning": "none"
+      },
+      "evidence_id": "EV-25504844",
+      "level": "INFO",
+      "message": "Dependency sample recorded",
+      "service": "remote-ledger",
+      "timestamp": "2036-05-13T14:12:25.807Z"
+    },
+    {
+      "attributes": {
+        "event_kind": "execution_progress",
+        "operation_id": "OP-25476047"
+      },
+      "evidence_id": "EV-38919828",
+      "level": "INFO",
+      "message": "Execution progress sample",
+      "service": "action-runner",
+      "timestamp": "2036-05-13T14:12:26.784Z"
+    },
+    {
+      "attributes": {
+        "event_kind": "dependency_observed",
+        "operation_id": "OP-25476047",
+        "warning": "none"
+      },
+      "evidence_id": "EV-73329098",
+      "level": "INFO",
+      "message": "Backend sample recorded",
+      "service": "remote-ledger",
+      "timestamp": "2036-05-13T14:12:27.761Z"
+    },
+    {
+      "attributes": {
+        "event_kind": "execution_completed",
+        "operation_id": "OP-25476047",
+        "result": "success"
+      },
+      "evidence_id": "EV-15841914",
+      "level": "INFO",
+      "message": "Execution result recorded",
+      "service": "action-runner",
+      "timestamp": "2036-05-13T14:12:29.716Z"
+    },
+    {
+      "attributes": {
+        "effect_id": "EF-35210272",
+        "event_kind": "effect_recorded",
+        "operation_id": "OP-25476047",
+        "state": "active"
+      },
+      "evidence_id": "EV-53970457",
+      "level": "INFO",
+      "message": "Operation effect stored",
+      "service": "action-runner",
+      "timestamp": "2036-05-13T14:12:29.876Z"
+    },
+    {
+      "attributes": {
+        "event_kind": "workflow_state_recorded",
+        "operation_id": "OP-25476047",
+        "workflow_state": "completed"
+      },
+      "evidence_id": "EV-64817656",
+      "level": "INFO",
+      "message": "Process state recorded",
+      "service": "workflow-controller",
+      "timestamp": "2036-05-13T14:12:30.176Z"
+    },
+    {
+      "attributes": {
+        "event_kind": "workflow_checkpoint",
+        "operation_id": "OP-25476047",
+        "workflow_state": "completed"
+      },
+      "evidence_id": "EV-32299654",
+      "level": "INFO",
+      "message": "Workflow observation recorded",
+      "service": "workflow-controller",
+      "timestamp": "2036-05-13T14:13:03.318Z"
+    },
+    {
+      "attributes": {
+        "event_kind": "dispatch_recorded",
+        "operation_id": "OP-71667738"
+      },
+      "evidence_id": "EV-28490295",
+      "level": "INFO",
+      "message": "Workflow dispatch recorded",
+      "service": "workflow-controller",
+      "timestamp": "2036-05-13T14:15:22.077Z"
+    },
+    {
+      "attributes": {
+        "event_kind": "execution_started",
+        "operation_id": "OP-71667738"
+      },
+      "evidence_id": "EV-43588063",
+      "level": "INFO",
+      "message": "Worker lifecycle update",
+      "service": "action-runner",
+      "timestamp": "2036-05-13T14:15:23.809Z"
+    },
+    {
+      "attributes": {
+        "event_kind": "dependency_observed",
+        "operation_id": "OP-71667738",
+        "warning": "none"
+      },
+      "evidence_id": "EV-92071838",
+      "level": "INFO",
+      "message": "Backend sample recorded",
+      "service": "remote-ledger",
+      "timestamp": "2036-05-13T14:15:39.565Z"
+    },
+    {
+      "attributes": {
+        "event_kind": "dependency_observed",
+        "operation_id": "OP-71667738",
+        "warning": "none"
+      },
+      "evidence_id": "EV-71003185",
+      "level": "INFO",
+      "message": "Backend sample recorded",
+      "service": "remote-ledger",
+      "timestamp": "2036-05-13T14:15:55.321Z"
+    },
+    {
+      "attributes": {
+        "event_kind": "deadline_reached",
+        "operation_id": "OP-71667738"
+      },
+      "evidence_id": "EV-41414483",
+      "level": "INFO",
+      "message": "Workflow deadline reached",
+      "service": "workflow-controller",
+      "timestamp": "2036-05-13T14:16:08.077Z"
+    },
+    {
+      "attributes": {
+        "event_kind": "execution_completed",
+        "operation_id": "OP-71667738",
+        "result": "cancelled"
+      },
+      "evidence_id": "EV-29450182",
+      "level": "INFO",
+      "message": "Execution result recorded",
+      "service": "action-runner",
+      "timestamp": "2036-05-13T14:16:11.077Z"
+    },
+    {
+      "attributes": {
+        "compensation_id": "CP-89489171",
+        "event_kind": "compensation_started",
+        "operation_id": "OP-71667738",
+        "phase": "started"
+      },
+      "evidence_id": "EV-97178302",
+      "level": "INFO",
+      "message": "Compensation lifecycle update",
+      "service": "workflow-controller",
+      "timestamp": "2036-05-13T14:16:14.077Z"
+    },
+    {
+      "attributes": {
+        "compensation_id": "CP-89489171",
+        "event_kind": "compensation_completed",
+        "operation_id": "OP-71667738",
+        "result": "completed"
+      },
+      "evidence_id": "EV-79725731",
+      "level": "INFO",
+      "message": "Rollback result recorded",
+      "service": "workflow-controller",
+      "timestamp": "2036-05-13T14:16:20.077Z"
+    },
+    {
+      "attributes": {
+        "event_kind": "workflow_state_recorded",
+        "operation_id": "OP-71667738",
+        "workflow_state": "compensated"
+      },
+      "evidence_id": "EV-66240729",
+      "level": "INFO",
+      "message": "Workflow state recorded",
+      "service": "workflow-controller",
+      "timestamp": "2036-05-13T14:16:21.077Z"
+    }
+  ],
+  "metadata": {
+    "benchmark_version": "diagbench-v0.4",
+    "dependency_alias": "remote-ledger",
+    "executor_alias": "action-runner",
+    "family_id": "incident_003_temporal_compensation",
+    "generation_domain_sha256": "cff5072cfccae55d5ea90942908231f900ab863f8944f6dd0440805c49e136f8",
+    "generator_version": "incident-003-generator-v1",
+    "healthy_control_operation_ids": [
+      "OP-76031565",
+      "OP-70021753",
+      "OP-96639983",
+      "OP-25476047"
+    ],
+    "legitimate_compensation_operation_id": "OP-71667738",
+    "orchestrator_alias": "workflow-controller",
+    "protocol_version": "incident-003-temporal-protocol-v1",
+    "seed": 1001,
+    "seed_split": "development",
+    "slow_control_operation_id": "OP-70021753",
+    "target_chronological_position": 2,
+    "target_compensation_delay_seconds": 6,
+    "target_completion_after_compensation_seconds": 14,
+    "target_deadline_seconds": 47,
+    "target_dependency_warning": true,
+    "target_operation_id": "OP-87743914",
+    "temporal_semantics_version": "temporal-semantics-v1",
+    "temporal_template_name": "wide_overlap"
+  },
+  "sensitive_fields": [
+    {
+      "classification": "workflow_operation_identifier",
+      "path": "workflow_attempts.operation_id",
+      "policy": "consistent_pseudonym",
+      "rationale": "Operation identity is sensitive but must remain linkable across sources."
+    },
+    {
+      "classification": "workflow_operation_identifier",
+      "path": "execution_observations.operation_id",
+      "policy": "consistent_pseudonym",
+      "rationale": "Operation identity is sensitive but must remain linkable across sources."
+    },
+    {
+      "classification": "workflow_operation_identifier",
+      "path": "effect_records.operation_id",
+      "policy": "consistent_pseudonym",
+      "rationale": "Operation identity is sensitive but must remain linkable across sources."
+    },
+    {
+      "classification": "workflow_operation_identifier",
+      "path": "compensation_records.operation_id",
+      "policy": "consistent_pseudonym",
+      "rationale": "Operation identity is sensitive but must remain linkable across sources."
+    },
+    {
+      "classification": "workflow_operation_identifier",
+      "path": "dependency_health.operation_id",
+      "policy": "consistent_pseudonym",
+      "rationale": "Operation identity is sensitive but must remain linkable across sources."
+    },
+    {
+      "classification": "workflow_operation_identifier",
+      "path": "logs.operation_id",
+      "policy": "consistent_pseudonym",
+      "rationale": "Log operation identity is sensitive and shares the structured namespace."
+    },
+    {
+      "classification": "effect_identifier",
+      "path": "effect_records.effect_id",
+      "policy": "consistent_pseudonym",
+      "rationale": "Effect identities are sensitive and remain linkable to effect logs."
+    },
+    {
+      "classification": "effect_identifier",
+      "path": "logs.effect_id",
+      "policy": "consistent_pseudonym",
+      "rationale": "Logged effect identities share the effect-record namespace."
+    },
+    {
+      "classification": "compensation_identifier",
+      "path": "compensation_records.compensation_id",
+      "policy": "consistent_pseudonym",
+      "rationale": "Compensation identities are sensitive and remain linkable to logs."
+    },
+    {
+      "classification": "compensation_identifier",
+      "path": "logs.compensation_id",
+      "policy": "consistent_pseudonym",
+      "rationale": "Logged compensation identities share the compensation-record namespace."
+    },
+    {
+      "classification": "operational_timestamp",
+      "path": "workflow_attempts.dispatched_at",
+      "policy": "remove_or_pseudonymize",
+      "rationale": "Literal time is sensitive; RCA needs relative temporal semantics only."
+    },
+    {
+      "classification": "operational_timestamp",
+      "path": "workflow_attempts.deadline_at",
+      "policy": "remove_or_pseudonymize",
+      "rationale": "Literal time is sensitive; RCA needs relative temporal semantics only."
+    },
+    {
+      "classification": "operational_timestamp",
+      "path": "execution_observations.started_at",
+      "policy": "remove_or_pseudonymize",
+      "rationale": "Literal time is sensitive; RCA needs relative temporal semantics only."
+    },
+    {
+      "classification": "operational_timestamp",
+      "path": "execution_observations.completed_at",
+      "policy": "remove_or_pseudonymize",
+      "rationale": "Literal time is sensitive; RCA needs relative temporal semantics only."
+    },
+    {
+      "classification": "operational_timestamp",
+      "path": "effect_records.created_at",
+      "policy": "remove_or_pseudonymize",
+      "rationale": "Literal time is sensitive; RCA needs relative temporal semantics only."
+    },
+    {
+      "classification": "operational_timestamp",
+      "path": "compensation_records.started_at",
+      "policy": "remove_or_pseudonymize",
+      "rationale": "Literal time is sensitive; RCA needs relative temporal semantics only."
+    },
+    {
+      "classification": "operational_timestamp",
+      "path": "compensation_records.completed_at",
+      "policy": "remove_or_pseudonymize",
+      "rationale": "Literal time is sensitive; RCA needs relative temporal semantics only."
+    },
+    {
+      "classification": "operational_timestamp",
+      "path": "dependency_health.observed_at",
+      "policy": "remove_or_pseudonymize",
+      "rationale": "Literal time is sensitive; RCA needs relative temporal semantics only."
+    },
+    {
+      "classification": "operational_timestamp",
+      "path": "logs.timestamp",
+      "policy": "remove_or_pseudonymize",
+      "rationale": "Literal time is sensitive; RCA needs relative temporal semantics only."
+    }
+  ],
+  "structured_evidence": {
+    "compensation_records": [
+      {
+        "compensation_id": "CP-89489171",
+        "completed_at": "2036-05-13T14:16:20.077Z",
+        "evidence_id": "EV-19634740",
+        "operation_id": "OP-71667738",
+        "orchestrator_alias": "workflow-controller",
+        "result": "completed",
+        "started_at": "2036-05-13T14:16:14.077Z"
+      },
+      {
+        "compensation_id": "CP-54952079",
+        "completed_at": "2036-05-13T14:07:41.578Z",
+        "evidence_id": "EV-29726942",
+        "operation_id": "OP-87743914",
+        "orchestrator_alias": "workflow-controller",
+        "result": "completed",
+        "started_at": "2036-05-13T14:07:15.578Z"
+      }
+    ],
+    "dependency_health": [
+      {
+        "availability_state": "available",
+        "dependency_alias": "remote-ledger",
+        "evidence_id": "EV-81917458",
+        "latency_ms": 61,
+        "observed_at": "2036-05-13T14:15:39.565Z",
+        "operation_id": "OP-71667738",
+        "warning": "none"
+      },
+      {
+        "availability_state": "available",
+        "dependency_alias": "remote-ledger",
+        "evidence_id": "EV-89905750",
+        "latency_ms": 143,
+        "observed_at": "2036-05-13T14:00:29.854Z",
+        "operation_id": "OP-76031565",
+        "warning": "none"
+      },
+      {
+        "availability_state": "available",
+        "dependency_alias": "remote-ledger",
+        "evidence_id": "EV-34434658",
+        "latency_ms": 179,
+        "observed_at": "2036-05-13T14:00:26.710Z",
+        "operation_id": "OP-76031565",
+        "warning": "none"
+      },
+      {
+        "availability_state": "available",
+        "dependency_alias": "remote-ledger",
+        "evidence_id": "EV-24453670",
+        "latency_ms": 817,
+        "observed_at": "2036-05-13T14:03:33.334Z",
+        "operation_id": "OP-70021753",
+        "warning": "latency_elevated"
+      },
+      {
+        "availability_state": "available",
+        "dependency_alias": "remote-ledger",
+        "evidence_id": "EV-43935972",
+        "latency_ms": 1159,
+        "observed_at": "2036-05-13T14:06:56.932Z",
+        "operation_id": "OP-87743914",
+        "warning": "latency_elevated"
+      },
+      {
+        "availability_state": "available",
+        "dependency_alias": "remote-ledger",
+        "evidence_id": "EV-83200827",
+        "latency_ms": 70,
+        "observed_at": "2036-05-13T14:09:31.385Z",
+        "operation_id": "OP-96639983",
+        "warning": "none"
+      },
+      {
+        "availability_state": "available",
+        "dependency_alias": "remote-ledger",
+        "evidence_id": "EV-43468898",
+        "latency_ms": 135,
+        "observed_at": "2036-05-13T14:03:43.629Z",
+        "operation_id": "OP-70021753",
+        "warning": "none"
+      },
+      {
+        "availability_state": "available",
+        "dependency_alias": "remote-ledger",
+        "evidence_id": "EV-82866411",
+        "latency_ms": 49,
+        "observed_at": "2036-05-13T14:12:25.807Z",
+        "operation_id": "OP-25476047",
+        "warning": "none"
+      },
+      {
+        "availability_state": "available",
+        "dependency_alias": "remote-ledger",
+        "evidence_id": "EV-89654434",
+        "latency_ms": 155,
+        "observed_at": "2036-05-13T14:12:27.761Z",
+        "operation_id": "OP-25476047",
+        "warning": "none"
+      },
+      {
+        "availability_state": "available",
+        "dependency_alias": "remote-ledger",
+        "evidence_id": "EV-43767435",
+        "latency_ms": 117,
+        "observed_at": "2036-05-13T14:15:55.321Z",
+        "operation_id": "OP-71667738",
+        "warning": "none"
+      },
+      {
+        "availability_state": "available",
+        "dependency_alias": "remote-ledger",
+        "evidence_id": "EV-35514741",
+        "latency_ms": 134,
+        "observed_at": "2036-05-13T14:09:27.910Z",
+        "operation_id": "OP-96639983",
+        "warning": "none"
+      }
+    ],
+    "effect_records": [
+      {
+        "created_at": "2036-05-13T14:00:33.091Z",
+        "effect_id": "EF-52698034",
+        "evidence_id": "EV-69201706",
+        "executor_alias": "action-runner",
+        "operation_id": "OP-76031565",
+        "state": "active"
+      },
+      {
+        "created_at": "2036-05-13T14:03:54.121Z",
+        "effect_id": "EF-78081697",
+        "evidence_id": "EV-72644421",
+        "executor_alias": "action-runner",
+        "operation_id": "OP-70021753",
+        "state": "active"
+      },
+      {
+        "created_at": "2036-05-13T14:07:29.812Z",
+        "effect_id": "EF-34391539",
+        "evidence_id": "EV-90949378",
+        "executor_alias": "action-runner",
+        "operation_id": "OP-87743914",
+        "state": "active"
+      },
+      {
+        "created_at": "2036-05-13T14:09:35.014Z",
+        "effect_id": "EF-91865722",
+        "evidence_id": "EV-79731912",
+        "executor_alias": "action-runner",
+        "operation_id": "OP-96639983",
+        "state": "active"
+      },
+      {
+        "created_at": "2036-05-13T14:12:29.876Z",
+        "effect_id": "EF-35210272",
+        "evidence_id": "EV-83369367",
+        "executor_alias": "action-runner",
+        "operation_id": "OP-25476047",
+        "state": "active"
+      }
+    ],
+    "execution_observations": [
+      {
+        "completed_at": "2036-05-13T14:00:32.997Z",
+        "evidence_id": "EV-98510474",
+        "executor_alias": "action-runner",
+        "operation_id": "OP-76031565",
+        "result": "success",
+        "started_at": "2036-05-13T14:00:23.567Z"
+      },
+      {
+        "completed_at": "2036-05-13T14:03:53.924Z",
+        "evidence_id": "EV-92574044",
+        "executor_alias": "action-runner",
+        "operation_id": "OP-70021753",
+        "result": "success",
+        "started_at": "2036-05-13T14:03:23.039Z"
+      },
+      {
+        "completed_at": "2036-05-13T14:09:34.860Z",
+        "evidence_id": "EV-89176281",
+        "executor_alias": "action-runner",
+        "operation_id": "OP-96639983",
+        "result": "success",
+        "started_at": "2036-05-13T14:09:24.435Z"
+      },
+      {
+        "completed_at": "2036-05-13T14:16:11.077Z",
+        "evidence_id": "EV-72970351",
+        "executor_alias": "action-runner",
+        "operation_id": "OP-71667738",
+        "result": "cancelled",
+        "started_at": "2036-05-13T14:15:23.809Z"
+      },
+      {
+        "completed_at": "2036-05-13T14:12:29.716Z",
+        "evidence_id": "EV-52133289",
+        "executor_alias": "action-runner",
+        "operation_id": "OP-25476047",
+        "result": "success",
+        "started_at": "2036-05-13T14:12:23.852Z"
+      },
+      {
+        "completed_at": "2036-05-13T14:07:29.578Z",
+        "evidence_id": "EV-24751686",
+        "executor_alias": "action-runner",
+        "operation_id": "OP-87743914",
+        "result": "success",
+        "started_at": "2036-05-13T14:06:24.287Z"
+      }
+    ],
+    "workflow_attempts": [
+      {
+        "compensation_state": "not_started",
+        "deadline_at": "2036-05-13T14:03:57.213Z",
+        "dispatched_at": "2036-05-13T14:03:22.213Z",
+        "evidence_id": "EV-64792154",
+        "operation_id": "OP-70021753",
+        "orchestrator_alias": "workflow-controller",
+        "workflow_state": "completed"
+      },
+      {
+        "compensation_state": "completed",
+        "deadline_at": "2036-05-13T14:07:09.578Z",
+        "dispatched_at": "2036-05-13T14:06:22.578Z",
+        "evidence_id": "EV-90477655",
+        "operation_id": "OP-87743914",
+        "orchestrator_alias": "workflow-controller",
+        "workflow_state": "compensated"
+      },
+      {
+        "compensation_state": "not_started",
+        "deadline_at": "2036-05-13T14:10:06.491Z",
+        "dispatched_at": "2036-05-13T14:09:22.491Z",
+        "evidence_id": "EV-21731321",
+        "operation_id": "OP-96639983",
+        "orchestrator_alias": "workflow-controller",
+        "workflow_state": "completed"
+      },
+      {
+        "compensation_state": "completed",
+        "deadline_at": "2036-05-13T14:16:08.077Z",
+        "dispatched_at": "2036-05-13T14:15:22.077Z",
+        "evidence_id": "EV-25290455",
+        "operation_id": "OP-71667738",
+        "orchestrator_alias": "workflow-controller",
+        "workflow_state": "compensated"
+      },
+      {
+        "compensation_state": "not_started",
+        "deadline_at": "2036-05-13T14:13:02.818Z",
+        "dispatched_at": "2036-05-13T14:12:22.818Z",
+        "evidence_id": "EV-42182236",
+        "operation_id": "OP-25476047",
+        "orchestrator_alias": "workflow-controller",
+        "workflow_state": "completed"
+      },
+      {
+        "compensation_state": "not_started",
+        "deadline_at": "2036-05-13T14:01:02.461Z",
+        "dispatched_at": "2036-05-13T14:00:22.461Z",
+        "evidence_id": "EV-11975091",
+        "operation_id": "OP-76031565",
+        "orchestrator_alias": "workflow-controller",
+        "workflow_state": "completed"
+      }
+    ]
+  },
+  "title": "Incident 003 \u2014 Inconsistent State from Premature Compensation",
+  "troubleshooting_question": "One workflow finished with a state that does not agree with its recorded downstream effect. Review the surrounding evidence and identify the most likely root cause."
+}

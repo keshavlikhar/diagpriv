@@ -18,6 +18,16 @@ seed-selection scan generated seeds 1000–1017 while applying the frozen
 first-occurrence rule; it did not generate or inspect validation or held-out
 instances.
 
+Incident 003 is now implemented only as an offline benchmark candidate on the
+`feat/incident-family-003-temporal-causality` branch. It has no experiment
+configuration, provider observation, or result JSONL. Its 200-instance
+development construction audit over seeds `1000–1199` passed all 5,400 check
+evaluations and all 200 temporal-ablation checks with no identifier collision.
+The proposed family, oracle, invariant classifications, transformation audit,
+and limitations are recorded in `docs/INCIDENT_003_PROTOCOL.md` and remain
+subject to methodology review. No validation or held-out Incident 003 instance
+has been constructed or inspected.
+
 ## Frozen Incident 002 development seeds
 
 Starting at 1000, seeds were inspected in ascending order and selected only

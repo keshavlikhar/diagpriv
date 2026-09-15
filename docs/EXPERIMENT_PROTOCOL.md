@@ -117,6 +117,27 @@ DiagPriv condition. They must not be replaced after observing model behavior.
 The evaluation registry rejects every other seed for Incident 002; its current
 pilot configuration also requires an empty validation and held-out set.
 
+### Incident 003 offline construction boundary
+
+Incident 003 (`incident_003_temporal_compensation`) is currently an offline
+construction only under `incident-003-temporal-protocol-v1` and
+`diagbench-v0.4`. Its generator accepts development seeds `1000–1999`; the
+review audit uses only `1000–1199`. It is deliberately absent from the provider
+evaluation registry and has no pilot configuration or result path. Adding an
+experiment requires a later, explicit protocol review rather than treating the
+generator's existence as execution authorization.
+
+Its reusable timestamp semantics are versioned as `temporal-semantics-v1`, and
+its mandatory causal-information audit as
+`incident-003-temporal-ablation-v1`. The ablation replaces each timestamp with
+a unique deterministic non-parseable audit marker, making all temporal
+predicates explicitly unavailable without creating a substitute valid
+timeline. It verifies that the target loses its unique deadline/compensation
+overlap signature while non-temporal ModelView information remains identical. The
+complete causal story, oracle, ModelView boundary, invariant definitions,
+construction results, and prospective (not implemented) relative-time design
+are specified in `docs/INCIDENT_003_PROTOCOL.md`.
+
 ### Incident 002 raw development experiments
 
 `experiments/incident_002_raw_development.toml` binds Incident 002 and the six
