@@ -240,6 +240,48 @@ anti-leak vocabulary, balanced evidence counts, legitimate compensation,
 dependency availability, all non-discardable invariants, necessity classes,
 ModelView separation, determinism/domain separation, and temporal ablation.
 
+## Frozen raw Sol development qualification
+
+The development set is selected by
+`incident-003-first-two-per-temporal-template-v1`: starting at seed 1000,
+inspect seeds in ascending order, retain a seed only while its temporal template
+has fewer than two retained occurrences, and stop immediately when each of the
+four templates has two. The scan stopped at seed 1018. Model difficulty,
+timestamps, target position, warning state, distractor strength, provider
+behavior, and privacy-transformation behavior played no role.
+
+| Seed | Temporal template | Target position | Target warning | Compensation completion order |
+|---:|---|---:|---|---|
+| 1000 | `wide_overlap` | 4 | present | compensation before original |
+| 1001 | `wide_overlap` | 2 | present | original before compensation |
+| 1002 | `tight_overlap` | 4 | absent | compensation before original |
+| 1003 | `tight_overlap` | 2 | absent | compensation before original |
+| 1004 | `short_overlap` | 3 | present | compensation before original |
+| 1015 | `delayed_compensation` | 4 | absent | compensation before original |
+| 1017 | `delayed_compensation` | 3 | absent | original before compensation |
+| 1018 | `short_overlap` | 5 | present | compensation before original |
+
+These eight seeds are frozen for this raw qualification and all later matched
+Incident 003 development conditions. They must not be changed after provider
+results. The raw qualification asks only whether GPT-5.6 Sol can recover the
+deadline → compensation → late-success chain from raw evidence. It uses
+`raw-rca-v2`, `rca-taxonomy-v2`, `raw-rca-scorer-v2`, medium reasoning,
+omitted temperature, and one call per seed. No pass/fail threshold is defined.
+
+The preparation config is
+`experiments/incident_003_raw_sol_development.toml`; its future local result is
+`results/incident_003_raw_sol_development_gpt_5_6_sol_medium.jsonl`. Manifest
+schema `raw-rca-manifest-v6` retains the frozen prompt-template hash and records
+the exact rendered `model_input_sha256`. All eight hashes are preregistered and
+reconstructed before provider setup. The result path must be absent at launch.
+No provider observation exists at this checkpoint.
+
+Primary reporting remains the existing valid-response, exact-RCA,
+`overall_correct`, five-dimension accuracy, evidence precision/recall/F1,
+usage/cost, and provider/parser/rate-limit/refusal metrics. The key causal
+dimensions for this family are trigger, subsequent action, and failure
+mechanism; component accuracy remains independently reported.
+
 ## Existing transformations and future relative time
 
 Incident 003 annotates both identifiers and every timestamp-bearing path as

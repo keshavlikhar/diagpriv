@@ -18,6 +18,8 @@ from diagpriv.evaluation.incident_families import (
     INCIDENT_001_FAMILY,
     INCIDENT_002_DEVELOPMENT_SEEDS,
     INCIDENT_002_FAMILY,
+    INCIDENT_003_DEVELOPMENT_SEEDS,
+    INCIDENT_003_FAMILY,
     evaluation_seed_split,
     generate_evaluation_incident,
 )
@@ -247,6 +249,13 @@ def prepare_model_input(config: RawRunConfig) -> PreparedModelInput:
     ):
         raise ProtectedSeedError(
             "Incident 002 evaluation is restricted to its frozen development seeds"
+        )
+    if (
+        config.incident_family == INCIDENT_003_FAMILY
+        and config.seed not in INCIDENT_003_DEVELOPMENT_SEEDS
+    ):
+        raise ProtectedSeedError(
+            "Incident 003 evaluation is restricted to its frozen development seeds"
         )
 
     if config.prompt_version == PROMPT_VERSION_V1:
