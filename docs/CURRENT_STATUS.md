@@ -29,9 +29,10 @@ correct in 8/8. The run has not been retroactively rescored.
 
 Offline adjudication classified the systematic disagreement as **B. Taxonomy
 ambiguity**, driven substantially by taxonomy-definition insufficiency. RCA v3
-methodology is designed but not implemented. No Incident 003 privacy comparison
-has occurred, no `relative-time-v1` transformation exists, and no validation or
-held-out Incident 003 instance has been constructed or inspected. See
+and Incident 003 v2 are implemented and tested offline, but no v3 provider
+observation exists. No Incident 003 privacy comparison has occurred, no
+`relative-time-v1` transformation exists, and no validation or held-out
+Incident 003 instance has been constructed or inspected. See
 `docs/INCIDENT_003_V1_RAW_FINDINGS.md`, `docs/RCA_V3_METHODOLOGY.md`, and
 `docs/INCIDENT_003_PROTOCOL.md`.
 
@@ -65,11 +66,28 @@ The local ignored artifact has SHA-256
 The raw run remains 0/8 exact under v2 and must not be regenerated, relabelled,
 or presented as a successful exact qualification.
 
-The planned, unimplemented v3 mapping changes only Incident 003's mechanism to
-`incorrect_concurrency_control`. Its fresh future development set is 1019,
-1020, 1021, 1022, 1023, 1025, 1026, and 1028 under
+The implemented, not-yet-provider-qualified v3 mapping changes only Incident
+003's mechanism to `incorrect_concurrency_control`. Its fresh future development
+set is 1019, 1020, 1021, 1022, 1023, 1025, 1026, and 1028 under
 `incident-003-v2-first-two-per-temporal-template-unobserved-v1`. Those seeds
-have not been sent to a provider.
+have not been sent to a provider. The offline protocol identifiers are
+`raw-rca-v3`, `rca-taxonomy-v3`, `raw-rca-scorer-v3`,
+`evidence-support-v3`, and `raw-rca-manifest-v9`; the prompt-template SHA-256 is
+`a2fc07481c9cd33776086d16cd76fafaa27c2fdf162f4ae634885187d0d22139`.
+
+Incident 003 v2 is a versioned wrapper over the frozen v1 construction. For a
+given seed its ModelView, invariants, and temporal ablation are unchanged. It
+keeps the historical v2 oracle intact and adds a separate v3 oracle whose
+mechanism is `incorrect_concurrency_control`. This prevents the v1 result from
+being relabelled or rescored in place.
+
+The final offline hardening separates the family-neutral evidence evaluator
+from the Incident 003 v2 rubric builder, preregisters canonical per-seed rubric
+hashes alongside model-input hashes, enforces subject bindings, and applies a
+conservative wrong-subject veto for the flat citation list. Manifest v9 now
+requires generator version, protocol version, and evidence requirement-set
+SHA-256. These changes remain offline: no fresh eight-seed provider
+qualification has occurred.
 
 ## Frozen Incident 002 development seeds
 

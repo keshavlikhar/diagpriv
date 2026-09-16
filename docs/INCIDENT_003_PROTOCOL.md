@@ -14,6 +14,13 @@ Construction is restricted to development seeds `1000–1999`. The 200-instance
 audit used only seeds `1000–1199`. No validation or held-out instance was
 constructed or inspected.
 
+Incident 003 v2 is a separate offline protocol wrapper identified by
+`incident_003_temporal_compensation_v2`, `incident-003-generator-v2`, and
+`incident-003-temporal-protocol-v2`. It delegates evidence construction to the
+frozen v1 generator so the ModelView, diagnostic invariants, and
+`incident-003-temporal-ablation-v1` result remain identical for the same seed.
+It does not mutate or reinterpret v1.
+
 ## Causal story and oracle
 
 The target workflow dispatches an operation whose downstream execution starts
@@ -36,6 +43,51 @@ transition. The executor records only execution progress/result and the
 original effect. The evidence therefore avoids assigning deadline or
 compensation policy to the executor, reducing the component-ownership ambiguity
 observed in earlier families.
+
+The separate Incident 003 v2 oracle for `rca-taxonomy-v3` is:
+
+```text
+observed_outcome = inconsistent_state
+trigger = timeout_or_deadline
+subsequent_action = compensation_or_rollback
+failure_mechanism = incorrect_concurrency_control
+affected_component = workflow_orchestrator
+```
+
+V3 selects concurrency control because the inconsistent outcome requires
+original execution and compensation to overlap and both take effect. Correct
+fencing, serialization, or cancellation enforcement would prevent that result.
+The edge is not classified as a state-transition defect because the
+inconsistency does not persist under serialized execution.
+
+The fresh v2 development set is selected by
+`incident-003-v2-first-two-per-temporal-template-unobserved-v1`: scan from 1019
+in ascending order, retain only the first two instances for each temporal
+template, and stop when all four templates have two. The frozen set is 1019,
+1020, 1021, 1022, 1023, 1025, 1026, and 1028. These instances have not been sent
+to a provider. No validation or held-out Incident 003 v2 instance has been
+generated or inspected.
+
+The frozen offline preflight table is:
+
+| Seed | Template | Target position | Warning | Completion order | Model input SHA-256 | Evidence rubric SHA-256 |
+|---:|---|---:|---|---|---|---|
+| 1019 | `tight_overlap` | 2 | yes | `compensation_before_original` | `2fdd467c9408b66de7a370b5bf7f9877316dfbfa4204bb93ff4c250b9822f452` | `c01d15e2f8ea4e857b324f803769b1fe9eaff30434a9a64d16a6d10b8766c0db` |
+| 1020 | `delayed_compensation` | 5 | no | `original_before_compensation` | `454b06bcb400c718ac4ed6a29e4fba618d7b280f2bec13c1d03198246c4ac18e` | `d8f4d67988180b0692f4a1e3f12c8d97e02489fe986c3f62ce17400da04f1377` |
+| 1021 | `tight_overlap` | 4 | no | `equal` | `4d5c3f69abfd5d8eb795fbf1dd5044e4a4621d49f8457ae9778780b2dae02f29` | `e8d55010bc62f36f9982ce0bfe96b89995c3990ce99a4cbb5088dae96117feac` |
+| 1022 | `delayed_compensation` | 5 | no | `compensation_before_original` | `2135b32e0712b9feb2744a70f182b33c784f4d7797322b0e3f901aa9b6b71fba` | `f0eb6ca56f15e43421c6168467179898f51098a7ddb22852dd037bb9d0649c64` |
+| 1023 | `wide_overlap` | 2 | no | `compensation_before_original` | `f9c14cb3c14036565bd1a026fc96fce1c33abe88e8011a7f0e5926c88960c8c4` | `5703cbb60e3db5220fa73e6a12231332f2cdb2c1714845f1981268789ddc1f60` |
+| 1025 | `short_overlap` | 5 | yes | `compensation_before_original` | `6275bcc7cc6531bdefacd060655c6613b504413c2b4053b897c3b74f6f52b2bc` | `03348ab34228647752a384c8e01be7d4af74607a140aa16c65cc1d9dac7399b5` |
+| 1026 | `wide_overlap` | 1 | yes | `original_before_compensation` | `be72cf270b660c9dd857a08fe7878d9adf1405dcbd73107097371b66a23eba6b` | `d67a92a6bccdb6891bfb3f437a68abc42a1f36719776a15d9a5a7be65cc45a9b` |
+| 1028 | `short_overlap` | 2 | yes | `compensation_before_original` | `1acbf564bb312397a57935dbb81d8bd7307465b6a2e6d3667f834e110e030b14` | `2524b8e23b63f739dc555a16600f54e44d5e942207b80fdf7291ab021cb89d26` |
+
+Each row has six valid deterministic essential paths and two valid contrast
+requirements. Seed 1021's execution completion and compensation completion
+timestamps are exactly equal. This is only a completion-order reporting tie:
+compensation starts strictly before original completion, both intervals have
+positive duration, and their overlap remains genuine. All essential causal
+invariants and the temporal ablation pass. Reporting therefore uses `equal`
+instead of incorrectly falling through to `original_before_compensation`.
 
 ## ModelView schema
 

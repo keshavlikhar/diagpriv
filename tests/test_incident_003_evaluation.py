@@ -3,6 +3,7 @@ from __future__ import annotations
 import hashlib
 import json
 from pathlib import Path
+import subprocess
 
 import pytest
 
@@ -429,7 +430,21 @@ def test_existing_result_path_stops_before_provider_setup(
     assert result.read_text(encoding="utf-8") == "historical\n"
 
 
-def test_result_path_is_ignored_and_not_created_during_preparation() -> None:
+def test_historical_result_path_is_ignored_and_untracked() -> None:
     assert "results/*" in (ROOT / ".gitignore").read_text(encoding="utf-8")
     assert RESULT_PATH.relative_to(ROOT).parts[0] == "results"
-    assert not RESULT_PATH.exists()
+    relative_path = str(RESULT_PATH.relative_to(ROOT))
+    ignored = subprocess.run(
+        ["git", "check-ignore", "--quiet", "--", relative_path],
+        cwd=ROOT,
+        check=False,
+    )
+    tracked = subprocess.run(
+        ["git", "ls-files", "--error-unmatch", "--", relative_path],
+        cwd=ROOT,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    assert ignored.returncode == 0
+    assert tracked.returncode != 0

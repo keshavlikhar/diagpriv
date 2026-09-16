@@ -12,6 +12,7 @@ from diagpriv.evaluation.providers import SanitizedAPIError
 from diagpriv.evaluation.response import ParsedResponse
 from diagpriv.evaluation.scoring import RCAScore
 from diagpriv.evaluation.scoring_v2 import RCAScoreV2
+from diagpriv.evaluation.scoring_v3 import RCAScoreV3
 
 
 @dataclass(frozen=True, slots=True)
@@ -140,10 +141,14 @@ class ExperimentManifest:
     provider_service_tier: str | None
     sanitized_api_error: SanitizedAPIError | None
     response: ParsedResponse
-    score: RCAScore | RCAScoreV2 | None
+    score: RCAScore | RCAScoreV2 | RCAScoreV3 | None
     model_input_sha256: str | None = None
     trial_index: int | None = None
     recovery_provenance: RecoveryProvenance | None = None
+    evidence_support_version: str | None = None
+    incident_generator_version: str | None = None
+    incident_protocol_version: str | None = None
+    evidence_requirement_set_sha256: str | None = None
 
     def __post_init__(self) -> None:
         if self.manifest_schema_version not in {
@@ -154,6 +159,7 @@ class ExperimentManifest:
             "raw-rca-manifest-v6",
             "raw-rca-manifest-v7",
             "raw-rca-manifest-v8",
+            "raw-rca-manifest-v9",
         }:
             raise ValueError(
                 f"Unsupported manifest schema: {self.manifest_schema_version}"
@@ -162,18 +168,25 @@ class ExperimentManifest:
             "raw-rca-manifest-v6",
             "raw-rca-manifest-v7",
             "raw-rca-manifest-v8",
+            "raw-rca-manifest-v9",
         }:
             if not isinstance(self.model_input_sha256, str) or re.fullmatch(
                 r"[0-9a-f]{64}", self.model_input_sha256
             ) is None:
-                if self.manifest_schema_version == "raw-rca-manifest-v8":
-                    raise ValueError("Manifest schema v8 requires model_input_sha256")
+                if self.manifest_schema_version in {
+                    "raw-rca-manifest-v8",
+                    "raw-rca-manifest-v9",
+                }:
+                    raise ValueError(
+                        f"Manifest schema {self.manifest_schema_version[-2:]} "
+                        "requires model_input_sha256"
+                    )
                 raise ValueError(
                     "Manifest schema v6 or v7 requires model_input_sha256"
                 )
         elif self.model_input_sha256 is not None:
             raise ValueError(
-                "model_input_sha256 is valid only in manifest schema v6 or v7"
+                "model_input_sha256 requires manifest schema v6 or later"
             )
         if self.manifest_schema_version in {
             "raw-rca-manifest-v7", "raw-rca-manifest-v8",
@@ -195,6 +208,50 @@ class ExperimentManifest:
             self.condition,
             self.recovery_provenance,
         )
+        if self.manifest_schema_version == "raw-rca-manifest-v9":
+            if (
+                self.prompt_version != "raw-rca-v3"
+                or self.taxonomy_version != "rca-taxonomy-v3"
+                or self.scorer_version != "raw-rca-scorer-v3"
+            ):
+                raise ValueError(
+                    "Manifest schema v9 requires the frozen RCA v3 protocol"
+                )
+            if re.fullmatch(r"[0-9a-f]{64}", self.prompt_sha256) is None:
+                raise ValueError("Manifest schema v9 requires prompt-template SHA-256")
+            if self.evidence_support_version != "evidence-support-v3":
+                raise ValueError(
+                    "Manifest schema v9 requires evidence-support-v3"
+                )
+            if not self.incident_generator_version:
+                raise ValueError("Manifest schema v9 requires incident generator version")
+            if not self.incident_protocol_version:
+                raise ValueError("Manifest schema v9 requires incident protocol version")
+            if (
+                not isinstance(self.evidence_requirement_set_sha256, str)
+                or re.fullmatch(
+                    r"[0-9a-f]{64}", self.evidence_requirement_set_sha256
+                )
+                is None
+            ):
+                raise ValueError(
+                    "Manifest schema v9 requires evidence requirement-set SHA-256"
+                )
+        elif self.evidence_support_version is not None:
+            raise ValueError(
+                "evidence_support_version is valid only in manifest schema v9"
+            )
+        elif any(
+            value is not None
+            for value in (
+                self.incident_generator_version,
+                self.incident_protocol_version,
+                self.evidence_requirement_set_sha256,
+            )
+        ):
+            raise ValueError(
+                "Incident/rubric provenance fields are valid only in manifest schema v9"
+            )
 
     def to_dict(self) -> dict[str, object]:
         data: dict[str, object] = {
@@ -248,6 +305,16 @@ class ExperimentManifest:
             data["trial_index"] = self.trial_index
         if self.recovery_provenance is not None:
             data["recovery_provenance"] = self.recovery_provenance.to_dict()
+        if self.evidence_support_version is not None:
+            data["evidence_support_version"] = self.evidence_support_version
+        if self.incident_generator_version is not None:
+            data["incident_generator_version"] = self.incident_generator_version
+        if self.incident_protocol_version is not None:
+            data["incident_protocol_version"] = self.incident_protocol_version
+        if self.evidence_requirement_set_sha256 is not None:
+            data["evidence_requirement_set_sha256"] = (
+                self.evidence_requirement_set_sha256
+            )
         return data
 
     def to_json(self, *, indent: int | None = 2) -> str:
@@ -258,15 +325,27 @@ class ExperimentManifest:
         prompt_version = data["prompt_version"]
         taxonomy_version = data.get(
             "taxonomy_version",
-            "rca-taxonomy-v2"
-            if prompt_version == "raw-rca-v2"
-            else "rca-taxonomy-v1",
+            (
+                "rca-taxonomy-v3"
+                if prompt_version == "raw-rca-v3"
+                else (
+                    "rca-taxonomy-v2"
+                    if prompt_version == "raw-rca-v2"
+                    else "rca-taxonomy-v1"
+                )
+            ),
         )
         scorer_version = data.get(
             "scorer_version",
-            "raw-rca-scorer-v2"
-            if prompt_version == "raw-rca-v2"
-            else "raw-rca-scorer-v1",
+            (
+                "raw-rca-scorer-v3"
+                if prompt_version == "raw-rca-v3"
+                else (
+                    "raw-rca-scorer-v2"
+                    if prompt_version == "raw-rca-v2"
+                    else "raw-rca-scorer-v1"
+                )
+            ),
         )
         score = _score_from_dict(data.get("score"), scorer_version=scorer_version)
         sanitized_error_data = data.get("sanitized_api_error")
@@ -336,6 +415,12 @@ class ExperimentManifest:
                 if recovery_data is None
                 else RecoveryProvenance.from_dict(recovery_data)
             ),
+            evidence_support_version=data.get("evidence_support_version"),
+            incident_generator_version=data.get("incident_generator_version"),
+            incident_protocol_version=data.get("incident_protocol_version"),
+            evidence_requirement_set_sha256=data.get(
+                "evidence_requirement_set_sha256"
+            ),
         )
 
     @classmethod
@@ -347,7 +432,7 @@ class ExperimentManifest:
 
 
 def _score_to_dict(
-    score: RCAScore | RCAScoreV2 | None,
+    score: RCAScore | RCAScoreV2 | RCAScoreV3 | None,
 ) -> dict[str, object] | None:
     if score is None:
         return None
@@ -359,17 +444,47 @@ def _score_to_dict(
         "affected_component_correct",
         "exact_root_cause_correct",
     ]
-    if isinstance(score, RCAScoreV2):
+    if isinstance(score, (RCAScoreV2, RCAScoreV3)):
         rca_fields.insert(2, "subsequent_action_correct")
     evidence_fields = (
-        "evidence_precision",
-        "evidence_recall",
-        "evidence_f1",
-        "evidence_supported",
-        "valid_evidence_ids",
-        "matched_evidence_ids",
-        "unknown_evidence_ids",
-        "expected_evidence_ids",
+        (
+            "essential_requirement_coverage",
+            "contrast_requirement_coverage",
+            "supportive_requirement_coverage",
+            "useful_citation_precision",
+            "invalid_citation_count",
+            "invalid_citation_rate",
+            "wrong_subject_citation_count",
+            "contextual_citation_count",
+            "redundant_citation_count",
+            "redundant_citation_rate",
+            "evidence_supported",
+            "satisfied_essential_requirements",
+            "missing_essential_requirements",
+            "satisfied_contrast_requirements",
+            "satisfied_supportive_requirements",
+            "selected_evidence_paths",
+            "valid_evidence_ids",
+            "useful_evidence_ids",
+            "unknown_evidence_ids",
+            "wrong_subject_evidence_ids",
+            "contextual_evidence_ids",
+            "redundant_evidence_ids",
+            "evidence_precision",
+            "evidence_recall",
+            "evidence_f1",
+        )
+        if isinstance(score, RCAScoreV3)
+        else (
+            "evidence_precision",
+            "evidence_recall",
+            "evidence_f1",
+            "evidence_supported",
+            "valid_evidence_ids",
+            "matched_evidence_ids",
+            "unknown_evidence_ids",
+            "expected_evidence_ids",
+        )
     )
     return {
         "rca": {field: data[field] for field in rca_fields},
@@ -380,12 +495,18 @@ def _score_to_dict(
 
 def _score_from_dict(
     data: object, *, scorer_version: str
-) -> RCAScore | RCAScoreV2 | None:
+) -> RCAScore | RCAScoreV2 | RCAScoreV3 | None:
     if data is None:
         return None
     if not isinstance(data, dict):
         raise ValueError("Manifest score must be an object or null")
-    score_class = RCAScoreV2 if scorer_version == "raw-rca-scorer-v2" else RCAScore
+    score_class = {
+        "raw-rca-scorer-v1": RCAScore,
+        "raw-rca-scorer-v2": RCAScoreV2,
+        "raw-rca-scorer-v3": RCAScoreV3,
+    }.get(scorer_version)
+    if score_class is None:
+        raise ValueError(f"Unsupported scorer version: {scorer_version}")
     if "rca" not in data:
         return score_class.from_dict(data)
     rca = data.get("rca")

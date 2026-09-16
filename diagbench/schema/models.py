@@ -183,6 +183,26 @@ class StructuredRootCauseV2:
 
 
 @dataclass(frozen=True, slots=True)
+class StructuredRootCauseV3:
+    """Oracle-only five-dimensional RCA target for rca-taxonomy-v3."""
+
+    observed_outcome: str
+    trigger: str
+    subsequent_action: str
+    failure_mechanism: str
+    affected_component: str
+    logical_operation_repeated: bool
+    explanation: str | None = None
+
+    def to_dict(self) -> dict[str, JSONValue]:
+        return asdict(self)
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> Self:
+        return cls(**data)
+
+
+@dataclass(frozen=True, slots=True)
 class ComponentMapping:
     """Oracle-only mapping from a canonical role to visible service names."""
 
@@ -347,6 +367,45 @@ class Incident:
             ),
             difficulty=data["difficulty"],
             metadata=data["metadata"],
+        )
+
+    @classmethod
+    def from_json(cls, payload: str) -> Self:
+        data = json.loads(payload)
+        if not isinstance(data, dict):
+            raise ValueError("An incident JSON document must contain an object")
+        return cls.from_dict(data)
+
+    @classmethod
+    def load(cls, path: Path) -> Self:
+        return cls.from_json(path.read_text(encoding="utf-8"))
+
+
+@dataclass(frozen=True, slots=True)
+class IncidentV3(Incident):
+    """Versioned incident carrying a v3 oracle without changing Incident."""
+
+    ground_truth_v3: StructuredRootCauseV3
+
+    def to_dict(self) -> dict[str, JSONValue]:
+        data = Incident.to_dict(self)
+        data["ground_truth_v3"] = self.ground_truth_v3.to_dict()
+        return data
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> Self:
+        if "ground_truth_v3" not in data:
+            raise ValueError("Missing incident field: ground_truth_v3")
+        base_data = {
+            key: value for key, value in data.items() if key != "ground_truth_v3"
+        }
+        base = Incident.from_dict(base_data)
+        return cls(
+            **{
+                field_name: getattr(base, field_name)
+                for field_name in Incident.__dataclass_fields__
+            },
+            ground_truth_v3=StructuredRootCauseV3.from_dict(data["ground_truth_v3"]),
         )
 
     @classmethod

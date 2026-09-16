@@ -38,8 +38,9 @@ run recovered the temporal chain in all eight observations but scored 0/8 exact
 under RCA v2 because every response selected `incorrect_concurrency_control`
 instead of the v1 oracle's `incorrect_state_transition`. Offline adjudication
 classified the disagreement as taxonomy ambiguity. RCA v3 methodology is
-designed but not implemented; no Incident 003 privacy, validation, or held-out
-observation exists.
+now implemented offline as a separate protocol, together with an Incident 003
+v2 wrapper and fresh development set. It has not been sent to a provider; no
+Incident 003 v2, privacy, validation, or held-out observation exists.
 
 See [CURRENT_STATUS](docs/CURRENT_STATUS.md) for immutable artifact hashes and
 known limitations, and [RESEARCH_PLAN](docs/RESEARCH_PLAN.md) for the roadmap.

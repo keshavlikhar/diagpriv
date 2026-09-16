@@ -6,11 +6,13 @@ from diagbench.schema.models import (
     EvidenceReference,
     ExpectedEvidence,
     Incident,
+    IncidentV3,
     LogEntry,
     ModelView,
     SensitiveField,
     StructuredRootCause,
     StructuredRootCauseV2,
+    StructuredRootCauseV3,
 )
 
 __all__ = [
@@ -19,9 +21,11 @@ __all__ = [
     "EvidenceReference",
     "ExpectedEvidence",
     "Incident",
+    "IncidentV3",
     "LogEntry",
     "ModelView",
     "SensitiveField",
     "StructuredRootCause",
     "StructuredRootCauseV2",
+    "StructuredRootCauseV3",
 ]

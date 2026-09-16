@@ -26,6 +26,13 @@ class SplitSummary:
     average_evidence_precision: float | None
     average_evidence_recall: float | None
     average_evidence_f1: float | None
+    average_essential_requirement_coverage: float | None
+    average_contrast_requirement_coverage: float | None
+    average_supportive_requirement_coverage: float | None
+    average_useful_citation_precision: float | None
+    invalid_citation_count: int | None
+    wrong_subject_citation_count: int | None
+    redundant_citation_count: int | None
     parse_failures: dict[str, int]
     provider_failures: int
     rate_limits: int
@@ -45,7 +52,20 @@ class SplitSummary:
     uncosted_runs: int
 
     def to_dict(self) -> dict[str, object]:
-        return asdict(self)
+        data = asdict(self)
+        v3_only = (
+            "average_essential_requirement_coverage",
+            "average_contrast_requirement_coverage",
+            "average_supportive_requirement_coverage",
+            "average_useful_citation_precision",
+            "invalid_citation_count",
+            "wrong_subject_citation_count",
+            "redundant_citation_count",
+        )
+        if all(data[field] is None for field in v3_only):
+            for field in v3_only:
+                del data[field]
+        return data
 
 
 @dataclass(frozen=True, slots=True)
@@ -91,6 +111,13 @@ def _summarize_split(
             average_evidence_precision=None,
             average_evidence_recall=None,
             average_evidence_f1=None,
+            average_essential_requirement_coverage=None,
+            average_contrast_requirement_coverage=None,
+            average_supportive_requirement_coverage=None,
+            average_useful_citation_precision=None,
+            invalid_citation_count=None,
+            wrong_subject_citation_count=None,
+            redundant_citation_count=None,
             parse_failures={},
             provider_failures=0,
             rate_limits=0,
@@ -136,6 +163,9 @@ def _summarize_split(
     v2_split = all(
         item.scorer_version == "raw-rca-scorer-v2" for item in manifests
     )
+    v3_split = all(
+        item.scorer_version == "raw-rca-scorer-v3" for item in manifests
+    )
     return SplitSummary(
         status="complete",
         runs=run_count,
@@ -154,7 +184,7 @@ def _summarize_split(
                 ),
                 run_count,
             )
-            if v2_split
+            if v2_split or v3_split
             else None
         ),
         mechanism_accuracy=_rate(
@@ -168,6 +198,41 @@ def _summarize_split(
         ),
         average_evidence_recall=_average([score.evidence_recall for score in scores]),
         average_evidence_f1=_average([score.evidence_f1 for score in scores]),
+        average_essential_requirement_coverage=(
+            _average([score.essential_requirement_coverage for score in scores])
+            if v3_split
+            else None
+        ),
+        average_contrast_requirement_coverage=(
+            _average([score.contrast_requirement_coverage for score in scores])
+            if v3_split
+            else None
+        ),
+        average_supportive_requirement_coverage=(
+            _average([score.supportive_requirement_coverage for score in scores])
+            if v3_split
+            else None
+        ),
+        average_useful_citation_precision=(
+            _average([score.useful_citation_precision for score in scores])
+            if v3_split
+            else None
+        ),
+        invalid_citation_count=(
+            sum(score.invalid_citation_count for score in scores)
+            if v3_split
+            else None
+        ),
+        wrong_subject_citation_count=(
+            sum(score.wrong_subject_citation_count for score in scores)
+            if v3_split
+            else None
+        ),
+        redundant_citation_count=(
+            sum(score.redundant_citation_count for score in scores)
+            if v3_split
+            else None
+        ),
         parse_failures=parse_failures,
         provider_failures=statuses["provider_error"],
         rate_limits=statuses["rate_limited"],
@@ -278,6 +343,26 @@ def inspection_records(path: Path) -> list[dict[str, object]]:
                 ),
                 "taxonomy_version": manifest.taxonomy_version,
                 "scorer_version": manifest.scorer_version,
+                **(
+                    {"evidence_support_version": manifest.evidence_support_version}
+                    if manifest.evidence_support_version is not None
+                    else {}
+                ),
+                **(
+                    {
+                        "incident_generator_version": (
+                            manifest.incident_generator_version
+                        ),
+                        "incident_protocol_version": (
+                            manifest.incident_protocol_version
+                        ),
+                        "evidence_requirement_set_sha256": (
+                            manifest.evidence_requirement_set_sha256
+                        ),
+                    }
+                    if manifest.evidence_requirement_set_sha256 is not None
+                    else {}
+                ),
                 **(
                     {"transformation_key_id": manifest.transformation_key_id}
                     if manifest.transformation_key_id is not None
