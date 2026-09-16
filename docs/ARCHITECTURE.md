@@ -52,8 +52,10 @@ ModelView, consult oracle-only privacy annotations, and return a new ModelView.
 - `redaction_v1.py` applies generic source-qualified placeholders.
 - `hmac_v1.py` applies canonical, domain-separated HMAC-SHA-256 pseudonyms using
   an externally supplied key.
+- `relative_time_v1.py` converts annotated visible timestamps to exact
+  incident-local millisecond offsets using one visible-data-derived anchor.
 
-Neither transformer mutates the Incident. The HMAC key exists only in process
+No transformer mutates the Incident. The HMAC key exists only in process
 memory and is explicitly excluded from dataclass representations and manifests.
 
 ### `diagpriv.invariants`
@@ -67,7 +69,15 @@ ModelView. It retains the exact predicate result and separately reports:
 - `expected_non_preservation`.
 
 Invariant data is for offline research reporting and is never added to a model
-prompt.
+prompt. Raw timestamp evaluation remains on `temporal-semantics-v1`; relative
+offset evaluation must explicitly select `relative-time-semantics-v1`.
+Transformation-aware observations use `raw-rca-manifest-v10`, which persists
+the transformation/parser configuration and its separately preregistered
+canonical SHA-256. The hash is checked during preparation and again before
+provider initialization; transformation provenance remains outside ModelView.
+Knowing one event's absolute time can allow exact relative offsets to reveal
+other events' absolute times, so this layer removes absolute representation but
+does not provide complete temporal anonymization.
 
 ### `diagpriv.evaluation`
 
@@ -152,8 +162,8 @@ protocol explicitly defines them.
 
 ## Current architectural limitations
 
-- The family registry is explicit and currently limited to Incidents 001 and
-  002.
+- The family registry is explicit and currently limited to Incidents 001, 002,
+  and the versioned Incident 003 protocols.
 - There is no artifact registry or remote results store.
 - Key management is an external operator procedure, not a production KMS
   integration.

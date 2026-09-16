@@ -90,6 +90,23 @@ If the key is exposed, low-entropy or enumerable identifier domains may be
 tested offline. Key secrecy, namespace scope, rotation, and artifact access are
 therefore part of the experimental exposure model.
 
+### `relative-time-v1`
+
+Relative time removes annotated calendar dates, wall-clock times, timezones,
+epochs, RFC3339 strings, and original timestamp formatting. It intentionally
+preserves exact incident-local millisecond offsets, equality, order, duration,
+gaps, overlap, deadline crossing, and total span. Those relations are required
+for the first Incident 003 matched diagnostic comparison.
+
+Exact relative timing can still be distinctive and correlatable with outside
+knowledge. If an observer independently knows the absolute time of one
+transformed event, exact relative offsets can permit reconstruction of the
+absolute times of other events in that transformed incident. Non-temporal
+identifiers are deliberately unchanged in v1 so the experiment isolates
+temporal representation. The condition does not claim
+anonymity, unlinkability, zero re-identification risk, or optimal data
+minimization.
+
 ## Required controls
 
 - Use only synthetic data until a separate real-data governance review exists.

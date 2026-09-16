@@ -33,14 +33,16 @@ general conclusions. No Incident 002 validation or held-out observation exists.
 Do not rerun completed experiments, run a privacy condition on validation, or
 inspect held-out seeds without explicit research approval.
 
-Incident Family 003 studies temporal causality. Its frozen raw Sol development
+Incident Family 003 studies temporal causality. Its frozen v1 raw Sol development
 run recovered the temporal chain in all eight observations but scored 0/8 exact
 under RCA v2 because every response selected `incorrect_concurrency_control`
 instead of the v1 oracle's `incorrect_state_transition`. Offline adjudication
-classified the disagreement as taxonomy ambiguity. RCA v3 methodology is
-now implemented offline as a separate protocol, together with an Incident 003
-v2 wrapper and fresh development set. It has not been sent to a provider; no
-Incident 003 v2, privacy, validation, or held-out observation exists.
+classified the disagreement as taxonomy ambiguity. RCA v3 is implemented as a
+separate protocol with an Incident 003 v2 wrapper and fresh development set.
+The frozen fresh raw run achieved 8/8 exact RCA but 0/8 evidence-supported
+diagnoses under the unchanged v3 citation rubric. `relative-time-v1` is
+implemented and audited offline; it has not been sent to a provider. No
+Incident 003 privacy, validation, or held-out observation exists.
 
 See [CURRENT_STATUS](docs/CURRENT_STATUS.md) for immutable artifact hashes and
 known limitations, and [RESEARCH_PLAN](docs/RESEARCH_PLAN.md) for the roadmap.
@@ -95,6 +97,7 @@ uv run python -m diagbench.generators.incident_002 --seed 1001
 - [HMAC baseline specification](docs/hmac_v1.md)
 - [Tokenization baseline specification](docs/tokenization_v1.md)
 - [Format-preserving baseline specification](docs/format_preserving_v1.md)
+- [Relative-time baseline specification](docs/relative_time_v1.md)
 - [Incident 002 protocol](docs/incident_002_protocol.md)
 - [Incident 002 final development findings](docs/INCIDENT_002_FINAL_FINDINGS.md)
 

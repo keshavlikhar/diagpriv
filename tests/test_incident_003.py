@@ -437,10 +437,14 @@ def test_existing_transformations_do_not_preserve_temporal_semantics() -> None:
         assert report[condition]["all_literal_timestamps_removed"] is True
         assert report[condition]["required_temporal_invariants_preserved"] is False
         assert report[condition]["preserves_cross_field_temporal_semantics_by_design"] is False
-    assert report["relative-time-v1"]["implemented"] is False
-    assert report["relative-time-v1"]["classification"] == (
-        "hypothetical_future_expectation_not_empirical_audit"
-    )
+    assert report["relative-time-v1"]["implemented"] is True
+    assert report["relative-time-v1"]["all_literal_timestamps_removed"] is True
+    assert report["relative-time-v1"][
+        "required_temporal_invariants_preserved"
+    ] is True
+    assert report["relative-time-v1"][
+        "preserves_cross_field_temporal_semantics_by_design"
+    ] is True
     assert incident.model_view() == original
 
 

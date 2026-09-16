@@ -29,12 +29,16 @@ correct in 8/8. The run has not been retroactively rescored.
 
 Offline adjudication classified the systematic disagreement as **B. Taxonomy
 ambiguity**, driven substantially by taxonomy-definition insufficiency. RCA v3
-and Incident 003 v2 are implemented and tested offline, but no v3 provider
-observation exists. No Incident 003 privacy comparison has occurred, no
-`relative-time-v1` transformation exists, and no validation or held-out
-Incident 003 instance has been constructed or inspected. See
-`docs/INCIDENT_003_V1_RAW_FINDINGS.md`, `docs/RCA_V3_METHODOLOGY.md`, and
-`docs/INCIDENT_003_PROTOCOL.md`.
+and Incident 003 v2 are implemented. The fresh raw v3 Sol run is frozen at 8/8
+valid and 8/8 exact five-label RCA, while `evidence_supported` and
+`overall_correct_v3` are 0/8 under the unchanged evidence-support-v3 rubric.
+Its ignored JSONL SHA-256 is
+`54ab224d3b432a5a1531a3d9b11b7d15515eeba56bf05023304ace72344f4915`.
+
+`relative-time-v1` is implemented and audited offline only. It has not been
+sent to a provider. No Incident 003 privacy result, validation observation, or
+held-out observation exists. See `docs/INCIDENT_003_V1_RAW_FINDINGS.md`,
+`docs/RCA_V3_METHODOLOGY.md`, and `docs/relative_time_v1.md`.
 
 ## Frozen Incident 003 v1 raw qualification
 
@@ -66,11 +70,11 @@ The local ignored artifact has SHA-256
 The raw run remains 0/8 exact under v2 and must not be regenerated, relabelled,
 or presented as a successful exact qualification.
 
-The implemented, not-yet-provider-qualified v3 mapping changes only Incident
-003's mechanism to `incorrect_concurrency_control`. Its fresh future development
+The implemented v3 mapping changes only Incident 003's mechanism to
+`incorrect_concurrency_control`. Its fresh development
 set is 1019, 1020, 1021, 1022, 1023, 1025, 1026, and 1028 under
 `incident-003-v2-first-two-per-temporal-template-unobserved-v1`. Those seeds
-have not been sent to a provider. The offline protocol identifiers are
+were used once for the frozen raw v3 qualification. The protocol identifiers are
 `raw-rca-v3`, `rca-taxonomy-v3`, `raw-rca-scorer-v3`,
 `evidence-support-v3`, and `raw-rca-manifest-v9`; the prompt-template SHA-256 is
 `a2fc07481c9cd33776086d16cd76fafaa27c2fdf162f4ae634885187d0d22139`.
@@ -86,8 +90,8 @@ from the Incident 003 v2 rubric builder, preregisters canonical per-seed rubric
 hashes alongside model-input hashes, enforces subject bindings, and applies a
 conservative wrong-subject veto for the flat citation list. Manifest v9 now
 requires generator version, protocol version, and evidence requirement-set
-SHA-256. These changes remain offline: no fresh eight-seed provider
-qualification has occurred.
+SHA-256. The completed fresh raw qualification remains immutable; no privacy
+condition has been executed.
 
 ## Frozen Incident 002 development seeds
 

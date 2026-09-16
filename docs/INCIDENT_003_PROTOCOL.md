@@ -64,9 +64,9 @@ The fresh v2 development set is selected by
 `incident-003-v2-first-two-per-temporal-template-unobserved-v1`: scan from 1019
 in ascending order, retain only the first two instances for each temporal
 template, and stop when all four templates have two. The frozen set is 1019,
-1020, 1021, 1022, 1023, 1025, 1026, and 1028. These instances have not been sent
-to a provider. No validation or held-out Incident 003 v2 instance has been
-generated or inspected.
+1020, 1021, 1022, 1023, 1025, 1026, and 1028. These instances were used once for
+the frozen raw v3 qualification. No privacy-transformed, validation, or held-out
+Incident 003 v2 provider observation exists.
 
 The frozen offline preflight table is:
 
@@ -353,25 +353,18 @@ sensitive. Applying the unchanged existing implementations to canonical seed
 | HMAC-v1 | Produces path-scoped HMAC pseudonyms | Yes | Timestamp evaluation rejects; relations are not preserved |
 | Tokenization-v1 | Produces path-scoped ordinal tokens | Yes | Timestamp evaluation rejects; relations are not preserved |
 | Format-preserving-v1 | Pseudonymizes each path independently while retaining character pattern | Yes | Does not preserve calendar validity or cross-field ordering; canonical evaluation rejects |
-| Prospective `relative-time-v1` | Not implemented | Expected | Expected to preserve declared relations |
+| `relative-time-v1` | Shared-anchor exact millisecond offsets | Yes | All declared temporal relations genuinely preserved offline |
 
-The first five rows are observations of current offline code on this Incident
-003 annotation policy; they are not provider experiments. The relative-time row
-is a hypothetical design expectation, not an empirical audit. Existing
-transformations were not changed to fit this family.
-
-A future `relative-time-v1` could strictly parse every annotated timestamp,
-select the earliest model-visible instant as a common incident-local anchor,
-and encode exact signed millisecond offsets such as `T+0ms`, `T+8000ms`, and
-`T+30000ms`. Equal instants would receive equal offsets across sources, while
-ordering, intervals, overlap, and deadline crossings would remain computable.
-Calendar date, wall-clock time, original timezone, epoch, and source formatting
-would be unavailable. Exact offsets also preserve exact interval magnitudes and
-may disclose more timing information than a diagnosis requires. A later review
-must compare exact offsets, bucketed offsets, order-only representations, and
-threshold-preserving representations, and separately decide whether to combine
-relative time with an identifier transformation. No option is selected or
-implemented here.
+All rows are observations of offline code on this Incident 003 annotation
+policy; they are not privacy-condition provider results. `relative-time-v1`
+selects the earliest annotated ModelView timestamp as one shared `T+0ms` anchor
+and emits canonical exact millisecond offsets. Its 200-instance audit passed
+all 3,400 per-instance checks, and seed 1021 preserved the reviewed
+equal-completion case. Calendar, wall-clock, timezone, epoch, and source
+timestamp formatting are removed; exact relative gaps and spans intentionally
+remain. Existing transformations were not changed to fit this family. See
+`docs/relative_time_v1.md` for the protocol, threat accounting, alternatives,
+hashes, and future dry-run configuration.
 
 ## Limitations
 

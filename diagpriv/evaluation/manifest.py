@@ -13,6 +13,11 @@ from diagpriv.evaluation.response import ParsedResponse
 from diagpriv.evaluation.scoring import RCAScore
 from diagpriv.evaluation.scoring_v2 import RCAScoreV2
 from diagpriv.evaluation.scoring_v3 import RCAScoreV3
+from diagpriv.transformations.provenance import (
+    canonical_transformation_configuration_json,
+    transformation_configuration_for_condition,
+    transformation_configuration_sha256,
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -100,6 +105,65 @@ def validate_recovery_identity(
 
 
 @dataclass(frozen=True, slots=True)
+class TransformationProvenance:
+    """Canonical transformation and temporal-parser provenance for manifest v10."""
+
+    transformation_version: str
+    temporal_semantics_version: str
+    anchor_rule: str
+    precision: str
+    representation: str
+    annotation_classification: str
+    scope_policy: str
+    transformation_configuration_sha256: str
+
+    def __post_init__(self) -> None:
+        configuration = self.configuration()
+        canonical_transformation_configuration_json(configuration)
+        expected = transformation_configuration_sha256(configuration)
+        if self.transformation_configuration_sha256 != expected:
+            raise ValueError("Transformation configuration SHA-256 mismatch")
+
+    def configuration(self) -> dict[str, str]:
+        return {
+            "transformation_version": self.transformation_version,
+            "temporal_semantics_version": self.temporal_semantics_version,
+            "anchor_rule": self.anchor_rule,
+            "precision": self.precision,
+            "representation": self.representation,
+            "annotation_classification": self.annotation_classification,
+            "scope_policy": self.scope_policy,
+        }
+
+    def to_dict(self) -> dict[str, str]:
+        return {
+            **self.configuration(),
+            "transformation_configuration_sha256": (
+                self.transformation_configuration_sha256
+            ),
+        }
+
+    @classmethod
+    def from_configuration(
+        cls,
+        configuration: dict[str, str],
+        *,
+        expected_sha256: str,
+    ) -> Self:
+        actual = transformation_configuration_sha256(configuration)
+        if actual != expected_sha256:
+            raise ValueError("Transformation configuration SHA-256 mismatch")
+        return cls(
+            **configuration,
+            transformation_configuration_sha256=expected_sha256,
+        )
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> Self:
+        return cls(**data)
+
+
+@dataclass(frozen=True, slots=True)
 class ExperimentManifest:
     manifest_schema_version: str
     experiment_id: str
@@ -113,6 +177,7 @@ class ExperimentManifest:
         "hmac-v1",
         "tokenization-v1",
         "format-preserving-v1",
+        "relative-time-v1",
     ]
     requested_model: str
     provider_returned_model: str | None
@@ -149,8 +214,10 @@ class ExperimentManifest:
     incident_generator_version: str | None = None
     incident_protocol_version: str | None = None
     evidence_requirement_set_sha256: str | None = None
+    transformation_provenance: TransformationProvenance | None = None
 
     def __post_init__(self) -> None:
+        schema_label = self.manifest_schema_version.rsplit("-", maxsplit=1)[-1]
         if self.manifest_schema_version not in {
             "raw-rca-manifest-v2",
             "raw-rca-manifest-v3",
@@ -160,6 +227,7 @@ class ExperimentManifest:
             "raw-rca-manifest-v7",
             "raw-rca-manifest-v8",
             "raw-rca-manifest-v9",
+            "raw-rca-manifest-v10",
         }:
             raise ValueError(
                 f"Unsupported manifest schema: {self.manifest_schema_version}"
@@ -169,6 +237,7 @@ class ExperimentManifest:
             "raw-rca-manifest-v7",
             "raw-rca-manifest-v8",
             "raw-rca-manifest-v9",
+            "raw-rca-manifest-v10",
         }:
             if not isinstance(self.model_input_sha256, str) or re.fullmatch(
                 r"[0-9a-f]{64}", self.model_input_sha256
@@ -176,9 +245,10 @@ class ExperimentManifest:
                 if self.manifest_schema_version in {
                     "raw-rca-manifest-v8",
                     "raw-rca-manifest-v9",
+                    "raw-rca-manifest-v10",
                 }:
                     raise ValueError(
-                        f"Manifest schema {self.manifest_schema_version[-2:]} "
+                        f"Manifest schema {schema_label} "
                         "requires model_input_sha256"
                     )
                 raise ValueError(
@@ -208,25 +278,39 @@ class ExperimentManifest:
             self.condition,
             self.recovery_provenance,
         )
-        if self.manifest_schema_version == "raw-rca-manifest-v9":
+        if self.manifest_schema_version in {
+            "raw-rca-manifest-v9",
+            "raw-rca-manifest-v10",
+        }:
             if (
                 self.prompt_version != "raw-rca-v3"
                 or self.taxonomy_version != "rca-taxonomy-v3"
                 or self.scorer_version != "raw-rca-scorer-v3"
             ):
                 raise ValueError(
-                    "Manifest schema v9 requires the frozen RCA v3 protocol"
+                    f"Manifest schema {schema_label} requires the frozen RCA v3 "
+                    "protocol"
                 )
             if re.fullmatch(r"[0-9a-f]{64}", self.prompt_sha256) is None:
-                raise ValueError("Manifest schema v9 requires prompt-template SHA-256")
+                raise ValueError(
+                    f"Manifest schema {schema_label} requires "
+                    "prompt-template SHA-256"
+                )
             if self.evidence_support_version != "evidence-support-v3":
                 raise ValueError(
-                    "Manifest schema v9 requires evidence-support-v3"
+                    f"Manifest schema {schema_label} requires "
+                    "evidence-support-v3"
                 )
             if not self.incident_generator_version:
-                raise ValueError("Manifest schema v9 requires incident generator version")
+                raise ValueError(
+                    f"Manifest schema {schema_label} requires "
+                    "incident generator version"
+                )
             if not self.incident_protocol_version:
-                raise ValueError("Manifest schema v9 requires incident protocol version")
+                raise ValueError(
+                    f"Manifest schema {schema_label} requires "
+                    "incident protocol version"
+                )
             if (
                 not isinstance(self.evidence_requirement_set_sha256, str)
                 or re.fullmatch(
@@ -235,11 +319,12 @@ class ExperimentManifest:
                 is None
             ):
                 raise ValueError(
-                    "Manifest schema v9 requires evidence requirement-set SHA-256"
+                    f"Manifest schema {schema_label} requires "
+                    "evidence requirement-set SHA-256"
                 )
         elif self.evidence_support_version is not None:
             raise ValueError(
-                "evidence_support_version is valid only in manifest schema v9"
+                "evidence_support_version is valid only in manifest schema v9 or v10"
             )
         elif any(
             value is not None
@@ -250,7 +335,25 @@ class ExperimentManifest:
             )
         ):
             raise ValueError(
-                "Incident/rubric provenance fields are valid only in manifest schema v9"
+                "Incident/rubric provenance fields are valid only in manifest schema "
+                "v9 or v10"
+            )
+        if self.manifest_schema_version == "raw-rca-manifest-v10":
+            if not isinstance(self.transformation_provenance, TransformationProvenance):
+                raise ValueError(
+                    "Manifest schema v10 requires transformation provenance"
+                )
+            expected_configuration = transformation_configuration_for_condition(
+                self.condition
+            )
+            if self.transformation_provenance.configuration() != expected_configuration:
+                raise ValueError(
+                    "Manifest v10 transformation provenance differs from the "
+                    "frozen condition configuration"
+                )
+        elif self.transformation_provenance is not None:
+            raise ValueError(
+                "Transformation provenance is valid only in manifest schema v10"
             )
 
     def to_dict(self) -> dict[str, object]:
@@ -315,6 +418,10 @@ class ExperimentManifest:
             data["evidence_requirement_set_sha256"] = (
                 self.evidence_requirement_set_sha256
             )
+        if self.transformation_provenance is not None:
+            data["transformation_provenance"] = (
+                self.transformation_provenance.to_dict()
+            )
         return data
 
     def to_json(self, *, indent: int | None = 2) -> str:
@@ -358,6 +465,13 @@ class ExperimentManifest:
         recovery_data = data.get("recovery_provenance")
         if recovery_data is not None and not isinstance(recovery_data, dict):
             raise ValueError("Recovery provenance must be an object or null")
+        transformation_data = data.get("transformation_provenance")
+        if transformation_data is not None and not isinstance(
+            transformation_data, dict
+        ):
+            raise ValueError(
+                "Transformation provenance must be an object or null"
+            )
         return cls(
             manifest_schema_version=data.get(
                 "manifest_schema_version", "raw-rca-manifest-v5"
@@ -420,6 +534,11 @@ class ExperimentManifest:
             incident_protocol_version=data.get("incident_protocol_version"),
             evidence_requirement_set_sha256=data.get(
                 "evidence_requirement_set_sha256"
+            ),
+            transformation_provenance=(
+                None
+                if transformation_data is None
+                else TransformationProvenance.from_dict(transformation_data)
             ),
         )
 

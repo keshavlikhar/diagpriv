@@ -8,7 +8,15 @@ from typing import Literal
 from diagbench.schema import DiagnosticInvariant, EvidenceReference, Incident, ModelView
 from diagbench.schema.models import JSONValue
 from diagbench.structural import structural_defect_matches, structural_signature
+from diagbench.relative_time import (
+    RELATIVE_TIME_SEMANTICS_VERSION,
+    interval_duration_seconds as relative_interval_duration_seconds,
+    intervals_overlap as relative_intervals_overlap,
+    ordered_sequence as relative_ordered_sequence,
+    paired_before as relative_paired_before,
+)
 from diagbench.temporal import (
+    TEMPORAL_SEMANTICS_VERSION,
     interval_duration_seconds,
     intervals_overlap,
     ordered_sequence,
@@ -37,12 +45,20 @@ class InvariantResult:
 
 
 def evaluate_invariants(
-    incident: Incident, transformed_view: ModelView
+    incident: Incident,
+    transformed_view: ModelView,
+    *,
+    temporal_semantics_version: str = TEMPORAL_SEMANTICS_VERSION,
 ) -> tuple[InvariantResult, ...]:
     """Evaluate declared relationships without exposing oracle data in ModelView."""
     results: list[InvariantResult] = []
     for invariant in incident.diagnostic_invariants:
-        preserved = _invariant_holds(incident, transformed_view, invariant)
+        preserved = _invariant_holds(
+            incident,
+            transformed_view,
+            invariant,
+            temporal_semantics_version=temporal_semantics_version,
+        )
         results.append(
             InvariantResult(
                 name=invariant.name,
@@ -182,7 +198,11 @@ def _resolve_view_reference(
 
 
 def _invariant_holds(
-    incident: Incident, model_view: ModelView, invariant: DiagnosticInvariant
+    incident: Incident,
+    model_view: ModelView,
+    invariant: DiagnosticInvariant,
+    *,
+    temporal_semantics_version: str,
 ) -> bool:
     if invariant.relation == "match_count":
         return _match_count(model_view, invariant) == invariant.expected
@@ -200,21 +220,30 @@ def _invariant_holds(
             value not in after[:index] for index, value in enumerate(after)
         )
     if invariant.relation == "ordered_before":
-        return ordered_sequence(tuple(_timestamp_string(value) for value in after))
+        return _ordered_sequence(
+            tuple(_timestamp_string(value) for value in after),
+            temporal_semantics_version,
+        )
     if invariant.relation == "paired_before":
-        return paired_before(tuple(_timestamp_string(value) for value in after))
+        return _paired_before(
+            tuple(_timestamp_string(value) for value in after),
+            temporal_semantics_version,
+        )
     if invariant.relation == "interval_seconds":
         if len(after) != 2:
             return False
-        interval = interval_duration_seconds(
-            _timestamp_string(after[0]), _timestamp_string(after[1])
+        interval = _interval_duration_seconds(
+            _timestamp_string(after[0]),
+            _timestamp_string(after[1]),
+            temporal_semantics_version,
         )
         return interval == invariant.expected
     if invariant.relation == "intervals_overlap":
         if len(after) != 4 or not isinstance(invariant.expected, bool):
             return False
-        overlap = intervals_overlap(
-            *tuple(_timestamp_string(value) for value in after)
+        overlap = _intervals_overlap(
+            tuple(_timestamp_string(value) for value in after),
+            temporal_semantics_version,
         )
         return overlap is invariant.expected
     if invariant.relation == "row_count":
@@ -284,3 +313,39 @@ def _timestamp_string(value: JSONValue) -> str:
     if not isinstance(value, str):
         raise ValueError(f"Timestamp invariant operand must be a string: {value!r}")
     return value
+
+
+def _ordered_sequence(values: tuple[str, ...], semantics_version: str) -> bool:
+    if semantics_version == TEMPORAL_SEMANTICS_VERSION:
+        return ordered_sequence(values)
+    if semantics_version == RELATIVE_TIME_SEMANTICS_VERSION:
+        return relative_ordered_sequence(values)
+    raise ValueError(f"Unsupported temporal semantics: {semantics_version}")
+
+
+def _paired_before(values: tuple[str, ...], semantics_version: str) -> bool:
+    if semantics_version == TEMPORAL_SEMANTICS_VERSION:
+        return paired_before(values)
+    if semantics_version == RELATIVE_TIME_SEMANTICS_VERSION:
+        return relative_paired_before(values)
+    raise ValueError(f"Unsupported temporal semantics: {semantics_version}")
+
+
+def _interval_duration_seconds(
+    start: str, end: str, semantics_version: str
+) -> float:
+    if semantics_version == TEMPORAL_SEMANTICS_VERSION:
+        return interval_duration_seconds(start, end)
+    if semantics_version == RELATIVE_TIME_SEMANTICS_VERSION:
+        return relative_interval_duration_seconds(start, end)
+    raise ValueError(f"Unsupported temporal semantics: {semantics_version}")
+
+
+def _intervals_overlap(values: tuple[str, ...], semantics_version: str) -> bool:
+    if len(values) != 4:
+        raise ValueError("Temporal overlap requires four values")
+    if semantics_version == TEMPORAL_SEMANTICS_VERSION:
+        return intervals_overlap(*values)
+    if semantics_version == RELATIVE_TIME_SEMANTICS_VERSION:
+        return relative_intervals_overlap(*values)
+    raise ValueError(f"Unsupported temporal semantics: {semantics_version}")

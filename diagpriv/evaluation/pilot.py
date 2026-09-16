@@ -36,6 +36,10 @@ from diagpriv.evaluation.prompt_v3 import (
     PROMPT_SHA256 as PROMPT_SHA256_V3,
     PROMPT_VERSION as PROMPT_VERSION_V3,
 )
+from diagpriv.transformations.provenance import (
+    transformation_configuration_for_condition,
+    transformation_configuration_sha256,
+)
 
 FROZEN_PROTOCOLS = {
     PROMPT_VERSION_V1: (
@@ -71,6 +75,7 @@ class PilotDefinition:
         "hmac-v1",
         "tokenization-v1",
         "format-preserving-v1",
+        "relative-time-v1",
     ]
     prompt_version: str
     prompt_sha256: str
@@ -96,6 +101,13 @@ class PilotDefinition:
     pricing_snapshot_path: Path
     hmac_key_environment_variable: str | None
     hmac_key_id: str | None
+    transformation_version: str | None
+    transformation_semantics_version: str | None
+    transformation_anchor_rule: str | None
+    transformation_precision: str | None
+    transformation_representation: str | None
+    transformation_annotation_classification: str | None
+    transformation_scope_policy: str | None
     matched_input_baseline_pilot_id: str | None
     matched_input_baseline_result_sha256: str | None
     matched_model_input_sha256_by_seed: dict[int, str]
@@ -105,6 +117,7 @@ class PilotDefinition:
     expected_incident_protocol_version: str | None
     expected_evidence_support_version: str | None
     expected_transformation_key_fingerprint: str | None
+    expected_transformation_configuration_sha256: str | None
 
     @classmethod
     def load(cls, path: Path) -> Self:
@@ -199,6 +212,17 @@ class PilotDefinition:
                 "key_environment_variable"
             ),
             hmac_key_id=transformation.get("key_id"),
+            transformation_version=transformation.get("transformation_version"),
+            transformation_semantics_version=transformation.get(
+                "temporal_semantics_version"
+            ),
+            transformation_anchor_rule=transformation.get("anchor_rule"),
+            transformation_precision=transformation.get("precision"),
+            transformation_representation=transformation.get("representation"),
+            transformation_annotation_classification=transformation.get(
+                "annotation_classification"
+            ),
+            transformation_scope_policy=transformation.get("scope_policy"),
             matched_input_baseline_pilot_id=matched_input.get(
                 "baseline_pilot_id"
             ),
@@ -226,6 +250,9 @@ class PilotDefinition:
             expected_transformation_key_fingerprint=input_provenance.get(
                 "transformation_key_fingerprint"
             ),
+            expected_transformation_configuration_sha256=input_provenance.get(
+                "transformation_configuration_sha256"
+            ),
         )
         definition.validate()
         return definition
@@ -238,6 +265,7 @@ class PilotDefinition:
             "raw-rca-manifest-v6",
             "raw-rca-manifest-v7",
             "raw-rca-manifest-v9",
+            "raw-rca-manifest-v10",
         }:
             raise ValueError(
                 f"Unsupported manifest schema: {self.manifest_schema_version}"
@@ -248,6 +276,7 @@ class PilotDefinition:
             "hmac-v1",
             "tokenization-v1",
             "format-preserving-v1",
+            "relative-time-v1",
         }:
             raise ValueError(f"Unsupported pilot condition: {self.condition}")
         if self.condition == "hmac-v1":
@@ -257,6 +286,41 @@ class PilotDefinition:
                 raise ValueError("hmac-v1 requires a non-secret experimental key ID")
         elif self.hmac_key_environment_variable is not None or self.hmac_key_id is not None:
             raise ValueError("HMAC key configuration is valid only for hmac-v1")
+        transformation_configuration = {
+            "transformation_version": self.transformation_version,
+            "temporal_semantics_version": self.transformation_semantics_version,
+            "anchor_rule": self.transformation_anchor_rule,
+            "precision": self.transformation_precision,
+            "representation": self.transformation_representation,
+            "annotation_classification": (
+                self.transformation_annotation_classification
+            ),
+            "scope_policy": self.transformation_scope_policy,
+        }
+        configured_values = tuple(transformation_configuration.values())
+        if self.manifest_schema_version == "raw-rca-manifest-v10":
+            expected_configuration = transformation_configuration_for_condition(
+                self.condition
+            )
+            if transformation_configuration != expected_configuration:
+                raise ValueError(
+                    "Manifest v10 requires the frozen transformation configuration"
+                )
+            actual_hash = transformation_configuration_sha256(
+                expected_configuration
+            )
+            if self.expected_transformation_configuration_sha256 != actual_hash:
+                raise ValueError("Transformation configuration SHA-256 mismatch")
+        elif self.condition == "relative-time-v1":
+            raise ValueError("relative-time-v1 requires manifest schema v10")
+        elif any(value is not None for value in configured_values):
+            raise ValueError(
+                "Transformation configuration fields require manifest schema v10"
+            )
+        elif self.expected_transformation_configuration_sha256 is not None:
+            raise ValueError(
+                "Transformation configuration SHA-256 requires manifest schema v10"
+            )
         if FROZEN_PROTOCOLS.get(self.prompt_version) != (
             self.prompt_sha256,
             self.taxonomy_version,
@@ -411,8 +475,16 @@ class PilotDefinition:
                     "Incident 003 v2 pilot requires the frozen fresh "
                     "seed-selection version"
                 )
-            if self.manifest_schema_version != "raw-rca-manifest-v9":
-                raise ValueError("Incident 003 v2 pilot requires manifest schema v9")
+            expected_schema = (
+                "raw-rca-manifest-v10"
+                if self.condition == "relative-time-v1"
+                else "raw-rca-manifest-v9"
+            )
+            if self.manifest_schema_version != expected_schema:
+                raise ValueError(
+                    f"Incident 003 v2 {self.condition} pilot requires "
+                    f"manifest schema {expected_schema.removeprefix('raw-rca-manifest-')}"
+                )
             if (
                 self.expected_incident_generator_version
                 != "incident-003-generator-v2"
@@ -425,8 +497,10 @@ class PilotDefinition:
                 )
             if self.prompt_version != PROMPT_VERSION_V3:
                 raise ValueError("Incident 003 v2 pilot requires raw-rca-v3")
-            if self.condition != "raw":
-                raise ValueError("Incident 003 v2 qualification must use raw evidence")
+            if self.condition not in {"raw", "relative-time-v1"}:
+                raise ValueError(
+                    "Incident 003 v2 currently supports raw or relative-time-v1 evidence"
+                )
             if not self.result_path_must_not_exist:
                 raise ValueError(
                     "Incident 003 v2 pilot requires a previously absent result path"
@@ -508,7 +582,10 @@ class PilotDefinition:
                 raise ValueError(
                     f"Input-provenance SHA-256 is invalid for seed {seed}"
                 )
-        if self.manifest_schema_version == "raw-rca-manifest-v9":
+        if self.manifest_schema_version in {
+            "raw-rca-manifest-v9",
+            "raw-rca-manifest-v10",
+        }:
             if set(rubric_hashes) != set(configured_seeds):
                 raise ValueError(
                     "Evidence requirement-set hashes must cover exactly the pilot seeds"
@@ -520,7 +597,7 @@ class PilotDefinition:
                     )
         elif rubric_hashes:
             raise ValueError(
-                "Evidence requirement-set hashes require manifest schema v9"
+                "Evidence requirement-set hashes require manifest schema v9 or v10"
             )
         if self.condition == "hmac-v1":
             if not isinstance(fingerprint, str) or not _is_sha256(fingerprint):
@@ -598,6 +675,20 @@ class PilotDefinition:
                 "key_environment_variable": self.hmac_key_environment_variable,
                 "key_id": self.hmac_key_id,
             }
+        elif self.manifest_schema_version == "raw-rca-manifest-v10":
+            data["transformation"] = {
+                "transformation_version": self.transformation_version,
+                "temporal_semantics_version": (
+                    self.transformation_semantics_version
+                ),
+                "anchor_rule": self.transformation_anchor_rule,
+                "precision": self.transformation_precision,
+                "representation": self.transformation_representation,
+                "annotation_classification": (
+                    self.transformation_annotation_classification
+                ),
+                "scope_policy": self.transformation_scope_policy,
+            }
         if self.matched_input_baseline_pilot_id is not None:
             data["matched_input"] = {
                 "baseline_pilot_id": self.matched_input_baseline_pilot_id,
@@ -623,6 +714,10 @@ class PilotDefinition:
             if self.expected_transformation_key_fingerprint is not None:
                 input_provenance["transformation_key_fingerprint"] = (
                     self.expected_transformation_key_fingerprint
+                )
+            if self.expected_transformation_configuration_sha256 is not None:
+                input_provenance["transformation_configuration_sha256"] = (
+                    self.expected_transformation_configuration_sha256
                 )
             if self.expected_evidence_requirement_set_sha256_by_seed:
                 input_provenance["evidence_requirement_set_sha256_by_seed"] = {
