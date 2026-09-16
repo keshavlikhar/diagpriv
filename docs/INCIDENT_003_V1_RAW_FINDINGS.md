@@ -158,7 +158,9 @@ cannot be applied retroactively as the experimental score.
 - The exact-ID evidence rubric and semantic evidence support answer different
   questions.
 - No privacy condition has been executed for Incident 003.
-- No `relative-time-v1` transformation exists.
+- At this v1 result freeze, no `relative-time-v1` transformation existed; it
+  was implemented later under a separate offline protocol and does not alter
+  this historical observation.
 - No Incident 003 validation or held-out observation exists.
 
 See `docs/RCA_V3_METHODOLOGY.md` for the approved but unimplemented methodology

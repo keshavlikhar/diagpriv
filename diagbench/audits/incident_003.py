@@ -18,10 +18,15 @@ from diagbench.temporal import (
     ordered_sequence,
     parse_timestamp,
 )
+from diagbench.relative_time import (
+    RELATIVE_TIME_SEMANTICS_VERSION,
+    parse_relative_time,
+)
 from diagpriv.invariants import evaluate_invariants
 from diagpriv.transformations.format_preserving_v1 import format_preserving_incident
 from diagpriv.transformations.hmac_v1 import hmac_incident
 from diagpriv.transformations.redaction_v1 import redact_incident
+from diagpriv.transformations.relative_time_v1 import relative_time_incident
 from diagpriv.transformations.tokenization_v1 import tokenize_incident
 
 TEMPORAL_ABLATION_VERSION = "incident-003-temporal-ablation-v1"
@@ -296,6 +301,7 @@ def audit_timestamp_transformations(
         "hmac-v1": hmac_incident(incident, key=hmac_key),
         "tokenization-v1": tokenize_incident(incident),
         "format-preserving-v1": format_preserving_incident(incident),
+        "relative-time-v1": relative_time_incident(incident),
     }
     actions = {
         "raw": "unchanged_literal_timestamps",
@@ -303,19 +309,38 @@ def audit_timestamp_transformations(
         "hmac-v1": "path_scoped_hmac_pseudonyms",
         "tokenization-v1": "path_scoped_ordinal_tokens",
         "format-preserving-v1": "path_scoped_character_pattern_pseudonyms",
+        "relative-time-v1": "shared_anchor_exact_millisecond_offsets",
     }
     original_timestamps = _timestamp_values(incident, incident.model_view())
     report: dict[str, JSONValue] = {}
     for condition, view in views.items():
         transformed_timestamps = _timestamp_values(incident, view)
         parseable = 0
+        parser = (
+            parse_relative_time
+            if condition == "relative-time-v1"
+            else parse_timestamp
+        )
         for value in transformed_timestamps:
             try:
-                parse_timestamp(value)
+                parser(value)
             except ValueError:
                 continue
             parseable += 1
-        temporal_results, rejected = _safe_temporal_results(incident, view)
+        if condition == "relative-time-v1":
+            evaluated = evaluate_invariants(
+                incident,
+                view,
+                temporal_semantics_version=RELATIVE_TIME_SEMANTICS_VERSION,
+            )
+            temporal_results = {
+                result.name: result.preserved
+                for result in evaluated
+                if result.relation in _TEMPORAL_RELATIONS
+            }
+            rejected = False
+        else:
+            temporal_results, rejected = _safe_temporal_results(incident, view)
         report[condition] = {
             "implemented": True,
             "timestamp_action": actions[condition],
@@ -330,17 +355,9 @@ def audit_timestamp_transformations(
                 for name in _CAUSAL_TEMPORAL_INVARIANTS
             ),
             "temporal_invariant_evaluation_rejected": rejected,
-            "preserves_cross_field_temporal_semantics_by_design": condition == "raw",
+            "preserves_cross_field_temporal_semantics_by_design": condition
+            in {"raw", "relative-time-v1"},
         }
-    report["relative-time-v1"] = {
-        "implemented": False,
-        "timestamp_action": "prospective_incident_relative_offsets",
-        "all_literal_timestamps_removed": True,
-        "required_temporal_invariants_preserved": "expected",
-        "temporal_invariant_evaluation_rejected": False,
-        "preserves_cross_field_temporal_semantics_by_design": True,
-        "classification": "hypothetical_future_expectation_not_empirical_audit",
-    }
     return report
 
 

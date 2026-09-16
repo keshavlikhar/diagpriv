@@ -18,6 +18,13 @@ from diagpriv.transformations.redaction_v1 import (
     redact_incident,
     redaction_placeholder,
 )
+from diagpriv.transformations.relative_time_v1 import (
+    ANCHOR_RULE as RELATIVE_TIME_ANCHOR_RULE,
+    PRECISION as RELATIVE_TIME_PRECISION,
+    TRANSFORMATION_VERSION as RELATIVE_TIME_TRANSFORMATION_VERSION,
+    relative_time_incident,
+    transformation_configuration as relative_time_configuration,
+)
 from diagpriv.transformations.tokenization_v1 import (
     TRANSFORMATION_VERSION as TOKENIZATION_TRANSFORMATION_VERSION,
     tokenize_incident,
@@ -31,6 +38,9 @@ __all__ = [
     "HMAC_KEY_ENVIRONMENT_VARIABLE",
     "HMAC_TRANSFORMATION_VERSION",
     "REDACTION_TRANSFORMATION_VERSION",
+    "RELATIVE_TIME_ANCHOR_RULE",
+    "RELATIVE_TIME_PRECISION",
+    "RELATIVE_TIME_TRANSFORMATION_VERSION",
     "TOKENIZATION_TRANSFORMATION_VERSION",
     "TRANSFORMATION_VERSION",
     "format_preserving_incident",
@@ -41,5 +51,7 @@ __all__ = [
     "redact_incident",
     "redaction_placeholder",
     "tokenize_incident",
+    "relative_time_configuration",
+    "relative_time_incident",
     "structural_pattern",
 ]

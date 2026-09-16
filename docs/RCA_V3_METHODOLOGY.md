@@ -321,8 +321,9 @@ The frozen future set is:
 1019, 1020, 1021, 1022, 1023, 1025, 1026, 1028
 ```
 
-These seeds have not been sent to a provider. The offline implementation and
-configuration do not authorize provider qualification.
+These seeds had not been sent to a provider when this methodology was frozen.
+The later raw v3 qualification is recorded separately and does not change this
+preregistration decision.
 
 The tracked preparation config freezes both exact rendered model-input and
 evidence-requirement-set hashes:

@@ -34,6 +34,7 @@ from diagpriv.evaluation.evidence_support_v3 import (
 from diagpriv.evaluation.manifest import (
     ExperimentManifest,
     RecoveryProvenance,
+    TransformationProvenance,
     append_manifest,
     validate_recovery_identity,
 )
@@ -71,7 +72,11 @@ from diagpriv.transformations import (
     hmac_incident,
     hmac_key_fingerprint,
     redact_incident,
+    relative_time_incident,
     tokenize_incident,
+)
+from diagpriv.transformations.provenance import (
+    transformation_configuration_for_condition,
 )
 
 SCORER_VERSION_V1 = "raw-rca-scorer-v1"
@@ -97,6 +102,7 @@ class RawRunConfig:
         "hmac-v1",
         "tokenization-v1",
         "format-preserving-v1",
+        "relative-time-v1",
     ] = "raw"
     decoding_settings: dict[str, float | int | str | bool | None] = field(
         default_factory=lambda: {"temperature": 0.0}
@@ -114,6 +120,7 @@ class RawRunConfig:
     expected_incident_protocol_version: str | None = None
     expected_evidence_support_version: str | None = None
     expected_transformation_key_fingerprint: str | None = None
+    expected_transformation_configuration_sha256: str | None = None
     trial_index: int | None = None
     recovery_provenance: RecoveryProvenance | None = None
 
@@ -136,6 +143,7 @@ class PreparedModelInput:
     incident_protocol_version: str
     evidence_support_version: str | None
     transformation_key_fingerprint: str | None
+    transformation_provenance: TransformationProvenance | None
 
 
 def pilot_seed_plan(
@@ -260,6 +268,7 @@ def run_raw_experiment(
                 "raw-rca-manifest-v7",
                 "raw-rca-manifest-v8",
                 "raw-rca-manifest-v9",
+                "raw-rca-manifest-v10",
             }
             else None
         ),
@@ -267,24 +276,29 @@ def run_raw_experiment(
         recovery_provenance=config.recovery_provenance,
         evidence_support_version=(
             prepared.evidence_support_version
-            if config.manifest_schema_version == "raw-rca-manifest-v9"
+            if config.manifest_schema_version
+            in {"raw-rca-manifest-v9", "raw-rca-manifest-v10"}
             else None
         ),
         incident_generator_version=(
             prepared.incident_generator_version
-            if config.manifest_schema_version == "raw-rca-manifest-v9"
+            if config.manifest_schema_version
+            in {"raw-rca-manifest-v9", "raw-rca-manifest-v10"}
             else None
         ),
         incident_protocol_version=(
             prepared.incident_protocol_version
-            if config.manifest_schema_version == "raw-rca-manifest-v9"
+            if config.manifest_schema_version
+            in {"raw-rca-manifest-v9", "raw-rca-manifest-v10"}
             else None
         ),
         evidence_requirement_set_sha256=(
             prepared.evidence_requirement_set_sha256
-            if config.manifest_schema_version == "raw-rca-manifest-v9"
+            if config.manifest_schema_version
+            in {"raw-rca-manifest-v9", "raw-rca-manifest-v10"}
             else None
         ),
+        transformation_provenance=prepared.transformation_provenance,
     )
     if result_path is not None:
         append_manifest(result_path, manifest)
@@ -344,6 +358,8 @@ def prepare_model_input(config: RawRunConfig) -> PreparedModelInput:
             "raw-rca-v3 requires frozen rubric and incident-version provenance"
         )
 
+    transformation_provenance = _prepare_transformation_provenance(config)
+
     if config.prompt_version == PROMPT_VERSION_V1:
         prompt_builder = build_prompt
         prompt_sha256 = PROMPT_SHA256_V1
@@ -394,6 +410,10 @@ def prepare_model_input(config: RawRunConfig) -> PreparedModelInput:
         model_view = tokenize_incident(incident)
     elif config.condition == "format-preserving-v1":
         model_view = format_preserving_incident(incident)
+    elif config.condition == "relative-time-v1":
+        if config.incident_family != INCIDENT_003_V2_FAMILY:
+            raise ValueError("relative-time-v1 currently supports Incident 003 v2 only")
+        model_view = relative_time_incident(incident)
     else:
         raise ValueError(f"Unsupported evaluation condition: {config.condition}")
 
@@ -457,6 +477,32 @@ def prepare_model_input(config: RawRunConfig) -> PreparedModelInput:
         incident_generator_version=incident_generator_version,
         incident_protocol_version=incident_protocol_version,
         evidence_support_version=evidence_support_version,
+        transformation_provenance=transformation_provenance,
+    )
+
+
+def _prepare_transformation_provenance(
+    config: RawRunConfig,
+) -> TransformationProvenance | None:
+    if config.manifest_schema_version != "raw-rca-manifest-v10":
+        if config.expected_transformation_configuration_sha256 is not None:
+            raise ValueError(
+                "Transformation configuration SHA-256 requires manifest schema v10"
+            )
+        if config.condition == "relative-time-v1":
+            raise ValueError(
+                "relative-time-v1 observations require manifest schema v10"
+            )
+        return None
+    if config.expected_transformation_configuration_sha256 is None:
+        raise ValueError(
+            "Manifest schema v10 requires a preregistered transformation "
+            "configuration SHA-256"
+        )
+    configuration = transformation_configuration_for_condition(config.condition)
+    return TransformationProvenance.from_configuration(
+        configuration,
+        expected_sha256=config.expected_transformation_configuration_sha256,
     )
 
 

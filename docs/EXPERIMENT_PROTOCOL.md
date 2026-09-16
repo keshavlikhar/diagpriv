@@ -234,9 +234,20 @@ a unique deterministic non-parseable audit marker, making all temporal
 predicates explicitly unavailable without creating a substitute valid
 timeline. It verifies that the target loses its unique deadline/compensation
 overlap signature while non-temporal ModelView information remains identical. The
-complete causal story, oracle, ModelView boundary, invariant definitions,
-construction results, and prospective (not implemented) relative-time design
-are specified in `docs/INCIDENT_003_PROTOCOL.md`.
+complete causal story, oracle, ModelView boundary, invariant definitions, and
+construction results are specified in `docs/INCIDENT_003_PROTOCOL.md`. The now
+implemented but not provider-executed relative-time condition is specified in
+`docs/relative_time_v1.md`.
+
+The prepared relative-time comparison uses `raw-rca-manifest-v10`. Unlike the
+frozen raw v9 observation, v10 persists a canonical transformation-provenance
+object containing the transformation and temporal-parser versions, anchor,
+precision, representation, annotation classification, scope policy, and a
+separately preregistered configuration SHA-256. Raw future v10 observations use
+an explicit canonical `raw`/`temporal-semantics-v1` configuration rather than
+ambiguous null transformation fields. Evidence requirement-set hashes remain
+representation-independent and therefore match raw; the parser and
+transformation configuration are pinned separately.
 
 ### Incident 002 raw development experiments
 
@@ -312,11 +323,14 @@ primary as-executed analysis. Final results and interpretation limits are in
   candidate-population-local mapping.
 - `format-preserving-v1`: deterministic same-pattern pseudonyms from an
   ephemeral mapping with explicit collision resolution.
+- `relative-time-v1`: Incident 003-only exact millisecond offsets from the
+  earliest annotated visible instant; non-temporal fields remain unchanged.
 
-All conditions use the same v2 prompt, taxonomy, scorer, model configuration,
-and evidence methodology for matched comparisons. Oracle labels, invariant
-definitions, expected evidence, and privacy annotations remain outside the
-provider-facing ModelView.
+Within each matched comparison, conditions retain the same frozen prompt,
+taxonomy, scorer, model configuration, and evidence methodology. Incident 001
+and Incident 002 comparisons use RCA v2; the Incident 003 v2 raw/relative-time
+comparison uses RCA v3. Oracle labels, invariant definitions, expected
+evidence, and privacy annotations remain outside the provider-facing ModelView.
 
 ## Provider boundary and failures
 

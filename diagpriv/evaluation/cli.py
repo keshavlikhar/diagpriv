@@ -147,6 +147,9 @@ def _run_pilot(args: argparse.Namespace) -> None:
                     expected_transformation_key_fingerprint=(
                         definition.expected_transformation_key_fingerprint
                     ),
+                    expected_transformation_configuration_sha256=(
+                        definition.expected_transformation_configuration_sha256
+                    ),
                     trial_index=trial_index,
                 ),
                 provider,
@@ -165,6 +168,7 @@ def _input_preflight(
         str(index): {} for index in definition.trial_indices
     }
     fingerprint: str | None = None
+    transformation_configuration_digest: str | None = None
     for seed in (*definition.development_seeds, *definition.validation_seeds):
         indices: tuple[int | None, ...] = (
             definition.trial_indices if definition.trial_indices else (None,)
@@ -211,6 +215,9 @@ def _input_preflight(
                     expected_transformation_key_fingerprint=(
                         definition.expected_transformation_key_fingerprint
                     ),
+                    expected_transformation_configuration_sha256=(
+                        definition.expected_transformation_configuration_sha256
+                    ),
                     trial_index=trial_index,
                 )
             )
@@ -221,6 +228,19 @@ def _input_preflight(
                 )
             if prepared.transformation_key_fingerprint is not None:
                 fingerprint = prepared.transformation_key_fingerprint
+            if prepared.transformation_provenance is not None:
+                digest = (
+                    prepared.transformation_provenance
+                    .transformation_configuration_sha256
+                )
+                if (
+                    transformation_configuration_digest is not None
+                    and transformation_configuration_digest != digest
+                ):
+                    raise ValueError(
+                        "Transformation configuration changed across prepared inputs"
+                    )
+                transformation_configuration_digest = digest
         distinct_hashes = {
             prepared.model_input_sha256 for prepared in prepared_for_seed
         }
@@ -240,6 +260,10 @@ def _input_preflight(
         data["evidence_requirement_set_sha256_by_seed"] = rubric_hashes
     if definition.hmac_key_id is not None:
         data["transformation_key_id"] = definition.hmac_key_id
+    if transformation_configuration_digest is not None:
+        data["transformation_configuration_sha256"] = (
+            transformation_configuration_digest
+        )
     if definition.trial_indices:
         data["trial_indices"] = list(definition.trial_indices)
         data["model_input_sha256_by_trial"] = trial_hashes
@@ -308,6 +332,9 @@ def _run_diagnostic(args: argparse.Namespace) -> None:
         ),
         expected_transformation_key_fingerprint=(
             definition.expected_transformation_key_fingerprint
+        ),
+        expected_transformation_configuration_sha256=(
+            definition.expected_transformation_configuration_sha256
         ),
     )
     # Validate every deterministic input and rubric constraint before provider
