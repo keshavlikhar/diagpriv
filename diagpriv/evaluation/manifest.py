@@ -146,6 +146,9 @@ class ExperimentManifest:
     trial_index: int | None = None
     recovery_provenance: RecoveryProvenance | None = None
     evidence_support_version: str | None = None
+    incident_generator_version: str | None = None
+    incident_protocol_version: str | None = None
+    evidence_requirement_set_sha256: str | None = None
 
     def __post_init__(self) -> None:
         if self.manifest_schema_version not in {
@@ -206,13 +209,48 @@ class ExperimentManifest:
             self.recovery_provenance,
         )
         if self.manifest_schema_version == "raw-rca-manifest-v9":
+            if (
+                self.prompt_version != "raw-rca-v3"
+                or self.taxonomy_version != "rca-taxonomy-v3"
+                or self.scorer_version != "raw-rca-scorer-v3"
+            ):
+                raise ValueError(
+                    "Manifest schema v9 requires the frozen RCA v3 protocol"
+                )
+            if re.fullmatch(r"[0-9a-f]{64}", self.prompt_sha256) is None:
+                raise ValueError("Manifest schema v9 requires prompt-template SHA-256")
             if self.evidence_support_version != "evidence-support-v3":
                 raise ValueError(
                     "Manifest schema v9 requires evidence-support-v3"
                 )
+            if not self.incident_generator_version:
+                raise ValueError("Manifest schema v9 requires incident generator version")
+            if not self.incident_protocol_version:
+                raise ValueError("Manifest schema v9 requires incident protocol version")
+            if (
+                not isinstance(self.evidence_requirement_set_sha256, str)
+                or re.fullmatch(
+                    r"[0-9a-f]{64}", self.evidence_requirement_set_sha256
+                )
+                is None
+            ):
+                raise ValueError(
+                    "Manifest schema v9 requires evidence requirement-set SHA-256"
+                )
         elif self.evidence_support_version is not None:
             raise ValueError(
                 "evidence_support_version is valid only in manifest schema v9"
+            )
+        elif any(
+            value is not None
+            for value in (
+                self.incident_generator_version,
+                self.incident_protocol_version,
+                self.evidence_requirement_set_sha256,
+            )
+        ):
+            raise ValueError(
+                "Incident/rubric provenance fields are valid only in manifest schema v9"
             )
 
     def to_dict(self) -> dict[str, object]:
@@ -269,6 +307,14 @@ class ExperimentManifest:
             data["recovery_provenance"] = self.recovery_provenance.to_dict()
         if self.evidence_support_version is not None:
             data["evidence_support_version"] = self.evidence_support_version
+        if self.incident_generator_version is not None:
+            data["incident_generator_version"] = self.incident_generator_version
+        if self.incident_protocol_version is not None:
+            data["incident_protocol_version"] = self.incident_protocol_version
+        if self.evidence_requirement_set_sha256 is not None:
+            data["evidence_requirement_set_sha256"] = (
+                self.evidence_requirement_set_sha256
+            )
         return data
 
     def to_json(self, *, indent: int | None = 2) -> str:
@@ -370,6 +416,11 @@ class ExperimentManifest:
                 else RecoveryProvenance.from_dict(recovery_data)
             ),
             evidence_support_version=data.get("evidence_support_version"),
+            incident_generator_version=data.get("incident_generator_version"),
+            incident_protocol_version=data.get("incident_protocol_version"),
+            evidence_requirement_set_sha256=data.get(
+                "evidence_requirement_set_sha256"
+            ),
         )
 
     @classmethod
@@ -404,6 +455,7 @@ def _score_to_dict(
             "invalid_citation_count",
             "invalid_citation_rate",
             "wrong_subject_citation_count",
+            "contextual_citation_count",
             "redundant_citation_count",
             "redundant_citation_rate",
             "evidence_supported",
@@ -416,6 +468,7 @@ def _score_to_dict(
             "useful_evidence_ids",
             "unknown_evidence_ids",
             "wrong_subject_evidence_ids",
+            "contextual_evidence_ids",
             "redundant_evidence_ids",
             "evidence_precision",
             "evidence_recall",

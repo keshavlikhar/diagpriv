@@ -108,6 +108,23 @@ Use only when the retry decision, timing, or bounds remain defective assuming
 effective idempotency. A harmless retry that becomes harmful only because
 deduplication is missing is an idempotency failure, not a retry-policy failure.
 
+### `stale_or_inconsistent_data`
+
+Use when a well-formed but obsolete or divergent view is itself the proximal
+defect. Corrupted data or an integrity-constraint violation is
+`data_integrity_failure`. If the conflicting state was admitted because
+fencing, version checking, compare-and-set, locking, or serialization was
+missing, the proximal mechanism is `incorrect_concurrency_control`.
+
+### `dependency_contract_failure`
+
+Use when a producer and consumer disagree about an established
+inter-component promise. Use `validation_or_input_handling_failure` when the
+responsible local component fails to reject, normalize, parse, bound, or look
+up input under its own obligation. These boundaries are stored in the
+machine-readable taxonomy metadata as exclusions, confusables, and decision
+guidance.
+
 ## Blinded mapping of existing families
 
 The accepted mapping uses construction facts only, not model predictions.
@@ -175,6 +192,61 @@ Subject binding is mandatory: evidence from different operations may not be
 combined to satisfy a target relation. An acceptable path may never be added in
 response to a model citation.
 
+The implementation is split deliberately:
+
+- `diagpriv/evaluation/evidence_support_v3.py` contains only family-neutral
+  rubric types, validation, canonical serialization, hashing, and scoring;
+- `diagpriv/evaluation/incident_003_v2_evidence.py` declares the Incident 003
+  v2 subjects, requirements, and alternative paths; and
+- `diagpriv/evaluation/evidence_protocols.py` dispatches a family/protocol to
+  its rubric builder outside the generic scorer.
+
+The generic evaluator receives a completed rubric and ModelView. It imports no
+Incident 003 generator or family identifier and contains no Incident 003
+source, deadline, or compensation semantics.
+
+### Canonical rubric and preregistration
+
+The normative rubric representation is compact UTF-8 JSON with sorted object
+keys and no insignificant whitespace or trailing newline. Subject bindings,
+requirements, alternatives, evidence-ID lists, and semantic parameters are
+sorted by stable identifiers so the digest does not depend on Python object
+identity, collection insertion order, pretty-printing, platform newline
+behavior, or builder traversal order. The representation includes every
+semantic field: protocol version; requirement ID, necessity class, and
+normative description; alternative ID; required and optional evidence IDs;
+semantic predicate and parameters; subject binding; redundancy class; and
+minimum-group requirement. Runtime caches are excluded.
+
+For each planned observation, the rubric is constructed and validated during
+input preflight, its SHA-256 is compared with the tracked per-seed value, and
+the same construction/hash check occurs again during run preparation before
+provider invocation. A missing evidence ID, unresolved/cross-subject binding,
+unsupported predicate, or hash mismatch fails closed before provider setup in
+the CLI preflight.
+
+### Subject binding and flat-citation policy
+
+Every visible evidence ID that may legitimately appear is bound to one frozen
+subject role: target, designated contrast/control, or an explicitly allowed
+supportive subject. A requirement path is confined to one binding, and rubric
+validation rejects paths that combine subjects. A citation is:
+
+- contributing when it belongs to a selected satisfied path;
+- redundant when it repeats an ID or supplies an additional interchangeable
+  path already satisfied elsewhere;
+- contextual when its subject is allowed but it contributes to no selected
+  path;
+- wrong-subject when its visible subject is incompatible with every declared
+  role; or
+- nonexistent when its evidence ID is absent from ModelView.
+
+Because the response schema exposes one flat evidence list rather than a
+claim-to-citation mapping, v3 adopts the conservative deterministic rule that
+any wrong-subject citation makes `evidence_supported=false`. Nonexistent IDs
+also veto support. Duplicate, redundant, and allowed contextual citations do
+not veto support; they remain visible in precision/redundancy metrics.
+
 ### Essential Incident 003 causal requirements
 
 1. Target identity linkage.
@@ -212,9 +284,8 @@ corroboration.
 - `evidence_supported`
 
 `evidence_supported` is true only when all essential requirements are
-satisfied, essential subject bindings are consistent, no nonexistent citation
-is used, and no wrong-target or contradictory evidence is used to satisfy an
-essential requirement. Contrast coverage is not required.
+satisfied, no nonexistent citation is used, and the flat citation list contains
+no wrong-subject citation. Contrast coverage is not required.
 
 The implemented overall criterion is:
 
@@ -252,6 +323,36 @@ The frozen future set is:
 
 These seeds have not been sent to a provider. The offline implementation and
 configuration do not authorize provider qualification.
+
+The tracked preparation config freezes both exact rendered model-input and
+evidence-requirement-set hashes:
+
+| Seed | Model input SHA-256 | Evidence requirement-set SHA-256 |
+|---:|---|---|
+| 1019 | `2fdd467c9408b66de7a370b5bf7f9877316dfbfa4204bb93ff4c250b9822f452` | `c01d15e2f8ea4e857b324f803769b1fe9eaff30434a9a64d16a6d10b8766c0db` |
+| 1020 | `454b06bcb400c718ac4ed6a29e4fba618d7b280f2bec13c1d03198246c4ac18e` | `d8f4d67988180b0692f4a1e3f12c8d97e02489fe986c3f62ce17400da04f1377` |
+| 1021 | `4d5c3f69abfd5d8eb795fbf1dd5044e4a4621d49f8457ae9778780b2dae02f29` | `e8d55010bc62f36f9982ce0bfe96b89995c3990ce99a4cbb5088dae96117feac` |
+| 1022 | `2135b32e0712b9feb2744a70f182b33c784f4d7797322b0e3f901aa9b6b71fba` | `f0eb6ca56f15e43421c6168467179898f51098a7ddb22852dd037bb9d0649c64` |
+| 1023 | `f9c14cb3c14036565bd1a026fc96fce1c33abe88e8011a7f0e5926c88960c8c4` | `5703cbb60e3db5220fa73e6a12231332f2cdb2c1714845f1981268789ddc1f60` |
+| 1025 | `6275bcc7cc6531bdefacd060655c6613b504413c2b4053b897c3b74f6f52b2bc` | `03348ab34228647752a384c8e01be7d4af74607a140aa16c65cc1d9dac7399b5` |
+| 1026 | `be72cf270b660c9dd857a08fe7878d9adf1405dcbd73107097371b66a23eba6b` | `d67a92a6bccdb6891bfb3f437a68abc42a1f36719776a15d9a5a7be65cc45a9b` |
+| 1028 | `1acbf564bb312397a57935dbb81d8bd7307465b6a2e6d3667f834e110e030b14` | `2524b8e23b63f739dc555a16600f54e44d5e942207b80fdf7291ab021cb89d26` |
+
+The corrected canonical ordering changed these rubric digests from the
+audit-derived provisional values; no prior v3 provider observation exists.
+
+## Manifest and reporting compatibility
+
+`raw-rca-manifest-v9` records prompt/taxonomy/scorer/evidence-protocol versions,
+Incident generator and protocol versions, the prompt-template SHA-256, exact
+`model_input_sha256`, exact `evidence_requirement_set_sha256`, provider/model
+and decoding provenance, execution/failure metadata, and the v3 score's
+individual requirement outcomes and selected path IDs. Historical v2-v8
+schemas and artifacts are not rewritten.
+
+Summary serialization omits the nullable v3-only aggregate fields for legacy
+observations, preserving the prior v2 report shape. V3 summaries expose the
+semantic coverage and citation classifications explicitly.
 
 ## Compatibility policy
 

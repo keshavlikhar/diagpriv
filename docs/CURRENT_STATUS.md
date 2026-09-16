@@ -81,6 +81,14 @@ keeps the historical v2 oracle intact and adds a separate v3 oracle whose
 mechanism is `incorrect_concurrency_control`. This prevents the v1 result from
 being relabelled or rescored in place.
 
+The final offline hardening separates the family-neutral evidence evaluator
+from the Incident 003 v2 rubric builder, preregisters canonical per-seed rubric
+hashes alongside model-input hashes, enforces subject bindings, and applies a
+conservative wrong-subject veto for the flat citation list. Manifest v9 now
+requires generator version, protocol version, and evidence requirement-set
+SHA-256. These changes remain offline: no fresh eight-seed provider
+qualification has occurred.
+
 ## Frozen Incident 002 development seeds
 
 Starting at 1000, seeds were inspected in ascending order and selected only

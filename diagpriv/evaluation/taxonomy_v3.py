@@ -84,8 +84,20 @@ SUBSEQUENT_ACTION_DEFINITIONS = (
 FAILURE_MECHANISM_DEFINITIONS = (
     _category("authorization_or_policy_failure", "Authorization or policy enforcement is absent, incorrect, or bypassed."),
     _category("configuration_or_routing_error", "Incorrect configuration or routing directs the system into the failure."),
-    _category("data_integrity_failure", "Stored or transmitted data violates a required integrity constraint."),
-    _category("dependency_contract_failure", "A component relies on a dependency behavior that violates or is absent from the dependency contract."),
+    _category(
+        "data_integrity_failure",
+        "Stored or transmitted data is corrupted or violates a required integrity constraint.",
+        exclude=("A well-formed but obsolete or divergent view belongs under stale_or_inconsistent_data.",),
+        confusables=("stale_or_inconsistent_data",),
+    ),
+    _category(
+        "dependency_contract_failure",
+        "A producer and consumer disagree about an established inter-component promise.",
+        include=("The violated obligation belongs to the dependency boundary rather than solely to local input handling.",),
+        exclude=("A responsible local component failing its own reject, normalize, parse, or bound obligation.",),
+        confusables=("validation_or_input_handling_failure",),
+        guidance=("Choose validation_or_input_handling_failure when the proximal missing control is local validation under the component's own obligation.",),
+    ),
     _category(
         "incorrect_concurrency_control",
         "Overlapping actors can both proceed or commit because coordination is absent or ineffective.",
@@ -121,8 +133,23 @@ FAILURE_MECHANISM_DEFINITIONS = (
         confusables=("incorrect_concurrency_control", "data_integrity_failure"),
     ),
     _category("resource_management_failure", "Resource allocation, release, capacity, or lifetime management is defective."),
-    _category("stale_or_inconsistent_data", "A decision uses stale, mutually inconsistent, or insufficiently synchronized data."),
-    _category("validation_or_input_handling_failure", "Input validation, normalization, parsing, or lookup handling is missing or incorrect."),
+    _category(
+        "stale_or_inconsistent_data",
+        "A well-formed but obsolete or divergent view is itself the proximal defect in a decision.",
+        exclude=(
+            "Corrupted data or integrity-constraint violations belong under data_integrity_failure.",
+            "Conflicting state admitted because fencing, versioning, compare-and-set, locking, or serialization is missing belongs under incorrect_concurrency_control.",
+        ),
+        confusables=("data_integrity_failure", "incorrect_concurrency_control"),
+        guidance=("Use this category only when the stale or divergent view remains the proximal defect after considering missing concurrency controls.",),
+    ),
+    _category(
+        "validation_or_input_handling_failure",
+        "A responsible local component fails to reject, normalize, parse, bound, or correctly look up input under its own obligation.",
+        exclude=("A producer/consumer disagreement about an established inter-component promise.",),
+        confusables=("dependency_contract_failure",),
+        guidance=("Choose dependency_contract_failure when the proximal defect is a violated dependency-boundary promise.",),
+    ),
     _category("unknown_failure_mechanism", "The supplied evidence does not establish a more specific mechanism."),
 )
 

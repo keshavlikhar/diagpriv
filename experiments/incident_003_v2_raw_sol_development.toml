@@ -29,6 +29,11 @@ intended = 0.0
 effective = "omitted"
 omission_reason = "Temperature is omitted to preserve the established GPT-5.6 Sol development decoding protocol; no claim is made that GPT-5.6 Sol rejects the parameter."
 
+[incident_protocol]
+generator_version = "incident-003-generator-v2"
+protocol_version = "incident-003-temporal-protocol-v2"
+evidence_protocol_version = "evidence-support-v3"
+
 [input_provenance.model_input_sha256_by_seed]
 "1019" = "2fdd467c9408b66de7a370b5bf7f9877316dfbfa4204bb93ff4c250b9822f452"
 "1020" = "454b06bcb400c718ac4ed6a29e4fba618d7b280f2bec13c1d03198246c4ac18e"
@@ -38,6 +43,16 @@ omission_reason = "Temperature is omitted to preserve the established GPT-5.6 So
 "1025" = "6275bcc7cc6531bdefacd060655c6613b504413c2b4053b897c3b74f6f52b2bc"
 "1026" = "be72cf270b660c9dd857a08fe7878d9adf1405dcbd73107097371b66a23eba6b"
 "1028" = "1acbf564bb312397a57935dbb81d8bd7307465b6a2e6d3667f834e110e030b14"
+
+[input_provenance.evidence_requirement_set_sha256_by_seed]
+"1019" = "c01d15e2f8ea4e857b324f803769b1fe9eaff30434a9a64d16a6d10b8766c0db"
+"1020" = "d8f4d67988180b0692f4a1e3f12c8d97e02489fe986c3f62ce17400da04f1377"
+"1021" = "e8d55010bc62f36f9982ce0bfe96b89995c3990ce99a4cbb5088dae96117feac"
+"1022" = "f0eb6ca56f15e43421c6168467179898f51098a7ddb22852dd037bb9d0649c64"
+"1023" = "5703cbb60e3db5220fa73e6a12231332f2cdb2c1714845f1981268789ddc1f60"
+"1025" = "03348ab34228647752a384c8e01be7d4af74607a140aa16c65cc1d9dac7399b5"
+"1026" = "d67a92a6bccdb6891bfb3f437a68abc42a1f36719776a15d9a5a7be65cc45a9b"
+"1028" = "2524b8e23b63f739dc555a16600f54e44d5e942207b80fdf7291ab021cb89d26"
 
 [pricing]
 snapshot = "pricing/openai_gpt_5_6_sol_2026-09-10.toml"

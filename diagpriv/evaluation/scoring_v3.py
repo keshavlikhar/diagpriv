@@ -6,7 +6,10 @@ from dataclasses import asdict, dataclass
 from typing import Any, Self
 
 from diagbench.schema import Incident
-from diagpriv.evaluation.evidence_support_v3 import score_evidence_support_v3
+from diagpriv.evaluation.evidence_support_v3 import (
+    EvidenceRubricV3,
+    score_evidence_support_v3,
+)
 from diagpriv.evaluation.response import RCAResponseV3
 from diagpriv.evaluation.scoring_v2 import ProtocolVersionError
 
@@ -28,6 +31,7 @@ class RCAScoreV3:
     invalid_citation_count: int
     invalid_citation_rate: float
     wrong_subject_citation_count: int
+    contextual_citation_count: int
     redundant_citation_count: int
     redundant_citation_rate: float
     evidence_supported: bool
@@ -40,6 +44,7 @@ class RCAScoreV3:
     useful_evidence_ids: tuple[str, ...]
     unknown_evidence_ids: tuple[str, ...]
     wrong_subject_evidence_ids: tuple[str, ...]
+    contextual_evidence_ids: tuple[str, ...]
     redundant_evidence_ids: tuple[str, ...]
     evidence_precision: float
     evidence_recall: float
@@ -58,6 +63,7 @@ class RCAScoreV3:
             "useful_evidence_ids",
             "unknown_evidence_ids",
             "wrong_subject_evidence_ids",
+            "contextual_evidence_ids",
             "redundant_evidence_ids",
         ):
             data[field] = list(data[field])
@@ -76,13 +82,18 @@ class RCAScoreV3:
             "useful_evidence_ids",
             "unknown_evidence_ids",
             "wrong_subject_evidence_ids",
+            "contextual_evidence_ids",
             "redundant_evidence_ids",
         ):
             converted[field] = tuple(converted[field])
         return cls(**converted)
 
 
-def score_response_v3(incident: Incident, response: RCAResponseV3) -> RCAScoreV3:
+def score_response_v3(
+    incident: Incident,
+    response: RCAResponseV3,
+    rubric: EvidenceRubricV3,
+) -> RCAScoreV3:
     """Require exact v3 RCA labels and complete semantic essential evidence."""
     if not isinstance(response, RCAResponseV3):
         raise ProtocolVersionError("raw-rca-v3 scoring requires an RCAResponseV3")
@@ -104,7 +115,11 @@ def score_response_v3(incident: Incident, response: RCAResponseV3) -> RCAScoreV3
             component_correct,
         )
     )
-    evidence = score_evidence_support_v3(incident, response.supporting_evidence)
+    evidence = score_evidence_support_v3(
+        response.supporting_evidence,
+        incident.model_view(),
+        rubric,
+    )
     return RCAScoreV3(
         outcome_correct=outcome_correct,
         trigger_correct=trigger_correct,

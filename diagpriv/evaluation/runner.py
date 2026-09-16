@@ -25,6 +25,12 @@ from diagpriv.evaluation.incident_families import (
     evaluation_seed_split,
     generate_evaluation_incident,
 )
+from diagpriv.evaluation.evidence_protocols import build_evidence_rubric_v3
+from diagpriv.evaluation.evidence_support_v3 import (
+    EvidenceRubricV3,
+    evidence_requirement_set_sha256_v3,
+    validate_evidence_rubric_v3,
+)
 from diagpriv.evaluation.manifest import (
     ExperimentManifest,
     RecoveryProvenance,
@@ -103,6 +109,10 @@ class RawRunConfig:
     hmac_key: bytes | None = field(default=None, repr=False, compare=False)
     transformation_key_id: str | None = None
     expected_model_input_sha256: str | None = None
+    expected_evidence_requirement_set_sha256: str | None = None
+    expected_incident_generator_version: str | None = None
+    expected_incident_protocol_version: str | None = None
+    expected_evidence_support_version: str | None = None
     expected_transformation_key_fingerprint: str | None = None
     trial_index: int | None = None
     recovery_provenance: RecoveryProvenance | None = None
@@ -120,6 +130,11 @@ class PreparedModelInput:
     taxonomy_version: str
     scorer_version: str
     model_input_sha256: str
+    evidence_rubric: EvidenceRubricV3 | None
+    evidence_requirement_set_sha256: str | None
+    incident_generator_version: str
+    incident_protocol_version: str
+    evidence_support_version: str | None
     transformation_key_fingerprint: str | None
 
 
@@ -189,7 +204,13 @@ def run_raw_experiment(
     elif config.prompt_version == PROMPT_VERSION_V2:
         score = score_response_v2(prepared.incident, parsed.response)
     elif config.prompt_version == PROMPT_VERSION_V3:
-        score = score_response_v3(prepared.incident, parsed.response)
+        if prepared.evidence_rubric is None:
+            raise ValueError("raw-rca-v3 requires a preregistered evidence rubric")
+        score = score_response_v3(
+            prepared.incident,
+            parsed.response,
+            prepared.evidence_rubric,
+        )
     else:
         score = score_response(prepared.incident, parsed.response)
 
@@ -245,7 +266,22 @@ def run_raw_experiment(
         trial_index=config.trial_index,
         recovery_provenance=config.recovery_provenance,
         evidence_support_version=(
-            str(prepared.incident.metadata["evidence_support_version"])
+            prepared.evidence_support_version
+            if config.manifest_schema_version == "raw-rca-manifest-v9"
+            else None
+        ),
+        incident_generator_version=(
+            prepared.incident_generator_version
+            if config.manifest_schema_version == "raw-rca-manifest-v9"
+            else None
+        ),
+        incident_protocol_version=(
+            prepared.incident_protocol_version
+            if config.manifest_schema_version == "raw-rca-manifest-v9"
+            else None
+        ),
+        evidence_requirement_set_sha256=(
+            prepared.evidence_requirement_set_sha256
             if config.manifest_schema_version == "raw-rca-manifest-v9"
             else None
         ),
@@ -298,6 +334,15 @@ def prepare_model_input(config: RawRunConfig) -> PreparedModelInput:
         and config.prompt_version != PROMPT_VERSION_V3
     ):
         raise ValueError("Incident 003 v2 requires raw-rca-v3")
+    if config.prompt_version == PROMPT_VERSION_V3 and (
+        config.expected_evidence_requirement_set_sha256 is None
+        or config.expected_incident_generator_version is None
+        or config.expected_incident_protocol_version is None
+        or config.expected_evidence_support_version is None
+    ):
+        raise ValueError(
+            "raw-rca-v3 requires frozen rubric and incident-version provenance"
+        )
 
     if config.prompt_version == PROMPT_VERSION_V1:
         prompt_builder = build_prompt
@@ -318,6 +363,21 @@ def prepare_model_input(config: RawRunConfig) -> PreparedModelInput:
         raise ValueError(f"Unsupported raw RCA prompt version: {config.prompt_version}")
 
     incident = generate_evaluation_incident(config.incident_family, config.seed)
+    # These fields are mandatory for the v9/v3 protocol, but older incident
+    # families and historical manifest schemas never promised them.  Keep the
+    # legacy preparation path tolerant while the v3 checks below fail closed.
+    incident_generator_version = str(incident.metadata.get("generator_version", ""))
+    incident_protocol_version = str(incident.metadata.get("protocol_version", ""))
+    if (
+        config.expected_incident_generator_version is not None
+        and incident_generator_version != config.expected_incident_generator_version
+    ):
+        raise ValueError("Incident generator version differs from frozen provenance")
+    if (
+        config.expected_incident_protocol_version is not None
+        and incident_protocol_version != config.expected_incident_protocol_version
+    ):
+        raise ValueError("Incident protocol version differs from frozen provenance")
     transformation_key_fingerprint: str | None = None
     if config.condition == "raw":
         model_view = incident.model_view()
@@ -339,6 +399,24 @@ def prepare_model_input(config: RawRunConfig) -> PreparedModelInput:
 
     prompt = prompt_builder(model_view)
     model_input_sha256 = hashlib.sha256(prompt.encode("utf-8")).hexdigest()
+    evidence_rubric: EvidenceRubricV3 | None = None
+    evidence_requirement_set_sha256: str | None = None
+    evidence_support_version: str | None = None
+    if config.prompt_version == PROMPT_VERSION_V3:
+        evidence_rubric = build_evidence_rubric_v3(incident)
+        validate_evidence_rubric_v3(model_view, evidence_rubric)
+        evidence_support_version = evidence_rubric.version
+        if (
+            evidence_support_version != config.expected_evidence_support_version
+            or incident.metadata.get("evidence_support_version")
+            != config.expected_evidence_support_version
+        ):
+            raise ValueError(
+                "Prepared evidence protocol differs from frozen provenance"
+            )
+        evidence_requirement_set_sha256 = evidence_requirement_set_sha256_v3(
+            evidence_rubric
+        )
     if (
         config.expected_model_input_sha256 is not None
         and model_input_sha256 != config.expected_model_input_sha256
@@ -346,6 +424,15 @@ def prepare_model_input(config: RawRunConfig) -> PreparedModelInput:
         raise ValueError(
             f"Prepared model input differs from frozen provenance for seed "
             f"{config.seed}"
+        )
+    if (
+        config.expected_evidence_requirement_set_sha256 is not None
+        and evidence_requirement_set_sha256
+        != config.expected_evidence_requirement_set_sha256
+    ):
+        raise ValueError(
+            "Prepared evidence requirement set differs from frozen provenance "
+            f"for seed {config.seed}"
         )
     if (
         config.expected_transformation_key_fingerprint is not None
@@ -365,6 +452,11 @@ def prepare_model_input(config: RawRunConfig) -> PreparedModelInput:
         scorer_version=scorer_version,
         transformation_key_fingerprint=transformation_key_fingerprint,
         model_input_sha256=model_input_sha256,
+        evidence_rubric=evidence_rubric,
+        evidence_requirement_set_sha256=evidence_requirement_set_sha256,
+        incident_generator_version=incident_generator_version,
+        incident_protocol_version=incident_protocol_version,
+        evidence_support_version=evidence_support_version,
     )
 
 

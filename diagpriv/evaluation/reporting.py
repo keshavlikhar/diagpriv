@@ -52,7 +52,20 @@ class SplitSummary:
     uncosted_runs: int
 
     def to_dict(self) -> dict[str, object]:
-        return asdict(self)
+        data = asdict(self)
+        v3_only = (
+            "average_essential_requirement_coverage",
+            "average_contrast_requirement_coverage",
+            "average_supportive_requirement_coverage",
+            "average_useful_citation_precision",
+            "invalid_citation_count",
+            "wrong_subject_citation_count",
+            "redundant_citation_count",
+        )
+        if all(data[field] is None for field in v3_only):
+            for field in v3_only:
+                del data[field]
+        return data
 
 
 @dataclass(frozen=True, slots=True)
@@ -333,6 +346,21 @@ def inspection_records(path: Path) -> list[dict[str, object]]:
                 **(
                     {"evidence_support_version": manifest.evidence_support_version}
                     if manifest.evidence_support_version is not None
+                    else {}
+                ),
+                **(
+                    {
+                        "incident_generator_version": (
+                            manifest.incident_generator_version
+                        ),
+                        "incident_protocol_version": (
+                            manifest.incident_protocol_version
+                        ),
+                        "evidence_requirement_set_sha256": (
+                            manifest.evidence_requirement_set_sha256
+                        ),
+                    }
+                    if manifest.evidence_requirement_set_sha256 is not None
                     else {}
                 ),
                 **(

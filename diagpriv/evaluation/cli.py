@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+from dataclasses import replace
 import json
 import os
 from pathlib import Path
@@ -129,6 +130,20 @@ def _run_pilot(args: argparse.Namespace) -> None:
                     expected_model_input_sha256=(
                         definition.expected_model_input_sha256_by_seed.get(seed)
                     ),
+                    expected_evidence_requirement_set_sha256=(
+                        definition.expected_evidence_requirement_set_sha256_by_seed.get(
+                            seed
+                        )
+                    ),
+                    expected_incident_generator_version=(
+                        definition.expected_incident_generator_version
+                    ),
+                    expected_incident_protocol_version=(
+                        definition.expected_incident_protocol_version
+                    ),
+                    expected_evidence_support_version=(
+                        definition.expected_evidence_support_version
+                    ),
                     expected_transformation_key_fingerprint=(
                         definition.expected_transformation_key_fingerprint
                     ),
@@ -145,6 +160,7 @@ def _input_preflight(
     definition: PilotDefinition, *, hmac_key: bytes | None
 ) -> dict[str, object]:
     hashes: dict[str, str] = {}
+    rubric_hashes: dict[str, str] = {}
     trial_hashes: dict[str, dict[str, str]] = {
         str(index): {} for index in definition.trial_indices
     }
@@ -178,6 +194,20 @@ def _input_preflight(
                     expected_model_input_sha256=(
                         definition.expected_model_input_sha256_by_seed[seed]
                     ),
+                    expected_evidence_requirement_set_sha256=(
+                        definition.expected_evidence_requirement_set_sha256_by_seed.get(
+                            seed
+                        )
+                    ),
+                    expected_incident_generator_version=(
+                        definition.expected_incident_generator_version
+                    ),
+                    expected_incident_protocol_version=(
+                        definition.expected_incident_protocol_version
+                    ),
+                    expected_evidence_support_version=(
+                        definition.expected_evidence_support_version
+                    ),
                     expected_transformation_key_fingerprint=(
                         definition.expected_transformation_key_fingerprint
                     ),
@@ -199,10 +229,15 @@ def _input_preflight(
                 f"Trial index altered model-visible input for seed {seed}"
             )
         hashes[str(seed)] = prepared_for_seed[0].model_input_sha256
+        rubric_hash = prepared_for_seed[0].evidence_requirement_set_sha256
+        if rubric_hash is not None:
+            rubric_hashes[str(seed)] = rubric_hash
     data: dict[str, object] = {
         "status": "verified",
         "model_input_sha256_by_seed": hashes,
     }
+    if rubric_hashes:
+        data["evidence_requirement_set_sha256_by_seed"] = rubric_hashes
     if definition.hmac_key_id is not None:
         data["transformation_key_id"] = definition.hmac_key_id
     if definition.trial_indices:
@@ -241,24 +276,46 @@ def _run_diagnostic(args: argparse.Namespace) -> None:
         )
 
     hmac_key = _external_hmac_key(definition)
+    run_config = RawRunConfig(
+        experiment_id=args.experiment_id,
+        seed=args.seed,
+        model=definition.requested_model,
+        model_version=None,
+        incident_family=definition.incident_family,
+        manifest_schema_version=definition.manifest_schema_version,
+        reasoning_effort=definition.reasoning_effort,
+        condition=definition.condition,
+        decoding_settings=dict(definition.decoding_settings),
+        intended_temperature=definition.intended_temperature,
+        temperature_omission_reason=definition.temperature_omission_reason,
+        prompt_version=definition.prompt_version,
+        hmac_key=hmac_key,
+        transformation_key_id=definition.hmac_key_id,
+        expected_model_input_sha256=(
+            definition.expected_model_input_sha256_by_seed.get(args.seed)
+        ),
+        expected_evidence_requirement_set_sha256=(
+            definition.expected_evidence_requirement_set_sha256_by_seed.get(args.seed)
+        ),
+        expected_incident_generator_version=(
+            definition.expected_incident_generator_version
+        ),
+        expected_incident_protocol_version=(
+            definition.expected_incident_protocol_version
+        ),
+        expected_evidence_support_version=(
+            definition.expected_evidence_support_version
+        ),
+        expected_transformation_key_fingerprint=(
+            definition.expected_transformation_key_fingerprint
+        ),
+    )
+    # Validate every deterministic input and rubric constraint before provider
+    # initialization. run_raw_experiment repeats the same checks before invoke.
+    prepare_model_input(run_config)
     provider, model_version = _openai_provider(definition)
     manifest = run_raw_experiment(
-        RawRunConfig(
-            experiment_id=args.experiment_id,
-            seed=args.seed,
-            model=definition.requested_model,
-            model_version=model_version,
-            incident_family=definition.incident_family,
-            manifest_schema_version=definition.manifest_schema_version,
-            reasoning_effort=definition.reasoning_effort,
-            condition=definition.condition,
-            decoding_settings=dict(definition.decoding_settings),
-            intended_temperature=definition.intended_temperature,
-            temperature_omission_reason=definition.temperature_omission_reason,
-            prompt_version=definition.prompt_version,
-            hmac_key=hmac_key,
-            transformation_key_id=definition.hmac_key_id,
-        ),
+        replace(run_config, model_version=model_version),
         provider,
         result_path=args.results,
     )

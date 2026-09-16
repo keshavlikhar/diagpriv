@@ -113,16 +113,25 @@ structured and lifecycle-log paths. The primary fields are essential, contrast,
 and supportive requirement coverage; useful-citation precision; invalid,
 wrong-subject, and redundant citation counts/rates; and
 `evidence_supported`. `evidence_supported` requires all essential obligations
-and no nonexistent citation. Acceptable paths bind all facts to the intended
-operation, so wrong-subject evidence cannot satisfy an essential obligation.
+and no nonexistent or wrong-subject citation. Acceptable paths bind all facts
+to the intended operation, so cross-subject combinations cannot satisfy an
+obligation. Because the response uses one flat citation list, any citation
+whose subject is incompatible with every declared target/control/supportive
+role conservatively vetoes support; allowed contextual and redundant citations
+do not.
 Legacy precision/recall/F1 are retained only as secondary derived fields for
 reporting compatibility. `overall_correct` requires exact five-label RCA and
 `evidence_supported`.
 
 Schema v9 preserves `prompt_sha256` as the template digest and requires
-`model_input_sha256` for the exact rendered model-visible input. It adds no
-oracle content to the manifest or model request. Historical schemas and
-observations are not rewritten.
+`model_input_sha256` for the exact rendered model-visible input. It also
+requires incident generator/protocol versions and the SHA-256 of the
+canonically serialized evidence requirement set. The config freezes both hash
+families per seed. CLI preflight validates rubric construction, evidence IDs,
+subject bindings, and both hashes before provider setup; run preparation
+repeats the checks immediately before invocation. It adds no oracle content to
+the model request. Historical schemas and observations are not rewritten, and
+legacy summaries omit v3-only nullable fields.
 
 ## Seed policy
 

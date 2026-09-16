@@ -413,6 +413,10 @@ def test_pilot_summary_separates_development_and_validation() -> None:
     assert summary.validation.runs == 1
     assert summary.validation.valid_response_rate == 0.0
     assert summary.validation.parse_failures == {"malformed_json": 1}
+    development_payload = summary.to_dict()["development"]
+    assert isinstance(development_payload, dict)
+    assert "average_essential_requirement_coverage" not in development_payload
+    assert "wrong_subject_citation_count" not in development_payload
 
 
 def test_openai_provider_requires_environment_credential(

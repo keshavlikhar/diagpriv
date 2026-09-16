@@ -100,6 +100,10 @@ class PilotDefinition:
     matched_input_baseline_result_sha256: str | None
     matched_model_input_sha256_by_seed: dict[int, str]
     expected_model_input_sha256_by_seed: dict[int, str]
+    expected_evidence_requirement_set_sha256_by_seed: dict[int, str]
+    expected_incident_generator_version: str | None
+    expected_incident_protocol_version: str | None
+    expected_evidence_support_version: str | None
     expected_transformation_key_fingerprint: str | None
 
     @classmethod
@@ -111,12 +115,15 @@ class PilotDefinition:
         transformation = data.get("transformation", {})
         matched_input = data.get("matched_input", {})
         input_provenance = data.get("input_provenance", {})
+        incident_protocol = data.get("incident_protocol", {})
         if not isinstance(transformation, dict):
             raise ValueError("transformation must be a table")
         if not isinstance(matched_input, dict):
             raise ValueError("matched_input must be a table")
         if not isinstance(input_provenance, dict):
             raise ValueError("input_provenance must be a table")
+        if not isinstance(incident_protocol, dict):
+            raise ValueError("incident_protocol must be a table")
         matched_hashes = matched_input.get("model_input_sha256_by_seed", {})
         if not isinstance(matched_hashes, dict):
             raise ValueError("matched input hashes must be a table")
@@ -125,6 +132,11 @@ class PilotDefinition:
         )
         if not isinstance(expected_hashes, dict):
             raise ValueError("Input-provenance hashes must be a table")
+        expected_rubric_hashes = input_provenance.get(
+            "evidence_requirement_set_sha256_by_seed", {}
+        )
+        if not isinstance(expected_rubric_hashes, dict):
+            raise ValueError("Evidence requirement-set hashes must be a table")
         protocol = FROZEN_PROTOCOLS.get(pilot["prompt_version"])
         default_taxonomy = None if protocol is None else protocol[1]
         default_scorer = None if protocol is None else protocol[2]
@@ -199,6 +211,18 @@ class PilotDefinition:
             expected_model_input_sha256_by_seed={
                 int(seed): digest for seed, digest in expected_hashes.items()
             },
+            expected_evidence_requirement_set_sha256_by_seed={
+                int(seed): digest for seed, digest in expected_rubric_hashes.items()
+            },
+            expected_incident_generator_version=incident_protocol.get(
+                "generator_version"
+            ),
+            expected_incident_protocol_version=incident_protocol.get(
+                "protocol_version"
+            ),
+            expected_evidence_support_version=incident_protocol.get(
+                "evidence_protocol_version"
+            ),
             expected_transformation_key_fingerprint=input_provenance.get(
                 "transformation_key_fingerprint"
             ),
@@ -389,6 +413,16 @@ class PilotDefinition:
                 )
             if self.manifest_schema_version != "raw-rca-manifest-v9":
                 raise ValueError("Incident 003 v2 pilot requires manifest schema v9")
+            if (
+                self.expected_incident_generator_version
+                != "incident-003-generator-v2"
+                or self.expected_incident_protocol_version
+                != "incident-003-temporal-protocol-v2"
+                or self.expected_evidence_support_version != "evidence-support-v3"
+            ):
+                raise ValueError(
+                    "Incident 003 v2 pilot requires frozen incident/evidence versions"
+                )
             if self.prompt_version != PROMPT_VERSION_V3:
                 raise ValueError("Incident 003 v2 pilot requires raw-rca-v3")
             if self.condition != "raw":
@@ -458,8 +492,9 @@ class PilotDefinition:
 
     def _validate_input_provenance(self) -> None:
         hashes = self.expected_model_input_sha256_by_seed
+        rubric_hashes = self.expected_evidence_requirement_set_sha256_by_seed
         fingerprint = self.expected_transformation_key_fingerprint
-        if not hashes and fingerprint is None:
+        if not hashes and not rubric_hashes and fingerprint is None:
             return
         if not hashes:
             raise ValueError("Input provenance requires model-input hashes")
@@ -473,6 +508,20 @@ class PilotDefinition:
                 raise ValueError(
                     f"Input-provenance SHA-256 is invalid for seed {seed}"
                 )
+        if self.manifest_schema_version == "raw-rca-manifest-v9":
+            if set(rubric_hashes) != set(configured_seeds):
+                raise ValueError(
+                    "Evidence requirement-set hashes must cover exactly the pilot seeds"
+                )
+            for seed, digest in rubric_hashes.items():
+                if not isinstance(digest, str) or not _is_sha256(digest):
+                    raise ValueError(
+                        f"Evidence requirement-set SHA-256 is invalid for seed {seed}"
+                    )
+        elif rubric_hashes:
+            raise ValueError(
+                "Evidence requirement-set hashes require manifest schema v9"
+            )
         if self.condition == "hmac-v1":
             if not isinstance(fingerprint, str) or not _is_sha256(fingerprint):
                 raise ValueError(
@@ -537,6 +586,12 @@ class PilotDefinition:
             },
             "pricing_snapshot_path": str(self.pricing_snapshot_path),
         }
+        if self.expected_incident_generator_version is not None:
+            data["incident_protocol"] = {
+                "generator_version": self.expected_incident_generator_version,
+                "protocol_version": self.expected_incident_protocol_version,
+                "evidence_protocol_version": self.expected_evidence_support_version,
+            }
         if self.condition == "hmac-v1":
             data["transformation"] = {
                 "version": "hmac-v1",
@@ -569,6 +624,13 @@ class PilotDefinition:
                 input_provenance["transformation_key_fingerprint"] = (
                     self.expected_transformation_key_fingerprint
                 )
+            if self.expected_evidence_requirement_set_sha256_by_seed:
+                input_provenance["evidence_requirement_set_sha256_by_seed"] = {
+                    str(seed): digest
+                    for seed, digest in sorted(
+                        self.expected_evidence_requirement_set_sha256_by_seed.items()
+                    )
+                }
             data["input_provenance"] = input_provenance
         return data
 
