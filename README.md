@@ -40,9 +40,11 @@ instead of the v1 oracle's `incorrect_state_transition`. Offline adjudication
 classified the disagreement as taxonomy ambiguity. RCA v3 is implemented as a
 separate protocol with an Incident 003 v2 wrapper and fresh development set.
 The frozen fresh raw run achieved 8/8 exact RCA but 0/8 evidence-supported
-diagnoses under the unchanged v3 citation rubric. `relative-time-v1` is
-implemented and audited offline; it has not been sent to a provider. No
-Incident 003 privacy, validation, or held-out observation exists.
+diagnoses under the unchanged v3 citation rubric. The frozen matched
+`relative-time-v1` run also achieved 8/8 exact RCA and retained all eight
+raw-correct cases; 1/8 responses was evidence-supported. This supports only a
+narrow eight-case development finding. No destructive Incident 003 privacy,
+validation, or held-out observation exists.
 
 See [CURRENT_STATUS](docs/CURRENT_STATUS.md) for immutable artifact hashes and
 known limitations, and [RESEARCH_PLAN](docs/RESEARCH_PLAN.md) for the roadmap.
@@ -86,6 +88,7 @@ uv run python -m diagbench.generators.incident_002 --seed 1001
 - [Current status and artifact ledger](docs/CURRENT_STATUS.md)
 - [Experiment protocol](docs/EXPERIMENT_PROTOCOL.md)
 - [Incident 003 v1 raw findings](docs/INCIDENT_003_V1_RAW_FINDINGS.md)
+- [Incident 003 relative-time findings](docs/INCIDENT_003_RELATIVE_TIME_V1_FINDINGS.md)
 - [RCA v3 methodology decision](docs/RCA_V3_METHODOLOGY.md)
 - [Threat model](docs/THREAT_MODEL.md)
 - [Architecture](docs/ARCHITECTURE.md)

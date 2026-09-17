@@ -78,9 +78,11 @@ evidence IDs. `evidence_supported` requires at least one expected visible ID and
 no nonexistent ID. `overall_correct` requires exact RCA and supported evidence.
 No LLM grader participates in primary scoring.
 
-## Offline RCA v3 protocol
+## RCA v3 protocol
 
-RCA v3 is implemented but not provider-qualified. Its identifiers are:
+RCA v3 is implemented and has one frozen raw and one frozen matched
+`relative-time-v1` Incident 003 v2 development observation. Its identifiers
+are:
 
 | Item | Value |
 |---|---|
@@ -89,7 +91,7 @@ RCA v3 is implemented but not provider-qualified. Its identifiers are:
 | Taxonomy | `rca-taxonomy-v3` |
 | Scorer | `raw-rca-scorer-v3` |
 | Evidence protocol | `evidence-support-v3` |
-| Manifest schema | `raw-rca-manifest-v9` |
+| Manifest schema | `raw-rca-manifest-v9` for raw; `raw-rca-manifest-v10` for transformation provenance |
 
 The canonical labels remain stable, while v3 adds operational definitions,
 inclusion and exclusion notes, nearest confusables, and explicit decision
@@ -208,8 +210,9 @@ ambiguity. The result was not retroactively rescored.
 The implemented offline v3 methodology, including a fresh unobserved
 development set and semantic evidence requirements, is specified in
 `docs/RCA_V3_METHODOLOGY.md`. The frozen v1 findings are in
-`docs/INCIDENT_003_V1_RAW_FINDINGS.md`. No Incident 003 privacy comparison or
-validation/held-out provider observation exists.
+`docs/INCIDENT_003_V1_RAW_FINDINGS.md`. No privacy condition was run under the
+historical v1/v2-taxonomy protocol, and no Incident 003 validation or held-out
+provider observation exists.
 
 Incident 003 v2 is routed separately as
 `incident_003_temporal_compensation_v2`, uses
@@ -221,11 +224,12 @@ four temporal templates and stops at 1028:
 
 `1019, 1020, 1021, 1022, 1023, 1025, 1026, 1028`.
 
-The registry rejects every other seed for this protocol. The offline config
+The registry rejects every other seed for this protocol. The raw config
 `experiments/incident_003_v2_raw_sol_development.toml` contains an empty
 validation and held-out set, freezes every rendered-input hash, requires a new
-result path, and cannot execute without `--execute`. Its presence is protocol
-preparation, not authorization to make provider calls.
+result path, and cannot execute without `--execute`. Its completed ignored raw
+result is frozen at SHA-256
+`54ab224d3b432a5a1531a3d9b11b7d15515eeba56bf05023304ace72344f4915`.
 
 Its reusable timestamp semantics are versioned as `temporal-semantics-v1`, and
 its mandatory causal-information audit as
@@ -235,11 +239,12 @@ predicates explicitly unavailable without creating a substitute valid
 timeline. It verifies that the target loses its unique deadline/compensation
 overlap signature while non-temporal ModelView information remains identical. The
 complete causal story, oracle, ModelView boundary, invariant definitions, and
-construction results are specified in `docs/INCIDENT_003_PROTOCOL.md`. The now
-implemented but not provider-executed relative-time condition is specified in
-`docs/relative_time_v1.md`.
+construction results are specified in `docs/INCIDENT_003_PROTOCOL.md`. The
+completed matched relative-time condition is specified in
+`docs/relative_time_v1.md`, with frozen findings in
+`docs/INCIDENT_003_RELATIVE_TIME_V1_FINDINGS.md`.
 
-The prepared relative-time comparison uses `raw-rca-manifest-v10`. Unlike the
+The completed relative-time comparison uses `raw-rca-manifest-v10`. Unlike the
 frozen raw v9 observation, v10 persists a canonical transformation-provenance
 object containing the transformation and temporal-parser versions, anchor,
 precision, representation, annotation classification, scope policy, and a
@@ -248,6 +253,12 @@ an explicit canonical `raw`/`temporal-semantics-v1` configuration rather than
 ambiguous null transformation fields. Evidence requirement-set hashes remain
 representation-independent and therefore match raw; the parser and
 transformation configuration are pinned separately.
+
+The relative-time result is frozen at SHA-256
+`0ecbb9f2b39a7529a7c5e056d4f57b1f440da9fb08f8c1a851b2939d27540bbb`.
+It produced 8/8 exact five-label RCA and retained all eight raw-correct cases,
+while 1/8 responses met `evidence_supported`. No destructive temporal
+condition has run under this protocol.
 
 ### Incident 002 raw development experiments
 
@@ -397,6 +408,19 @@ under their completed experiment IDs:
 These are development observations only. No HMAC, tokenization, or
 format-preserving validation observation exists, and none of these conditions
 has been used on held-out seeds.
+
+The Incident 003 v2 matched temporal development observations are also frozen:
+
+| Condition | Exact RCA | Evidence-supported | `overall_correct_v3` |
+|---|---:|---:|---:|
+| Raw | 8/8 | 0/8 | 0/8 |
+| `relative-time-v1` | 8/8 | 1/8 | 1/8 |
+
+This comparison establishes only that all five RCA labels were preserved on
+the eight matched GPT-5.6 Sol development cases. It does not establish
+superiority over redaction, HMAC, tokenization, format-preserving
+pseudonymization, or temporal ablation because those Incident 003 v3 model
+conditions have not run.
 
 ## Interpretation limits
 

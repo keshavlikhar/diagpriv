@@ -1,6 +1,6 @@
 # Current Status
 
-Last updated: 2026-09-15.
+Last updated: 2026-09-16.
 
 ## Handoff point
 
@@ -35,10 +35,15 @@ valid and 8/8 exact five-label RCA, while `evidence_supported` and
 Its ignored JSONL SHA-256 is
 `54ab224d3b432a5a1531a3d9b11b7d15515eeba56bf05023304ace72344f4915`.
 
-`relative-time-v1` is implemented and audited offline only. It has not been
-sent to a provider. No Incident 003 privacy result, validation observation, or
-held-out observation exists. See `docs/INCIDENT_003_V1_RAW_FINDINGS.md`,
-`docs/RCA_V3_METHODOLOGY.md`, and `docs/relative_time_v1.md`.
+The matched `relative-time-v1` GPT-5.6 Sol development run is complete and
+frozen: 8/8 valid responses, 8/8 exact five-label RCA, 1/8
+`evidence_supported`, and 1/8 `overall_correct_v3`. All eight raw-correct cases
+remained correct after absolute timestamps were replaced by exact
+incident-relative millisecond offsets. The ignored result SHA-256 is
+`0ecbb9f2b39a7529a7c5e056d4f57b1f440da9fb08f8c1a851b2939d27540bbb`.
+No destructive Incident 003 temporal condition, validation observation, or
+held-out observation exists. See
+`docs/INCIDENT_003_RELATIVE_TIME_V1_FINDINGS.md` for the frozen comparison.
 
 ## Frozen Incident 003 v1 raw qualification
 
@@ -90,8 +95,30 @@ from the Incident 003 v2 rubric builder, preregisters canonical per-seed rubric
 hashes alongside model-input hashes, enforces subject bindings, and applies a
 conservative wrong-subject veto for the flat citation list. Manifest v9 now
 requires generator version, protocol version, and evidence requirement-set
-SHA-256. The completed fresh raw qualification remains immutable; no privacy
-condition has been executed.
+SHA-256. The completed fresh raw qualification and matched relative-time
+observation remain immutable. No destructive temporal privacy condition has
+been executed.
+
+## Frozen Incident 003 v2 matched temporal result
+
+Raw and `relative-time-v1` both achieved 8/8 exact RCA on the same eight
+development seeds. Every transformed response selected `inconsistent_state`,
+`timeout_or_deadline`, `compensation_or_rollback`,
+`incorrect_concurrency_control`, and `workflow_orchestrator`; none selected
+`incorrect_state_transition`.
+
+Citation completeness remains substantially weaker than label accuracy. Raw
+essential coverage was 19/48 and relative-time coverage was 23/48; raw had
+0/8 evidence-supported diagnoses and relative time had 1/8. Relative-time
+useful citation precision was 34/40, with zero invalid, wrong-subject, or
+redundant citations. These differences are descriptive development findings,
+not statistically significant evidence.
+
+The supported statement is limited to: on these eight fresh matched Incident
+003 development cases with GPT-5.6 Sol, replacing absolute timestamps with
+exact incident-relative millisecond offsets preserved all five RCA dimensions.
+It does not establish validation or held-out performance, other-model
+behavior, anonymity, or superiority over destructive transformations.
 
 ## Frozen Incident 002 development seeds
 
@@ -300,6 +327,8 @@ experiment IDs.
 | `results/incident_002_format_preserving_v1_sol_repeated_trials_2_3.jsonl` | `cb1b17e8ad57ce4788ddb3d37e5249fde27263d912f16f03664dc506956df318` |
 | `results/incident_002_sol_transport_recovery.jsonl` | `87902fa3217aaca020cb2cd2df14effc19c8c97a6f823031ed171a6f0ef4747e` |
 | `results/incident_003_raw_sol_development_gpt_5_6_sol_medium.jsonl` | `4f24b8a5bb593fb491307544796bc6d75b85c32b761e5ee09d79bdb802e8f66b` |
+| `results/incident_003_v2_raw_sol_development_gpt_5_6_sol_medium.jsonl` | `54ab224d3b432a5a1531a3d9b11b7d15515eeba56bf05023304ace72344f4915` |
+| `results/incident_003_v2_relative_time_v1_sol_development_gpt_5_6_sol_medium.jsonl` | `0ecbb9f2b39a7529a7c5e056d4f57b1f440da9fb08f8c1a851b2939d27540bbb` |
 
 Earlier raw-v1 HTTP failures and the seed-1000 taxonomy diagnostic remain local
 infrastructure/development history. The HTTP 400 attempts are not RCA
@@ -322,6 +351,13 @@ invariant hypothesis, but do not establish causality, statistical significance,
 general model behavior, Raw ≈ Format-preserving, or a universal method ranking.
 Its initial defect set is limited to transformations already represented by
 `format-preserving-v1`; semantic and check-digit defects remain out of scope.
+
+Incident 003's matched development result shows complete five-label RCA
+preservation for exact relative millisecond offsets on eight GPT-5.6 Sol cases.
+It does not yet test whether temporal structure is necessary for model utility.
+The next candidate comparison is `temporal-ablation-v1`, followed by the
+existing destructive baselines under the same seeds and v3 protocol. Those
+conditions require separate preparation and authorization.
 
 ## Immediate prohibitions
 
@@ -357,3 +393,7 @@ Its initial defect set is limited to transformations already represented by
   taxonomy despite recovering the temporal chain. The accepted ambiguity and
   prospective v3 methodology are development findings, not a retroactive score
   correction or empirical v3 qualification.
+- Incident 003 v2 raw and relative time each achieved 8/8 exact RCA, but this
+  eight-case matched development result is not inferential evidence. Seven of
+  eight relative-time responses still lacked complete preregistered evidence
+  support, and no destructive matched condition has run under v3.

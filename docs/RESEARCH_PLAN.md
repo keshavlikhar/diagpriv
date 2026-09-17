@@ -24,7 +24,9 @@ The benchmark contains Incident Family 001: a timeout followed by a re-arrival
 of the same logical operation, with missing or ineffective idempotency causing
 two successful effects. Incident Family 002 is an offline construction in which
 a reference-shape defect reaches an exact lookup and causes a missing
-provisioning effect. All data is fictional and synthetic.
+provisioning effect. Incident Family 003 tests temporal causality when deadline-
+driven compensation overlaps an unfenced original execution. All data is
+fictional and synthetic.
 
 ## Design principles
 
@@ -86,23 +88,25 @@ provisioning effect. All data is fictional and synthetic.
     systematic mechanism disagreement as taxonomy ambiguity. RCA v3 and
     Incident 003 v2 were then implemented; the fresh raw v3 run produced 8/8
     exact RCA but 0/8 evidence-supported diagnoses under the unchanged rubric.
-15. **Relative temporal baseline:** `relative-time-v1` is implemented and
-    passes the 200-instance offline audit. Its future eight-seed v3 Sol config
-    is preregistered, but no transformed provider observation exists.
+15. **Relative temporal baseline:** `relative-time-v1` passed the 200-instance
+    offline audit and the frozen eight-seed matched GPT-5.6 Sol development run
+    produced 8/8 exact RCA, retaining all eight raw-correct diagnoses. Citation
+    support remained incomplete: 1/8 transformed responses was evidence-
+    supported. See `docs/INCIDENT_003_RELATIVE_TIME_V1_FINDINGS.md`.
 
 ## Roadmap and decision gates
 
-### 1. Format-dependent incident family
+### 1. Incident 003 temporal-structure negative control
 
-- Review and freeze Incident Family 002 before any provider experiment.
-- Validate that its offline evidence requires the predeclared structural
-  property and does not reveal the answer through wording or labels.
-- Compare redaction, HMAC, tokenization, and format-preserving pseudonymization
-  under the same frozen RCA protocol and a documented exposure model.
-
-The current 4/5 format-preserving result is a development observation on an
-incident that does not require format. It cannot establish incremental utility
-over ordinary relationship-preserving pseudonymization.
+- Prepare separately reviewed matched conditions on the same eight development
+  seeds under the frozen GPT-5.6 Sol/v3 protocol.
+- Treat `temporal-ablation-v1` as the strongest direct negative-control
+  candidate because it removes temporal semantics while retaining non-temporal
+  evidence.
+- Consider redaction-v1, HMAC-v1, tokenization-v1, and
+  format-preserving-v1 as additional destructive temporal conditions.
+- Do not infer superiority over these conditions until their provider
+  observations exist; offline invariant behavior is not model utility.
 
 ### 2. DiagPriv task-aware selection
 

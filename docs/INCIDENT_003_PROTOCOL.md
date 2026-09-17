@@ -14,7 +14,7 @@ Construction is restricted to development seeds `1000–1999`. The 200-instance
 audit used only seeds `1000–1199`. No validation or held-out instance was
 constructed or inspected.
 
-Incident 003 v2 is a separate offline protocol wrapper identified by
+Incident 003 v2 is a separate versioned protocol wrapper identified by
 `incident_003_temporal_compensation_v2`, `incident-003-generator-v2`, and
 `incident-003-temporal-protocol-v2`. It delegates evidence construction to the
 frozen v1 generator so the ModelView, diagnostic invariants, and
@@ -65,8 +65,9 @@ The fresh v2 development set is selected by
 in ascending order, retain only the first two instances for each temporal
 template, and stop when all four templates have two. The frozen set is 1019,
 1020, 1021, 1022, 1023, 1025, 1026, and 1028. These instances were used once for
-the frozen raw v3 qualification. No privacy-transformed, validation, or held-out
-Incident 003 v2 provider observation exists.
+the frozen raw v3 qualification and once for the matched `relative-time-v1`
+condition. No destructive privacy-transformed, validation, or held-out Incident
+003 v2 provider observation exists.
 
 The frozen offline preflight table is:
 
@@ -338,9 +339,10 @@ intended temporal sequence. Offline adjudication classified this as **B.
 Taxonomy ambiguity**, driven substantially by taxonomy-definition
 insufficiency. Historical scores remain unchanged. See
 `docs/INCIDENT_003_V1_RAW_FINDINGS.md` for the frozen observation and
-`docs/RCA_V3_METHODOLOGY.md` for the approved but unimplemented v3 design.
+`docs/RCA_V3_METHODOLOGY.md` for the approved v3 design and implementation
+boundary.
 
-## Existing transformations and future relative time
+## Existing transformations and matched relative time
 
 Incident 003 annotates both identifiers and every timestamp-bearing path as
 sensitive. Applying the unchanged existing implementations to canonical seed
@@ -355,21 +357,26 @@ sensitive. Applying the unchanged existing implementations to canonical seed
 | Format-preserving-v1 | Pseudonymizes each path independently while retaining character pattern | Yes | Does not preserve calendar validity or cross-field ordering; canonical evaluation rejects |
 | `relative-time-v1` | Shared-anchor exact millisecond offsets | Yes | All declared temporal relations genuinely preserved offline |
 
-All rows are observations of offline code on this Incident 003 annotation
-policy; they are not privacy-condition provider results. `relative-time-v1`
+The raw and `relative-time-v1` rows are now also represented by one frozen
+matched provider observation per selected v2 development seed. The remaining
+privacy rows are offline code observations only. `relative-time-v1`
 selects the earliest annotated ModelView timestamp as one shared `T+0ms` anchor
 and emits canonical exact millisecond offsets. Its 200-instance audit passed
 all 3,400 per-instance checks, and seed 1021 preserved the reviewed
 equal-completion case. Calendar, wall-clock, timezone, epoch, and source
 timestamp formatting are removed; exact relative gaps and spans intentionally
-remain. Existing transformations were not changed to fit this family. See
-`docs/relative_time_v1.md` for the protocol, threat accounting, alternatives,
-hashes, and future dry-run configuration.
+remain. Existing transformations were not changed to fit this family. The
+matched relative-time run produced 8/8 valid and 8/8 exact five-label RCA,
+retaining all eight raw-correct diagnoses. Evidence support remained
+incomplete: raw was 0/8 and relative time was 1/8 under
+`evidence-support-v3`. See `docs/relative_time_v1.md` for the protocol and
+`docs/INCIDENT_003_RELATIVE_TIME_V1_FINDINGS.md` for the frozen observation.
 
 ## Limitations
 
-- This is synthetic construction with one raw model qualification and no human
-  validation, privacy comparison, or revised-protocol qualification.
+- This is synthetic construction with one raw and one matched relative-time
+  development observation, no human validation, and no destructive temporal
+  privacy comparison.
 - A structured contradictory final state may make the outcome salient even
   though the intended mechanism still requires timing.
 - Temporal ablation demonstrates loss of the declared mechanical clue, not
@@ -377,6 +384,7 @@ hashes, and future dry-run configuration.
 - Only RFC 3339 inputs and millisecond-generated examples are currently used.
 - One family and 200 related development instances do not establish realism or
   generality.
-- Existing baselines conflate timestamp removal with loss of temporal semantics;
-  a matched temporal-privacy comparison needs a separately reviewed relative-
-  time transformation.
+- Existing destructive baselines conflate timestamp removal with loss of
+  temporal semantics. Their matched Incident 003 v3 provider conditions have
+  not run; `temporal-ablation-v1` is the strongest direct negative-control
+  candidate for the next separately reviewed experiment.

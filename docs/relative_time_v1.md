@@ -1,7 +1,7 @@
 # `relative-time-v1` protocol
 
-Status: implemented and audited offline for Incident 003 v2. No provider
-observation exists for this condition.
+Status: implemented, audited offline, and evaluated once on the frozen Incident
+003 v2 matched development set. The result is immutable.
 
 ## Research intent
 
@@ -15,8 +15,9 @@ The preregistered directional hypothesis for Incident 003 is:
 
 `Raw ≈ Relative-time-v1 > Redaction / HMAC / Tokenization / existing Format-preserving`
 
-This is a qualitative development hypothesis, not a result and not a numeric
-success threshold.
+The completed run tests only the raw-versus-relative portion of this qualitative
+development hypothesis. Destructive temporal conditions have not run under the
+matched v3 protocol, so the complete ordering is not an empirical result.
 
 ## Frozen semantics
 
@@ -204,20 +205,32 @@ change because literal timestamps are replaced.
 | 1026 | `4a62763f53e76517d7f4c30ce0861c3df081ad177250f05ff30681fc3a2ee40b` | `d67a92a6bccdb6891bfb3f437a68abc42a1f36719776a15d9a5a7be65cc45a9b` |
 | 1028 | `03426719e9173d5a562713673a602b588fb49f38e42f1b56c868f36ed51bbf6d` | `2524b8e23b63f739dc555a16600f54e44d5e942207b80fdf7291ab021cb89d26` |
 
-The future matched configuration is
-`experiments/incident_003_v2_relative_time_v1_sol_development.toml`. It keeps
-the same eight fresh seeds, GPT-5.6 Sol, medium reasoning, omitted temperature,
+The completed matched configuration is
+`experiments/incident_003_v2_relative_time_v1_sol_development.toml`. It used the
+same eight fresh seeds, GPT-5.6 Sol, medium reasoning, omitted temperature,
 `raw-rca-v3`, `rca-taxonomy-v3`, `raw-rca-scorer-v3`,
-`evidence-support-v3`, and manifest v9. Its intended result path is:
+`evidence-support-v3`, and manifest v10. Its frozen ignored result is:
 
 `results/incident_003_v2_relative_time_v1_sol_development_gpt_5_6_sol_medium.jsonl`
 
-Preparation/dry-run command (no provider call without `--execute`):
+SHA-256:
+`0ecbb9f2b39a7529a7c5e056d4f57b1f440da9fb08f8c1a851b2939d27540bbb`.
 
-```bash
-uv run python -m diagpriv.evaluation.cli run-pilot \
-  --config experiments/incident_003_v2_relative_time_v1_sol_development.toml \
-  --results results/incident_003_v2_relative_time_v1_sol_development_gpt_5_6_sol_medium.jsonl
-```
+## Frozen matched finding
 
-No provider execution is authorized by this document.
+Both raw and `relative-time-v1` produced 8/8 valid responses and 8/8 exact
+five-dimensional RCA. Relative time retained all eight raw-correct cases. Raw
+had 0/8 evidence-supported responses; relative time had 1/8. Citation
+completeness therefore remained substantially weaker than RCA-label accuracy.
+
+> On these eight fresh matched Incident 003 development cases with GPT-5.6 Sol, replacing absolute timestamps with exact incident-relative millisecond offsets preserved all five RCA dimensions.
+
+This is not evidence of statistical significance, validation or held-out
+performance, behavior of other models, anonymity, or superiority over
+destructive temporal transformations. See
+`docs/INCIDENT_003_RELATIVE_TIME_V1_FINDINGS.md` for the complete frozen result,
+artifact hashes, evidence analysis, usage, and interpretation limits.
+
+The next separately reviewed comparison may include `temporal-ablation-v1`,
+redaction-v1, HMAC-v1, tokenization-v1, and format-preserving-v1 on the same
+eight seeds. None is authorized or executed by this document.
