@@ -12,13 +12,21 @@ from diagbench.generators.incident_002 import generate_incident_002
 from diagbench.generators.incident_003 import generate_incident_003
 from diagbench.generators.incident_003_v2 import generate_incident_003_v2
 from diagpriv.evaluation.evidence_support_v3 import (
+    EVIDENCE_SUPPORT_VERSION as EVIDENCE_SUPPORT_VERSION_V3,
     canonical_rubric_json_v3,
     evidence_requirement_set_sha256_v3,
     score_evidence_support_v3,
     validate_evidence_rubric_v3,
 )
+from diagpriv.evaluation.evidence_support_v4 import (
+    EVIDENCE_SUPPORT_VERSION as EVIDENCE_SUPPORT_VERSION_V4,
+    score_evidence_support_v4,
+)
 from diagpriv.evaluation.incident_003_v2_evidence import (
     build_incident_003_v2_evidence_rubric,
+)
+from diagpriv.evaluation.incident_003_v2_evidence_semantics import (
+    Incident003V2EvidenceSemanticEvaluator,
 )
 from diagpriv.evaluation.prompt_v3 import (
     PROMPT_SHA256,
@@ -77,19 +85,29 @@ def _score_evidence(
     evidence_ids: tuple[str, ...], seed: int = 1019
 ):
     incident = generate_incident_003_v2(seed)
-    return score_evidence_support_v3(
+    evaluator = Incident003V2EvidenceSemanticEvaluator(
+        str(incident.metadata["temporal_semantics_version"])
+    )
+    return score_evidence_support_v4(
         evidence_ids,
         incident.model_view(),
         build_incident_003_v2_evidence_rubric(incident),
+        evaluator,
     )
 
 
 def _score_response(response: RCAResponseV3, seed: int = 1019) -> RCAScoreV3:
     incident = generate_incident_003_v2(seed)
+    evaluator = Incident003V2EvidenceSemanticEvaluator(
+        str(incident.metadata["temporal_semantics_version"])
+    )
     return score_response_v3(
         incident,
         response,
         build_incident_003_v2_evidence_rubric(incident),
+        evidence_support_version=EVIDENCE_SUPPORT_VERSION_V4,
+        model_view=incident.model_view(),
+        semantic_evaluator=evaluator,
     )
 
 
@@ -308,16 +326,55 @@ def test_v3_rubric_serialization_and_hash_are_normative_and_deterministic() -> N
 
 
 def test_generic_evidence_module_has_no_incident_003_dependency() -> None:
-    source = (
-        __import__(
-            "diagpriv.evaluation.evidence_support_v3", fromlist=["__file__"]
-        ).__file__
+    for module in (
+        "diagpriv.evaluation.evidence_support_v3",
+        "diagpriv.evaluation.evidence_support_v4",
+    ):
+        source = __import__(module, fromlist=["__file__"]).__file__
+        assert source is not None
+        text = Path(source).read_text(encoding="utf-8")
+        assert "incident_003" not in text
+        assert "compensation" not in text
+        assert "deadline" not in text
+
+
+def test_evidence_support_v3_and_v4_are_distinct_and_preserve_v3_behavior() -> None:
+    incident = generate_incident_003_v2(1019)
+    rubric = build_incident_003_v2_evidence_rubric(incident)
+    requirement = next(
+        item
+        for item in rubric.requirements
+        if item.name == "deadline_before_original_completion"
     )
-    assert source is not None
-    text = Path(source).read_text(encoding="utf-8")
-    assert "incident_003" not in text
-    assert "compensation" not in text
-    assert "deadline" not in text
+    path = next(
+        item
+        for item in requirement.acceptable_paths
+        if item.path_id.endswith(":structured")
+    )
+    view = incident.model_view()
+    execution_id = path.evidence_ids[1]
+    execution = next(
+        row
+        for row in view.structured_evidence["execution_observations"]
+        if row["evidence_id"] == execution_id
+    )
+    execution["completed_at"] = "not-a-timestamp"
+
+    historical = score_evidence_support_v3(path.evidence_ids, view, rubric)
+    semantic = score_evidence_support_v4(
+        path.evidence_ids,
+        view,
+        rubric,
+        Incident003V2EvidenceSemanticEvaluator(
+            str(incident.metadata["temporal_semantics_version"])
+        ),
+    )
+
+    assert EVIDENCE_SUPPORT_VERSION_V3 == "evidence-support-v3"
+    assert EVIDENCE_SUPPORT_VERSION_V4 == "evidence-support-v4"
+    assert EVIDENCE_SUPPORT_VERSION_V3 != EVIDENCE_SUPPORT_VERSION_V4
+    assert requirement.name in historical.satisfied_essential_requirements
+    assert requirement.name in semantic.missing_essential_requirements
 
 
 def test_rubric_validation_rejects_nonexistent_and_cross_subject_paths() -> None:
@@ -402,10 +459,13 @@ def test_adversarial_07_complete_proof_plus_unbound_subject_is_unsupported() -> 
     unrelated["evidence_id"] = "EV-UNRELATED-SUBJECT"
     unrelated["operation_id"] = "OP-UNRELATED-SUBJECT"
     view.structured_evidence["workflow_attempts"].append(unrelated)
-    score = score_evidence_support_v3(
+    score = score_evidence_support_v4(
         (*_target_core_ids(), "EV-UNRELATED-SUBJECT"),
         view,
         build_incident_003_v2_evidence_rubric(incident),
+        Incident003V2EvidenceSemanticEvaluator(
+            str(incident.metadata["temporal_semantics_version"])
+        ),
     )
     assert score.essential_requirement_coverage == 1.0
     assert score.wrong_subject_citation_count == 1
@@ -582,6 +642,11 @@ def test_v2_and_v3_responses_cannot_cross_protocol_scorers() -> None:
             incident_v3,
             response_v2,
             build_incident_003_v2_evidence_rubric(incident_v3),
+            evidence_support_version=EVIDENCE_SUPPORT_VERSION_V4,
+            model_view=incident_v3.model_view(),
+            semantic_evaluator=Incident003V2EvidenceSemanticEvaluator(
+                str(incident_v3.metadata["temporal_semantics_version"])
+            ),
         )
     with pytest.raises(ProtocolVersionError, match="RCAResponseV2"):
         score_response_v2(v1_incident, _correct_response())  # type: ignore[arg-type]

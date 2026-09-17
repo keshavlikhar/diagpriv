@@ -1,0 +1,70 @@
+[pilot]
+pilot_id = "incident-003-v2-tokenization-v1-sol-development-v1"
+provider = "openai-responses"
+incident_family = "incident_003_temporal_compensation_v2"
+manifest_schema_version = "raw-rca-manifest-v10"
+development_seed_selection_version = "incident-003-v2-first-two-per-temporal-template-unobserved-v1"
+condition = "tokenization-v1"
+prompt_version = "raw-rca-v3"
+prompt_sha256 = "a2fc07481c9cd33776086d16cd76fafaa27c2fdf162f4ae634885187d0d22139"
+taxonomy_version = "rca-taxonomy-v3"
+scorer_version = "raw-rca-scorer-v3"
+seed_scope = "development_only"
+development_seeds = [1019, 1020, 1021, 1022, 1023, 1025, 1026, 1028]
+validation_seeds = []
+held_out_seeds = []
+calls_per_seed = 1
+result_path_must_not_exist = true
+
+[model]
+requested_model = "gpt-5.6-sol"
+version_metadata_environment_variable = "DIAGPRIV_MODEL_VERSION_METADATA"
+reasoning_effort = "medium"
+
+[decoding]
+max_output_tokens = 4096
+
+[temperature_protocol_correction]
+intended = 0.0
+effective = "omitted"
+omission_reason = "Temperature is omitted to preserve the frozen matched Incident 003 v2 decoding protocol; no claim is made that GPT-5.6 Sol rejects the parameter."
+
+[transformation]
+transformation_version = "tokenization-v1"
+temporal_semantics_version = "temporal-semantics-unavailable-v1"
+anchor_rule = "not-applicable"
+precision = "not-applicable"
+representation = "namespaced-deterministic-ordinal-token"
+annotation_classification = "all-sensitive-fields"
+scope_policy = "annotated-model-view-fields-only"
+
+[incident_protocol]
+generator_version = "incident-003-generator-v2"
+protocol_version = "incident-003-temporal-protocol-v2"
+evidence_protocol_version = "evidence-support-v4"
+
+[input_provenance]
+transformation_configuration_sha256 = "d33bb3ef1e6b18f8f443e6296d35386766c37a1c0b36513b0fc4863599e26a18"
+
+[input_provenance.model_input_sha256_by_seed]
+"1019" = "d1239f3b9022850b91b78f40fe1c13f42f8ef56b7e5c6b6aae6b77a627a7a0b2"
+"1020" = "7eae517fd150388391df00694c94493f1286530f3d234d1a74b57eb9402a09b4"
+"1021" = "8f4de8bddf7782a792a27152578544e0b5eedd1af758792f84d48609e6e83d11"
+"1022" = "fcbb06fd82fa02d6a411f366645f37752d92ae1309c3da9f2fbb59a9a6139877"
+"1023" = "fc26567590f66d091b4a8d17a5e88fae7cc439038b398f35bda64bbe279d2775"
+"1025" = "85fd8c57c38c27c8843b0ef33e4463b618c410d1df7dfe59492467ec89e0e7ce"
+"1026" = "e5930170fbe81fed18488251a1f2568962ad12da244721541726c1cfbd6670f4"
+"1028" = "460e4d304e4320ae405aafcc9f37167941353755eaa85d67f1b06b1c364b1034"
+
+[input_provenance.evidence_requirement_set_sha256_by_seed]
+"1019" = "c01d15e2f8ea4e857b324f803769b1fe9eaff30434a9a64d16a6d10b8766c0db"
+"1020" = "d8f4d67988180b0692f4a1e3f12c8d97e02489fe986c3f62ce17400da04f1377"
+"1021" = "e8d55010bc62f36f9982ce0bfe96b89995c3990ce99a4cbb5088dae96117feac"
+"1022" = "f0eb6ca56f15e43421c6168467179898f51098a7ddb22852dd037bb9d0649c64"
+"1023" = "5703cbb60e3db5220fa73e6a12231332f2cdb2c1714845f1981268789ddc1f60"
+"1025" = "03348ab34228647752a384c8e01be7d4af74607a140aa16c65cc1d9dac7399b5"
+"1026" = "d67a92a6bccdb6891bfb3f437a68abc42a1f36719776a15d9a5a7be65cc45a9b"
+"1028" = "2524b8e23b63f739dc555a16600f54e44d5e942207b80fdf7291ab021cb89d26"
+
+[pricing]
+snapshot = "pricing/openai_gpt_5_6_sol_2026-09-10.toml"

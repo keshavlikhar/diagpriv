@@ -178,6 +178,7 @@ class ExperimentManifest:
         "tokenization-v1",
         "format-preserving-v1",
         "relative-time-v1",
+        "temporal-ablation-v1",
     ]
     requested_model: str
     provider_returned_model: str | None
@@ -296,10 +297,15 @@ class ExperimentManifest:
                     f"Manifest schema {schema_label} requires "
                     "prompt-template SHA-256"
                 )
-            if self.evidence_support_version != "evidence-support-v3":
+            expected_evidence_versions = (
+                {"evidence-support-v3", "evidence-support-v4"}
+                if self.manifest_schema_version == "raw-rca-manifest-v10"
+                else {"evidence-support-v3"}
+            )
+            if self.evidence_support_version not in expected_evidence_versions:
                 raise ValueError(
                     f"Manifest schema {schema_label} requires "
-                    "evidence-support-v3"
+                    f"one of {sorted(expected_evidence_versions)}"
                 )
             if not self.incident_generator_version:
                 raise ValueError(

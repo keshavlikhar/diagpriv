@@ -5,10 +5,16 @@ from __future__ import annotations
 from dataclasses import asdict, dataclass
 from typing import Any, Self
 
-from diagbench.schema import Incident
+from diagbench.schema import Incident, ModelView
 from diagpriv.evaluation.evidence_support_v3 import (
+    EVIDENCE_SUPPORT_VERSION as EVIDENCE_SUPPORT_VERSION_V3,
     EvidenceRubricV3,
     score_evidence_support_v3,
+)
+from diagpriv.evaluation.evidence_support_v4 import (
+    EVIDENCE_SUPPORT_VERSION as EVIDENCE_SUPPORT_VERSION_V4,
+    EvidenceSemanticEvaluatorV4,
+    score_evidence_support_v4,
 )
 from diagpriv.evaluation.response import RCAResponseV3
 from diagpriv.evaluation.scoring_v2 import ProtocolVersionError
@@ -93,8 +99,12 @@ def score_response_v3(
     incident: Incident,
     response: RCAResponseV3,
     rubric: EvidenceRubricV3,
+    *,
+    evidence_support_version: str = EVIDENCE_SUPPORT_VERSION_V3,
+    model_view: ModelView | None = None,
+    semantic_evaluator: EvidenceSemanticEvaluatorV4 | None = None,
 ) -> RCAScoreV3:
-    """Require exact v3 RCA labels and complete semantic essential evidence."""
+    """Score unchanged RCA-v3 labels with an explicit evidence protocol."""
     if not isinstance(response, RCAResponseV3):
         raise ProtocolVersionError("raw-rca-v3 scoring requires an RCAResponseV3")
     oracle = getattr(incident, "ground_truth_v3", None)
@@ -115,11 +125,31 @@ def score_response_v3(
             component_correct,
         )
     )
-    evidence = score_evidence_support_v3(
-        response.supporting_evidence,
-        incident.model_view(),
-        rubric,
-    )
+    if evidence_support_version == EVIDENCE_SUPPORT_VERSION_V3:
+        # Historical evidence-support-v3 evaluated citation paths against the
+        # raw incident view.  Keep that behavior available for interpreting
+        # frozen raw and relative-time observations.
+        evidence = score_evidence_support_v3(
+            response.supporting_evidence,
+            incident.model_view(),
+            rubric,
+        )
+    elif evidence_support_version == EVIDENCE_SUPPORT_VERSION_V4:
+        if model_view is None or semantic_evaluator is None:
+            raise ProtocolVersionError(
+                "evidence-support-v4 requires a transformed ModelView and "
+                "semantic evaluator"
+            )
+        evidence = score_evidence_support_v4(
+            response.supporting_evidence,
+            model_view,
+            rubric,
+            semantic_evaluator,
+        )
+    else:
+        raise ProtocolVersionError(
+            f"Unsupported evidence protocol: {evidence_support_version}"
+        )
     return RCAScoreV3(
         outcome_correct=outcome_correct,
         trigger_correct=trigger_correct,

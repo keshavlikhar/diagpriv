@@ -1,6 +1,6 @@
 # Current Status
 
-Last updated: 2026-09-16.
+Last updated: 2026-09-17.
 
 ## Handoff point
 
@@ -44,6 +44,28 @@ incident-relative millisecond offsets. The ignored result SHA-256 is
 No destructive Incident 003 temporal condition, validation observation, or
 held-out observation exists. See
 `docs/INCIDENT_003_RELATIVE_TIME_V1_FINDINGS.md` for the frozen comparison.
+
+The five destructive Incident 003 v2 development configs are now prepared
+offline on `feat/incident-003-destructive-baselines`; none has been executed.
+They preregister 8 calls each (40 total) on the same frozen seeds and Sol/v3
+protocol. Manifest v10 records canonical transformation provenance and exact
+model-input/rubric hashes. Future destructive observations explicitly use
+`evidence-support-v4`; historical raw and relative-time observations remain
+`evidence-support-v3`. Their stored responses were rescored offline under v4
+without changing either artifact: raw remains 0/8 evidence-supported and 0/8
+overall, while relative time remains 1/8 and 1/8. A 200-instance development
+audit found zero
+parseable transformed timestamps for every condition and 200/200 passing
+temporal-ablation audits. A semantic evidence audit also confirmed that all
+four core temporal proof obligations were unsatisfied in 200/200 instances for
+every destructive condition despite complete citation sets. Identity and
+terminal-state evidence remained satisfiable for temporal ablation, HMAC,
+tokenization, and format-preserving pseudonymization; redaction also lost
+genuine cross-source linkage. Evidence-support-v4 requires both the frozen
+citation path and model-visible semantic proof under the configured temporal
+semantics. Recommended execution is temporal ablation first, followed by a
+stop for review before any supporting baseline. See
+`docs/INCIDENT_003_DESTRUCTIVE_BASELINES_PROTOCOL.md`.
 
 ## Frozen Incident 003 v1 raw qualification
 
@@ -99,7 +121,7 @@ SHA-256. The completed fresh raw qualification and matched relative-time
 observation remain immutable. No destructive temporal privacy condition has
 been executed.
 
-## Frozen Incident 003 v2 matched temporal result
+## Frozen Incident 003 v2 matched temporal result and prepared negative controls
 
 Raw and `relative-time-v1` both achieved 8/8 exact RCA on the same eight
 development seeds. Every transformed response selected `inconsistent_state`,
@@ -119,6 +141,11 @@ The supported statement is limited to: on these eight fresh matched Incident
 exact incident-relative millisecond offsets preserved all five RCA dimensions.
 It does not establish validation or held-out performance, other-model
 behavior, anonymity, or superiority over destructive transformations.
+
+The preregistered directional hypothesis for the not-yet-executed suite is
+`Raw approximately equals Relative-time-v1 > Temporal-ablation-v1`, with
+redaction, HMAC, tokenization, and format-preserving pseudonymization as
+supporting destructive baselines. No numeric pass/fail threshold is defined.
 
 ## Frozen Incident 002 development seeds
 
@@ -355,9 +382,9 @@ Its initial defect set is limited to transformations already represented by
 Incident 003's matched development result shows complete five-label RCA
 preservation for exact relative millisecond offsets on eight GPT-5.6 Sol cases.
 It does not yet test whether temporal structure is necessary for model utility.
-The next candidate comparison is `temporal-ablation-v1`, followed by the
-existing destructive baselines under the same seeds and v3 protocol. Those
-conditions require separate preparation and authorization.
+The `temporal-ablation-v1` negative control and four supporting destructive
+baselines are now prepared under the same seeds and v3 protocol, but none has
+been executed. Provider execution still requires separate authorization.
 
 ## Immediate prohibitions
 
@@ -396,4 +423,5 @@ conditions require separate preparation and authorization.
 - Incident 003 v2 raw and relative time each achieved 8/8 exact RCA, but this
   eight-case matched development result is not inferential evidence. Seven of
   eight relative-time responses still lacked complete preregistered evidence
-  support, and no destructive matched condition has run under v3.
+  support. The frozen responses have also been rescored offline under v4, but
+  no destructive matched condition has run under v4.

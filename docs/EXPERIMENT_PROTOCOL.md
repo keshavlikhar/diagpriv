@@ -336,6 +336,8 @@ primary as-executed analysis. Final results and interpretation limits are in
   ephemeral mapping with explicit collision resolution.
 - `relative-time-v1`: Incident 003-only exact millisecond offsets from the
   earliest annotated visible instant; non-temporal fields remain unchanged.
+- `temporal-ablation-v1`: Incident 003-only unique non-temporal timestamp
+  markers plus deterministic log reordering; no timestamp parser is assigned.
 
 Within each matched comparison, conditions retain the same frozen prompt,
 taxonomy, scorer, model configuration, and evidence methodology. Incident 001
@@ -421,6 +423,30 @@ the eight matched GPT-5.6 Sol development cases. It does not establish
 superiority over redaction, HMAC, tokenization, format-preserving
 pseudonymization, or temporal ablation because those Incident 003 v3 model
 conditions have not run.
+
+The five destructive Incident 003 v2 configs are preregistered in
+`docs/INCIDENT_003_DESTRUCTIVE_BASELINES_PROTOCOL.md`. They use manifest v10,
+the frozen eight seeds, one call per seed, and unique append-only result paths.
+Every transformed timestamp condition records either its valid temporal
+semantics version or the explicit `temporal-semantics-unavailable-v1` status;
+opaque transformed strings are never ordered lexically as timestamps. The
+existing evidence-support-v3 requirement set remains unchanged across all
+conditions, including its hashes. Historical raw and relative-time records
+retain citation-path-only `evidence-support-v3`; their responses are rescored
+offline under `evidence-support-v4` for the future matched evidence table.
+Future destructive observations record v4 natively. Evidence-support-v4
+requires both citation-path membership and
+successful evaluation of the path's semantic relationship against the
+transformed ModelView. The family-neutral scorer delegates relationship
+interpretation to the Incident 003 v2 semantic evaluator selected by the
+frozen temporal-semantics version. Under unavailable semantics, temporal
+requirements remain unsatisfied even when every preregistered evidence ID is
+cited; preserved non-temporal requirements remain independently evaluable.
+
+Execution is staged: run the eight-call `temporal-ablation-v1` negative control
+first, stop for analysis, and execute the four supporting destructive baselines
+only after review. This order does not alter the preregistered configs or
+analysis plan.
 
 ## Interpretation limits
 

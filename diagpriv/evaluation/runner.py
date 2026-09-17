@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Literal
 
 from diagbench.schema import Incident, ModelView
+from diagbench.audits.incident_003 import temporally_ablated_model_view
 from diagbench.generators.incident_001 import (
     DEVELOPMENT_SEEDS,
     VALIDATION_SEEDS,
@@ -25,11 +26,19 @@ from diagpriv.evaluation.incident_families import (
     evaluation_seed_split,
     generate_evaluation_incident,
 )
-from diagpriv.evaluation.evidence_protocols import build_evidence_rubric_v3
+from diagpriv.evaluation.evidence_protocols import (
+    build_evidence_rubric_v3,
+    build_evidence_semantic_evaluator_v4,
+)
 from diagpriv.evaluation.evidence_support_v3 import (
+    EVIDENCE_SUPPORT_VERSION as EVIDENCE_SUPPORT_VERSION_V3,
     EvidenceRubricV3,
     evidence_requirement_set_sha256_v3,
     validate_evidence_rubric_v3,
+)
+from diagpriv.evaluation.evidence_support_v4 import (
+    EVIDENCE_SUPPORT_VERSION as EVIDENCE_SUPPORT_VERSION_V4,
+    EvidenceSemanticEvaluatorV4,
 )
 from diagpriv.evaluation.manifest import (
     ExperimentManifest,
@@ -82,6 +91,14 @@ from diagpriv.transformations.provenance import (
 SCORER_VERSION_V1 = "raw-rca-scorer-v1"
 TAXONOMY_VERSION_V1 = "rca-taxonomy-v1"
 
+_INCIDENT_003_V2_DESTRUCTIVE_CONDITIONS = {
+    "temporal-ablation-v1",
+    "redaction-v1",
+    "hmac-v1",
+    "tokenization-v1",
+    "format-preserving-v1",
+}
+
 
 class ProtectedSeedError(ValueError):
     """Raised when a run would consume a protected or unassigned seed."""
@@ -103,6 +120,7 @@ class RawRunConfig:
         "tokenization-v1",
         "format-preserving-v1",
         "relative-time-v1",
+        "temporal-ablation-v1",
     ] = "raw"
     decoding_settings: dict[str, float | int | str | bool | None] = field(
         default_factory=lambda: {"temperature": 0.0}
@@ -138,6 +156,7 @@ class PreparedModelInput:
     scorer_version: str
     model_input_sha256: str
     evidence_rubric: EvidenceRubricV3 | None
+    evidence_semantic_evaluator: EvidenceSemanticEvaluatorV4 | None
     evidence_requirement_set_sha256: str | None
     incident_generator_version: str
     incident_protocol_version: str
@@ -218,6 +237,10 @@ def run_raw_experiment(
             prepared.incident,
             parsed.response,
             prepared.evidence_rubric,
+            evidence_support_version=prepared.evidence_support_version
+            or EVIDENCE_SUPPORT_VERSION_V3,
+            model_view=prepared.model_view,
+            semantic_evaluator=prepared.evidence_semantic_evaluator,
         )
     else:
         score = score_response(prepared.incident, parsed.response)
@@ -357,6 +380,17 @@ def prepare_model_input(config: RawRunConfig) -> PreparedModelInput:
         raise ValueError(
             "raw-rca-v3 requires frozen rubric and incident-version provenance"
         )
+    if config.incident_family == INCIDENT_003_V2_FAMILY:
+        expected_evidence_version = (
+            EVIDENCE_SUPPORT_VERSION_V4
+            if config.condition in _INCIDENT_003_V2_DESTRUCTIVE_CONDITIONS
+            else EVIDENCE_SUPPORT_VERSION_V3
+        )
+        if config.expected_evidence_support_version != expected_evidence_version:
+            raise ValueError(
+                f"Incident 003 v2 {config.condition} requires "
+                f"{expected_evidence_version}"
+            )
 
     transformation_provenance = _prepare_transformation_provenance(config)
 
@@ -414,25 +448,53 @@ def prepare_model_input(config: RawRunConfig) -> PreparedModelInput:
         if config.incident_family != INCIDENT_003_V2_FAMILY:
             raise ValueError("relative-time-v1 currently supports Incident 003 v2 only")
         model_view = relative_time_incident(incident)
+    elif config.condition == "temporal-ablation-v1":
+        if config.incident_family != INCIDENT_003_V2_FAMILY:
+            raise ValueError(
+                "temporal-ablation-v1 currently supports Incident 003 v2 only"
+            )
+        model_view = temporally_ablated_model_view(incident)
     else:
         raise ValueError(f"Unsupported evaluation condition: {config.condition}")
+
+    if (
+        config.expected_transformation_key_fingerprint is not None
+        and transformation_key_fingerprint
+        != config.expected_transformation_key_fingerprint
+    ):
+        raise ValueError(
+            "HMAC key fingerprint differs from frozen input provenance"
+        )
 
     prompt = prompt_builder(model_view)
     model_input_sha256 = hashlib.sha256(prompt.encode("utf-8")).hexdigest()
     evidence_rubric: EvidenceRubricV3 | None = None
+    evidence_semantic_evaluator: EvidenceSemanticEvaluatorV4 | None = None
     evidence_requirement_set_sha256: str | None = None
     evidence_support_version: str | None = None
     if config.prompt_version == PROMPT_VERSION_V3:
         evidence_rubric = build_evidence_rubric_v3(incident)
         validate_evidence_rubric_v3(model_view, evidence_rubric)
-        evidence_support_version = evidence_rubric.version
-        if (
-            evidence_support_version != config.expected_evidence_support_version
-            or incident.metadata.get("evidence_support_version")
-            != config.expected_evidence_support_version
+        if incident.metadata.get("evidence_support_version") != (
+            EVIDENCE_SUPPORT_VERSION_V3
         ):
             raise ValueError(
-                "Prepared evidence protocol differs from frozen provenance"
+                "Incident evidence rubric lineage differs from frozen provenance"
+            )
+        evidence_support_version = config.expected_evidence_support_version
+        if evidence_support_version not in {
+            EVIDENCE_SUPPORT_VERSION_V3,
+            EVIDENCE_SUPPORT_VERSION_V4,
+        }:
+            raise ValueError("Unsupported evidence protocol version")
+        if evidence_support_version == EVIDENCE_SUPPORT_VERSION_V4:
+            temporal_semantics_version = (
+                transformation_provenance.temporal_semantics_version
+                if transformation_provenance is not None
+                else str(incident.metadata["temporal_semantics_version"])
+            )
+            evidence_semantic_evaluator = build_evidence_semantic_evaluator_v4(
+                incident, temporal_semantics_version
             )
         evidence_requirement_set_sha256 = evidence_requirement_set_sha256_v3(
             evidence_rubric
@@ -454,14 +516,6 @@ def prepare_model_input(config: RawRunConfig) -> PreparedModelInput:
             "Prepared evidence requirement set differs from frozen provenance "
             f"for seed {config.seed}"
         )
-    if (
-        config.expected_transformation_key_fingerprint is not None
-        and transformation_key_fingerprint
-        != config.expected_transformation_key_fingerprint
-    ):
-        raise ValueError(
-            "HMAC key fingerprint differs from frozen input provenance"
-        )
     return PreparedModelInput(
         split=split,
         incident=incident,
@@ -473,6 +527,7 @@ def prepare_model_input(config: RawRunConfig) -> PreparedModelInput:
         transformation_key_fingerprint=transformation_key_fingerprint,
         model_input_sha256=model_input_sha256,
         evidence_rubric=evidence_rubric,
+        evidence_semantic_evaluator=evidence_semantic_evaluator,
         evidence_requirement_set_sha256=evidence_requirement_set_sha256,
         incident_generator_version=incident_generator_version,
         incident_protocol_version=incident_protocol_version,
@@ -489,9 +544,9 @@ def _prepare_transformation_provenance(
             raise ValueError(
                 "Transformation configuration SHA-256 requires manifest schema v10"
             )
-        if config.condition == "relative-time-v1":
+        if config.condition in {"relative-time-v1", "temporal-ablation-v1"}:
             raise ValueError(
-                "relative-time-v1 observations require manifest schema v10"
+                f"{config.condition} observations require manifest schema v10"
             )
         return None
     if config.expected_transformation_configuration_sha256 is None:

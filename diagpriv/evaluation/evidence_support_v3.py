@@ -252,7 +252,7 @@ def score_evidence_support_v3(
     model_view: ModelView,
     rubric: EvidenceRubricV3,
 ) -> EvidenceSupportScoreV3:
-    """Score citations against a caller-supplied, family-neutral rubric."""
+    """Score citations using the frozen historical v3 path-presence semantics."""
     validate_evidence_rubric_v3(model_view, rubric)
     visible = _visible_evidence_ids(model_view)
     bound = {
@@ -280,7 +280,7 @@ def score_evidence_support_v3(
         matches = [
             path
             for path in requirement.acceptable_paths
-            if _path_satisfied(path, cited)
+            if _citation_requirements_satisfied(path, cited)
         ]
         if matches:
             selected = min(
@@ -374,8 +374,10 @@ def score_evidence_support_v3(
     )
 
 
-def _path_satisfied(path: EvidencePathV3, cited: set[str]) -> bool:
-    """Evaluate one registered, subject-validated semantic predicate."""
+def _citation_requirements_satisfied(
+    path: EvidencePathV3, cited: set[str]
+) -> bool:
+    """Evaluate only the citation half of a registered semantic path."""
     if path.semantic_predicate_id != "bound_minimum_evidence_present":
         raise ValueError(f"Unsupported evidence predicate: {path.semantic_predicate_id}")
     return (
