@@ -36,6 +36,12 @@ from diagpriv.evaluation.prompt_v3 import (
     PROMPT_SHA256 as PROMPT_SHA256_V3,
     PROMPT_VERSION as PROMPT_VERSION_V3,
 )
+from diagpriv.evaluation.evidence_support_v3 import (
+    EVIDENCE_SUPPORT_VERSION as EVIDENCE_SUPPORT_VERSION_V3,
+)
+from diagpriv.evaluation.evidence_support_v4 import (
+    EVIDENCE_SUPPORT_VERSION as EVIDENCE_SUPPORT_VERSION_V4,
+)
 from diagpriv.transformations.provenance import (
     transformation_configuration_for_condition,
     transformation_configuration_sha256,
@@ -76,6 +82,7 @@ class PilotDefinition:
         "tokenization-v1",
         "format-preserving-v1",
         "relative-time-v1",
+        "temporal-ablation-v1",
     ]
     prompt_version: str
     prompt_sha256: str
@@ -277,6 +284,7 @@ class PilotDefinition:
             "tokenization-v1",
             "format-preserving-v1",
             "relative-time-v1",
+            "temporal-ablation-v1",
         }:
             raise ValueError(f"Unsupported pilot condition: {self.condition}")
         if self.condition == "hmac-v1":
@@ -311,8 +319,8 @@ class PilotDefinition:
             )
             if self.expected_transformation_configuration_sha256 != actual_hash:
                 raise ValueError("Transformation configuration SHA-256 mismatch")
-        elif self.condition == "relative-time-v1":
-            raise ValueError("relative-time-v1 requires manifest schema v10")
+        elif self.condition in {"relative-time-v1", "temporal-ablation-v1"}:
+            raise ValueError(f"{self.condition} requires manifest schema v10")
         elif any(value is not None for value in configured_values):
             raise ValueError(
                 "Transformation configuration fields require manifest schema v10"
@@ -476,30 +484,51 @@ class PilotDefinition:
                     "seed-selection version"
                 )
             expected_schema = (
-                "raw-rca-manifest-v10"
-                if self.condition == "relative-time-v1"
-                else "raw-rca-manifest-v9"
+                "raw-rca-manifest-v9"
+                if self.condition == "raw"
+                else "raw-rca-manifest-v10"
             )
             if self.manifest_schema_version != expected_schema:
                 raise ValueError(
                     f"Incident 003 v2 {self.condition} pilot requires "
                     f"manifest schema {expected_schema.removeprefix('raw-rca-manifest-')}"
                 )
+            expected_evidence_version = (
+                EVIDENCE_SUPPORT_VERSION_V4
+                if self.condition
+                in {
+                    "temporal-ablation-v1",
+                    "redaction-v1",
+                    "hmac-v1",
+                    "tokenization-v1",
+                    "format-preserving-v1",
+                }
+                else EVIDENCE_SUPPORT_VERSION_V3
+            )
             if (
                 self.expected_incident_generator_version
                 != "incident-003-generator-v2"
                 or self.expected_incident_protocol_version
                 != "incident-003-temporal-protocol-v2"
-                or self.expected_evidence_support_version != "evidence-support-v3"
+                or self.expected_evidence_support_version
+                != expected_evidence_version
             ):
                 raise ValueError(
                     "Incident 003 v2 pilot requires frozen incident/evidence versions"
                 )
             if self.prompt_version != PROMPT_VERSION_V3:
                 raise ValueError("Incident 003 v2 pilot requires raw-rca-v3")
-            if self.condition not in {"raw", "relative-time-v1"}:
+            if self.condition not in {
+                "raw",
+                "relative-time-v1",
+                "temporal-ablation-v1",
+                "redaction-v1",
+                "hmac-v1",
+                "tokenization-v1",
+                "format-preserving-v1",
+            }:
                 raise ValueError(
-                    "Incident 003 v2 currently supports raw or relative-time-v1 evidence"
+                    "Incident 003 v2 does not support the configured condition"
                 )
             if not self.result_path_must_not_exist:
                 raise ValueError(
@@ -669,14 +698,8 @@ class PilotDefinition:
                 "protocol_version": self.expected_incident_protocol_version,
                 "evidence_protocol_version": self.expected_evidence_support_version,
             }
-        if self.condition == "hmac-v1":
-            data["transformation"] = {
-                "version": "hmac-v1",
-                "key_environment_variable": self.hmac_key_environment_variable,
-                "key_id": self.hmac_key_id,
-            }
-        elif self.manifest_schema_version == "raw-rca-manifest-v10":
-            data["transformation"] = {
+        if self.manifest_schema_version == "raw-rca-manifest-v10":
+            transformation: dict[str, object] = {
                 "transformation_version": self.transformation_version,
                 "temporal_semantics_version": (
                     self.transformation_semantics_version
@@ -688,6 +711,22 @@ class PilotDefinition:
                     self.transformation_annotation_classification
                 ),
                 "scope_policy": self.transformation_scope_policy,
+            }
+            if self.condition == "hmac-v1":
+                transformation.update(
+                    {
+                        "key_environment_variable": (
+                            self.hmac_key_environment_variable
+                        ),
+                        "key_id": self.hmac_key_id,
+                    }
+                )
+            data["transformation"] = transformation
+        elif self.condition == "hmac-v1":
+            data["transformation"] = {
+                "version": "hmac-v1",
+                "key_environment_variable": self.hmac_key_environment_variable,
+                "key_id": self.hmac_key_id,
             }
         if self.matched_input_baseline_pilot_id is not None:
             data["matched_input"] = {

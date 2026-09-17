@@ -41,6 +41,58 @@ RELATIVE_TIME_TRANSFORMATION_CONFIGURATION = {
     "scope_policy": "annotated-model-view-fields-only",
 }
 
+TEMPORAL_SEMANTICS_UNAVAILABLE = "temporal-semantics-unavailable-v1"
+
+TEMPORAL_ABLATION_TRANSFORMATION_CONFIGURATION = {
+    "transformation_version": "incident-003-temporal-ablation-v1",
+    "temporal_semantics_version": TEMPORAL_SEMANTICS_UNAVAILABLE,
+    "anchor_rule": "not-applicable",
+    "precision": "not-applicable",
+    "representation": "unique-deterministic-nontemporal-marker",
+    "annotation_classification": "operational_timestamp",
+    "scope_policy": "annotated-timestamps-plus-deterministic-log-reordering",
+}
+
+REDACTION_TRANSFORMATION_CONFIGURATION = {
+    "transformation_version": "redaction-v1",
+    "temporal_semantics_version": TEMPORAL_SEMANTICS_UNAVAILABLE,
+    "anchor_rule": "not-applicable",
+    "precision": "not-applicable",
+    "representation": "path-generic-placeholder",
+    "annotation_classification": "all-sensitive-fields",
+    "scope_policy": "annotated-model-view-fields-only",
+}
+
+HMAC_TRANSFORMATION_CONFIGURATION = {
+    "transformation_version": "hmac-v1",
+    "temporal_semantics_version": TEMPORAL_SEMANTICS_UNAVAILABLE,
+    "anchor_rule": "not-applicable",
+    "precision": "not-applicable",
+    "representation": "namespaced-hmac-sha256-pseudonym",
+    "annotation_classification": "all-sensitive-fields",
+    "scope_policy": "annotated-model-view-fields-only",
+}
+
+TOKENIZATION_TRANSFORMATION_CONFIGURATION = {
+    "transformation_version": "tokenization-v1",
+    "temporal_semantics_version": TEMPORAL_SEMANTICS_UNAVAILABLE,
+    "anchor_rule": "not-applicable",
+    "precision": "not-applicable",
+    "representation": "namespaced-deterministic-ordinal-token",
+    "annotation_classification": "all-sensitive-fields",
+    "scope_policy": "annotated-model-view-fields-only",
+}
+
+FORMAT_PRESERVING_TRANSFORMATION_CONFIGURATION = {
+    "transformation_version": "format-preserving-v1",
+    "temporal_semantics_version": TEMPORAL_SEMANTICS_UNAVAILABLE,
+    "anchor_rule": "not-applicable",
+    "precision": "not-applicable",
+    "representation": "namespaced-character-class-pattern-pseudonym",
+    "annotation_classification": "all-sensitive-fields",
+    "scope_policy": "annotated-model-view-fields-only",
+}
+
 
 def canonical_transformation_configuration_json(
     configuration: Mapping[str, str],
@@ -74,7 +126,16 @@ def transformation_configuration_for_condition(condition: str) -> dict[str, str]
         return dict(RAW_TRANSFORMATION_CONFIGURATION)
     if condition == "relative-time-v1":
         return dict(RELATIVE_TIME_TRANSFORMATION_CONFIGURATION)
-    raise ValueError(
-        "Manifest v10 transformation provenance currently supports raw or "
-        "relative-time-v1"
-    )
+    configurations = {
+        "temporal-ablation-v1": TEMPORAL_ABLATION_TRANSFORMATION_CONFIGURATION,
+        "redaction-v1": REDACTION_TRANSFORMATION_CONFIGURATION,
+        "hmac-v1": HMAC_TRANSFORMATION_CONFIGURATION,
+        "tokenization-v1": TOKENIZATION_TRANSFORMATION_CONFIGURATION,
+        "format-preserving-v1": FORMAT_PRESERVING_TRANSFORMATION_CONFIGURATION,
+    }
+    try:
+        return dict(configurations[condition])
+    except KeyError as error:
+        raise ValueError(
+            f"Manifest v10 transformation provenance does not support {condition}"
+        ) from error

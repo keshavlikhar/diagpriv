@@ -98,15 +98,26 @@ fictional and synthetic.
 
 ### 1. Incident 003 temporal-structure negative control
 
-- Prepare separately reviewed matched conditions on the same eight development
-  seeds under the frozen GPT-5.6 Sol/v3 protocol.
+- Offline preparation is complete for five separately executable matched
+  conditions on the same eight development seeds under the frozen GPT-5.6
+  Sol/v3 protocol; provider execution still requires review.
 - Treat `temporal-ablation-v1` as the strongest direct negative-control
   candidate because it removes temporal semantics while retaining non-temporal
   evidence.
+- Score future destructive evidence with `evidence-support-v4`: cited IDs
+  alone cannot satisfy a temporal requirement when the transformed
+  representation has `temporal-semantics-unavailable-v1`. Preserve historical
+  raw/relative v3 metrics and use their separately labeled offline v4 rescores
+  for the matched evidence comparison.
 - Consider redaction-v1, HMAC-v1, tokenization-v1, and
   format-preserving-v1 as additional destructive temporal conditions.
+- Execute temporal ablation first and stop for analysis before authorizing the
+  four supporting conditions; this staging does not change the frozen suite.
 - Do not infer superiority over these conditions until their provider
   observations exist; offline invariant behavior is not model utility.
+- Preserve the preregistered direction
+  `Raw approximately equals Relative-time-v1 > Temporal-ablation-v1` without a
+  post hoc numeric threshold. Analyze every seed as a paired descriptive row.
 
 ### 2. DiagPriv task-aware selection
 
