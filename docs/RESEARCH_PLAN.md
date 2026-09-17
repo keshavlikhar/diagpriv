@@ -93,31 +93,32 @@ fictional and synthetic.
     produced 8/8 exact RCA, retaining all eight raw-correct diagnoses. Citation
     support remained incomplete: 1/8 transformed responses was evidence-
     supported. See `docs/INCIDENT_003_RELATIVE_TIME_V1_FINDINGS.md`.
+16. **Temporal destructive control and cue audit:** the frozen
+    `temporal-ablation-v1` run remained 8/8 exact RCA but fell to 0/8
+    evidence-supported under v4. A provider-free 200-instance audit found that
+    terminal-state, record-presence, and event-kind signatures each perfectly
+    separate targets from controls without temporal semantics. See
+    `docs/INCIDENT_003_TEMPORAL_ABLATION_FINDINGS.md`.
 
 ## Roadmap and decision gates
 
-### 1. Incident 003 temporal-structure negative control
+### 1. Incident 003 benchmark-cue repair
 
-- Offline preparation is complete for five separately executable matched
-  conditions on the same eight development seeds under the frozen GPT-5.6
-  Sol/v3 protocol; provider execution still requires review.
-- Treat `temporal-ablation-v1` as the strongest direct negative-control
-  candidate because it removes temporal semantics while retaining non-temporal
-  evidence.
-- Score future destructive evidence with `evidence-support-v4`: cited IDs
-  alone cannot satisfy a temporal requirement when the transformed
-  representation has `temporal-semantics-unavailable-v1`. Preserve historical
-  raw/relative v3 metrics and use their separately labeled offline v4 rescores
-  for the matched evidence comparison.
-- Consider redaction-v1, HMAC-v1, tokenization-v1, and
-  format-preserving-v1 as additional destructive temporal conditions.
-- Execute temporal ablation first and stop for analysis before authorizing the
-  four supporting conditions; this staging does not change the frozen suite.
-- Do not infer superiority over these conditions until their provider
-  observations exist; offline invariant behavior is not model utility.
-- Preserve the preregistered direction
-  `Raw approximately equals Relative-time-v1 > Temporal-ablation-v1` without a
-  post hoc numeric threshold. Analyze every seed as a paired descriptive row.
+- Freeze the unexpected 8/8 temporal-ablation result without changing Incident
+  003 v2, its configs, or its artifacts.
+- Keep redaction-v1, HMAC-v1, tokenization-v1, and format-preserving-v1
+  preregistered but **PAUSED — pending benchmark-cue investigation**.
+- Design separately versioned `incident-003-generator-v3` and
+  `incident-003-temporal-protocol-v3` candidates whose hard controls share
+  target non-temporal terminal, record-type, message-category, and role
+  signatures.
+- Require raw temporal relations to distinguish target from controls,
+  relative-time to preserve those distinctions, and temporal ablation to make
+  them unavailable while producing target/control non-temporal collisions.
+- Balance trigger/action vocabulary and neutralize near-label component aliases
+  before any v3 provider run.
+- Preserve `evidence-support-v4` separation between label correctness and
+  model-visible semantic support.
 
 ### 2. DiagPriv task-aware selection
 
