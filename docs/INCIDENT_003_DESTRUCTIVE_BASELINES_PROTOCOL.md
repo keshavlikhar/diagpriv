@@ -1,6 +1,7 @@
 # Incident 003 destructive temporal baselines protocol
 
-Status: prepared offline; no provider observation exists.
+Status: temporal-ablation observation complete and frozen; supporting conditions
+paused pending benchmark-cue investigation.
 
 ## Scientific question
 
@@ -16,6 +17,7 @@ The frozen references are not rerun:
 |---|---:|---|
 | Raw | 8/8 | `54ab224d3b432a5a1531a3d9b11b7d15515eeba56bf05023304ace72344f4915` |
 | `relative-time-v1` | 8/8 | `0ecbb9f2b39a7529a7c5e056d4f57b1f440da9fb08f8c1a851b2939d27540bbb` |
+| `temporal-ablation-v1` | 8/8 | `aebe64d289c9a0f1d201a8066e6678b0c386bcfaf07026eb73377bc475432922` |
 
 The primary negative control is `temporal-ablation-v1`. Redaction, HMAC,
 tokenization, and format-preserving pseudonymization are supporting historical
@@ -32,12 +34,15 @@ The supporting expected pattern is:
 
 `Raw approximately equals Relative-time-v1 > Redaction / HMAC / Tokenization / Format-preserving`
 
-No numeric success threshold is defined. The destructive conditions need not
-perform equally. These are development comparisons, not confirmatory inference.
+No numeric success threshold is defined. Temporal ablation did not follow the
+expected direction: it remained 8/8 exact despite unavailable temporal
+semantics and was 0/8 evidence-supported. This is a frozen development finding,
+not confirmatory inference. See
+`docs/INCIDENT_003_TEMPORAL_ABLATION_FINDINGS.md`.
 
 ## Matched design
 
-All five future conditions use:
+All five configured conditions use:
 
 - family `incident_003_temporal_compensation_v2`;
 - seeds `1019, 1020, 1021, 1022, 1023, 1025, 1026, 1028`;
@@ -45,7 +50,7 @@ All five future conditions use:
 - GPT-5.6 Sol with medium reasoning;
 - omitted temperature;
 - `raw-rca-v3`, `rca-taxonomy-v3`, and `raw-rca-scorer-v3`;
-- `evidence-support-v4` for future destructive observations;
+- `evidence-support-v4` for destructive observations;
 - `incident-003-generator-v2` and `incident-003-temporal-protocol-v2`;
 - manifest `raw-rca-manifest-v10`;
 - a result path that must not already exist.
@@ -318,58 +323,30 @@ Canonical configuration SHA-256 values:
 | Format-preserving | 1026 | `68fe6760dd96d10180dc65f6affdc27e368faf60777273d7a63bffbb3901e9bd` | `d67a92a6bccdb6891bfb3f437a68abc42a1f36719776a15d9a5a7be65cc45a9b` |
 | Format-preserving | 1028 | `5bf48c122433843e6143d81c5bffb14d5011454ea5f6eb81a51d71e6f90caee9` | `2524b8e23b63f739dc555a16600f54e44d5e942207b80fdf7291ab021cb89d26` |
 
-## Future configs and result paths
+## Config and result-path status
 
-| Condition | Config | Proposed append-only result path | Calls |
-|---|---|---|---:|
-| Temporal ablation | `experiments/incident_003_v2_temporal_ablation_v1_sol_development.toml` | `results/incident_003_v2_temporal_ablation_v1_sol_development_gpt_5_6_sol_medium.jsonl` | 8 |
-| Redaction | `experiments/incident_003_v2_redaction_v1_sol_development.toml` | `results/incident_003_v2_redaction_v1_sol_development_gpt_5_6_sol_medium.jsonl` | 8 |
-| HMAC | `experiments/incident_003_v2_hmac_v1_sol_development.toml` | `results/incident_003_v2_hmac_v1_sol_development_gpt_5_6_sol_medium.jsonl` | 8 |
-| Tokenization | `experiments/incident_003_v2_tokenization_v1_sol_development.toml` | `results/incident_003_v2_tokenization_v1_sol_development_gpt_5_6_sol_medium.jsonl` | 8 |
-| Format-preserving | `experiments/incident_003_v2_format_preserving_v1_sol_development.toml` | `results/incident_003_v2_format_preserving_v1_sol_development_gpt_5_6_sol_medium.jsonl` | 8 |
+| Condition | Config | Append-only result path | Calls | Status |
+|---|---|---|---:|---|
+| Temporal ablation | `experiments/incident_003_v2_temporal_ablation_v1_sol_development.toml` | `results/incident_003_v2_temporal_ablation_v1_sol_development_gpt_5_6_sol_medium.jsonl` | 8 | Complete and frozen |
+| Redaction | `experiments/incident_003_v2_redaction_v1_sol_development.toml` | `results/incident_003_v2_redaction_v1_sol_development_gpt_5_6_sol_medium.jsonl` | 8 | **PAUSED — pending benchmark-cue investigation** |
+| HMAC | `experiments/incident_003_v2_hmac_v1_sol_development.toml` | `results/incident_003_v2_hmac_v1_sol_development_gpt_5_6_sol_medium.jsonl` | 8 | **PAUSED — pending benchmark-cue investigation** |
+| Tokenization | `experiments/incident_003_v2_tokenization_v1_sol_development.toml` | `results/incident_003_v2_tokenization_v1_sol_development_gpt_5_6_sol_medium.jsonl` | 8 | **PAUSED — pending benchmark-cue investigation** |
+| Format-preserving | `experiments/incident_003_v2_format_preserving_v1_sol_development.toml` | `results/incident_003_v2_format_preserving_v1_sol_development_gpt_5_6_sol_medium.jsonl` | 8 | **PAUSED — pending benchmark-cue investigation** |
 
-The suite contains exactly 40 future calls. Dry runs omit `--execute`; each real
-condition, if separately approved later, requires its own explicit command and
-new result path.
+The suite originally preregistered 40 calls. Eight temporal-ablation calls are
+complete. The remaining 32 are not authorized. Frozen configs, paths, hashes,
+and the original analysis plan remain recorded; no config is edited in response
+to the result.
 
-Execution is intentionally staged without changing any frozen config or
-analysis rule:
+The staged decision was:
 
 1. execute `temporal-ablation-v1` first (8 calls);
 2. stop and analyze that decisive causal negative control;
 3. execute the four supporting baselines (32 calls) only after review.
 
-If temporal ablation remains 8/8 exact, non-temporal cues may be sufficient and
-that must be understood before spending or interpreting the supporting calls.
-
-Future execution commands (not run during preparation):
-
-```bash
-uv run python -m diagpriv.evaluation.cli run-pilot \
-  --config experiments/incident_003_v2_temporal_ablation_v1_sol_development.toml \
-  --results results/incident_003_v2_temporal_ablation_v1_sol_development_gpt_5_6_sol_medium.jsonl \
-  --execute
-
-uv run python -m diagpriv.evaluation.cli run-pilot \
-  --config experiments/incident_003_v2_redaction_v1_sol_development.toml \
-  --results results/incident_003_v2_redaction_v1_sol_development_gpt_5_6_sol_medium.jsonl \
-  --execute
-
-uv run python -m diagpriv.evaluation.cli run-pilot \
-  --config experiments/incident_003_v2_hmac_v1_sol_development.toml \
-  --results results/incident_003_v2_hmac_v1_sol_development_gpt_5_6_sol_medium.jsonl \
-  --execute
-
-uv run python -m diagpriv.evaluation.cli run-pilot \
-  --config experiments/incident_003_v2_tokenization_v1_sol_development.toml \
-  --results results/incident_003_v2_tokenization_v1_sol_development_gpt_5_6_sol_medium.jsonl \
-  --execute
-
-uv run python -m diagpriv.evaluation.cli run-pilot \
-  --config experiments/incident_003_v2_format_preserving_v1_sol_development.toml \
-  --results results/incident_003_v2_format_preserving_v1_sol_development_gpt_5_6_sol_medium.jsonl \
-  --execute
-```
+Temporal ablation remained 8/8 exact. The offline cue audit found perfect
+non-temporal separability, so step 3 is paused. No remaining command should be
+run until the benchmark-cue investigation receives separate review.
 
 ## Preregistered analysis
 
@@ -383,7 +360,7 @@ The primary descriptive table is paired by seed across raw, relative time,
 temporal ablation, redaction, HMAC, tokenization, and format-preserving. Raw and
 relative-time observations are reused from their frozen artifacts, not pooled
 with reruns. Their matched evidence comparison uses the documented offline v4
-rescoring, while future destructive observations produce v4 scores natively.
+rescoring, while destructive observations produce v4 scores natively.
 
 Interpretation is qualitative and preregistered:
 
@@ -410,4 +387,5 @@ temporal semantics; opaque transformed timestamps cannot satisfy a temporal
 requirement. Historical evidence-support-v3 remains citation-path-only and is
 not relabeled.
 No validation, held-out, human, multi-model, or repeated-trial inference is
-authorized by this preparation.
+authorized by this preparation. The observed temporal-ablation success confirms
+that the causal-isolation limitation is active rather than hypothetical.

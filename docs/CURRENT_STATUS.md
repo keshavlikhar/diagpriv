@@ -41,31 +41,28 @@ frozen: 8/8 valid responses, 8/8 exact five-label RCA, 1/8
 remained correct after absolute timestamps were replaced by exact
 incident-relative millisecond offsets. The ignored result SHA-256 is
 `0ecbb9f2b39a7529a7c5e056d4f57b1f440da9fb08f8c1a851b2939d27540bbb`.
-No destructive Incident 003 temporal condition, validation observation, or
-held-out observation exists. See
+See
 `docs/INCIDENT_003_RELATIVE_TIME_V1_FINDINGS.md` for the frozen comparison.
 
-The five destructive Incident 003 v2 development configs are now prepared
-offline on `feat/incident-003-destructive-baselines`; none has been executed.
-They preregister 8 calls each (40 total) on the same frozen seeds and Sol/v3
-protocol. Manifest v10 records canonical transformation provenance and exact
-model-input/rubric hashes. Future destructive observations explicitly use
-`evidence-support-v4`; historical raw and relative-time observations remain
-`evidence-support-v3`. Their stored responses were rescored offline under v4
-without changing either artifact: raw remains 0/8 evidence-supported and 0/8
-overall, while relative time remains 1/8 and 1/8. A 200-instance development
-audit found zero
-parseable transformed timestamps for every condition and 200/200 passing
-temporal-ablation audits. A semantic evidence audit also confirmed that all
-four core temporal proof obligations were unsatisfied in 200/200 instances for
-every destructive condition despite complete citation sets. Identity and
-terminal-state evidence remained satisfiable for temporal ablation, HMAC,
-tokenization, and format-preserving pseudonymization; redaction also lost
-genuine cross-source linkage. Evidence-support-v4 requires both the frozen
-citation path and model-visible semantic proof under the configured temporal
-semantics. Recommended execution is temporal ablation first, followed by a
-stop for review before any supporting baseline. See
-`docs/INCIDENT_003_DESTRUCTIVE_BASELINES_PROTOCOL.md`.
+The frozen `temporal-ablation-v1` negative-control run then produced 8/8 exact
+RCA on the same seeds even though all temporal relations were unavailable.
+Evidence-support-v4 scored only 0.041667 essential coverage, 0/8
+evidence-supported, and 0/8 overall correct. Its ignored JSONL SHA-256 is
+`aebe64d289c9a0f1d201a8066e6678b0c386bcfaf07026eb73377bc475432922`.
+The supported interpretation is that Incident 003 v2 remains solvable from
+surviving non-temporal cues on these eight development cases; it does not
+isolate temporal reasoning strongly enough for the intended causal claim.
+
+A deterministic 200-instance cue audit found perfect target/control
+separability from terminal-state fields, record-type presence, or event-kind
+sets alone. The target-only tuple was compensated workflow + successful
+execution + active effect + compensation record. Explicit deadline and
+compensation vocabulary and near-label orchestrator roles add further
+shortcuts. See `docs/INCIDENT_003_TEMPORAL_ABLATION_FINDINGS.md`.
+
+The four remaining destructive configs stay preregistered and frozen, but
+their execution is **PAUSED — pending benchmark-cue investigation**. No
+validation or held-out Incident 003 observation exists.
 
 ## Frozen Incident 003 v1 raw qualification
 
@@ -117,9 +114,8 @@ from the Incident 003 v2 rubric builder, preregisters canonical per-seed rubric
 hashes alongside model-input hashes, enforces subject bindings, and applies a
 conservative wrong-subject veto for the flat citation list. Manifest v9 now
 requires generator version, protocol version, and evidence requirement-set
-SHA-256. The completed fresh raw qualification and matched relative-time
-observation remain immutable. No destructive temporal privacy condition has
-been executed.
+SHA-256. The completed fresh raw qualification, matched relative-time
+observation, and temporal-ablation negative control remain immutable.
 
 ## Frozen Incident 003 v2 matched temporal result and prepared negative controls
 
@@ -142,10 +138,12 @@ exact incident-relative millisecond offsets preserved all five RCA dimensions.
 It does not establish validation or held-out performance, other-model
 behavior, anonymity, or superiority over destructive transformations.
 
-The preregistered directional hypothesis for the not-yet-executed suite is
+The preregistered directional hypothesis was
 `Raw approximately equals Relative-time-v1 > Temporal-ablation-v1`, with
 redaction, HMAC, tokenization, and format-preserving pseudonymization as
-supporting destructive baselines. No numeric pass/fail threshold is defined.
+supporting destructive baselines. Temporal ablation instead remained 8/8 exact,
+while evidence support fell to 0/8. The remaining four runs are paused rather
+than interpreted without first addressing the demonstrated shortcut cues.
 
 ## Frozen Incident 002 development seeds
 
@@ -356,6 +354,7 @@ experiment IDs.
 | `results/incident_003_raw_sol_development_gpt_5_6_sol_medium.jsonl` | `4f24b8a5bb593fb491307544796bc6d75b85c32b761e5ee09d79bdb802e8f66b` |
 | `results/incident_003_v2_raw_sol_development_gpt_5_6_sol_medium.jsonl` | `54ab224d3b432a5a1531a3d9b11b7d15515eeba56bf05023304ace72344f4915` |
 | `results/incident_003_v2_relative_time_v1_sol_development_gpt_5_6_sol_medium.jsonl` | `0ecbb9f2b39a7529a7c5e056d4f57b1f440da9fb08f8c1a851b2939d27540bbb` |
+| `results/incident_003_v2_temporal_ablation_v1_sol_development_gpt_5_6_sol_medium.jsonl` | `aebe64d289c9a0f1d201a8066e6678b0c386bcfaf07026eb73377bc475432922` |
 
 Earlier raw-v1 HTTP failures and the seed-1000 taxonomy diagnostic remain local
 infrastructure/development history. The HTTP 400 attempts are not RCA
@@ -381,10 +380,11 @@ Its initial defect set is limited to transformations already represented by
 
 Incident 003's matched development result shows complete five-label RCA
 preservation for exact relative millisecond offsets on eight GPT-5.6 Sol cases.
-It does not yet test whether temporal structure is necessary for model utility.
-The `temporal-ablation-v1` negative control and four supporting destructive
-baselines are now prepared under the same seeds and v3 protocol, but none has
-been executed. Provider execution still requires separate authorization.
+The temporal-ablation negative control also remained 8/8 exact despite removing
+temporal semantics, demonstrating that v2 can be solved through non-temporal
+shortcut cues. This blocks the intended causal interpretation. The four
+supporting destructive baselines remain paused pending a separately versioned
+benchmark repair; their configs are retained unchanged.
 
 ## Immediate prohibitions
 
@@ -420,8 +420,8 @@ been executed. Provider execution still requires separate authorization.
   taxonomy despite recovering the temporal chain. The accepted ambiguity and
   prospective v3 methodology are development findings, not a retroactive score
   correction or empirical v3 qualification.
-- Incident 003 v2 raw and relative time each achieved 8/8 exact RCA, but this
-  eight-case matched development result is not inferential evidence. Seven of
-  eight relative-time responses still lacked complete preregistered evidence
-  support. The frozen responses have also been rescored offline under v4, but
-  no destructive matched condition has run under v4.
+- Incident 003 v2 raw, relative time, and temporal ablation each achieved 8/8
+  exact RCA. Temporal ablation nevertheless had 0/8 evidence-supported
+  responses and exposed perfect non-temporal target/control separability in an
+  offline 200-instance audit. The result is a benchmark-cue finding, not
+  evidence that temporal reasoning is unnecessary.

@@ -257,8 +257,10 @@ transformation configuration are pinned separately.
 The relative-time result is frozen at SHA-256
 `0ecbb9f2b39a7529a7c5e056d4f57b1f440da9fb08f8c1a851b2939d27540bbb`.
 It produced 8/8 exact five-label RCA and retained all eight raw-correct cases,
-while 1/8 responses met `evidence_supported`. No destructive temporal
-condition has run under this protocol.
+while 1/8 responses met `evidence_supported`. The subsequently frozen
+`temporal-ablation-v1` condition also produced 8/8 exact RCA but 0/8
+evidence-supported responses under v4, demonstrating non-temporal shortcut
+solvability rather than successful temporal causal isolation.
 
 ### Incident 002 raw development experiments
 
@@ -417,12 +419,15 @@ The Incident 003 v2 matched temporal development observations are also frozen:
 |---|---:|---:|---:|
 | Raw | 8/8 | 0/8 | 0/8 |
 | `relative-time-v1` | 8/8 | 1/8 | 1/8 |
+| `temporal-ablation-v1` | 8/8 | 0/8 | 0/8 |
 
 This comparison establishes only that all five RCA labels were preserved on
-the eight matched GPT-5.6 Sol development cases. It does not establish
-superiority over redaction, HMAC, tokenization, format-preserving
-pseudonymization, or temporal ablation because those Incident 003 v3 model
-conditions have not run.
+the eight matched GPT-5.6 Sol development cases under all three completed
+conditions. Temporal ablation removed temporal semantics but did not reduce
+label accuracy, so Incident 003 v2 does not isolate temporal reasoning strongly
+enough for the intended causal claim. It does not establish superiority over
+redaction, HMAC, tokenization, or format-preserving pseudonymization; those four
+Incident 003 conditions remain unexecuted.
 
 The five destructive Incident 003 v2 configs are preregistered in
 `docs/INCIDENT_003_DESTRUCTIVE_BASELINES_PROTOCOL.md`. They use manifest v10,
@@ -433,8 +438,8 @@ opaque transformed strings are never ordered lexically as timestamps. The
 existing evidence-support-v3 requirement set remains unchanged across all
 conditions, including its hashes. Historical raw and relative-time records
 retain citation-path-only `evidence-support-v3`; their responses are rescored
-offline under `evidence-support-v4` for the future matched evidence table.
-Future destructive observations record v4 natively. Evidence-support-v4
+offline under `evidence-support-v4` for the matched evidence table.
+Destructive observations record v4 natively. Evidence-support-v4
 requires both citation-path membership and
 successful evaluation of the path's semantic relationship against the
 transformed ModelView. The family-neutral scorer delegates relationship
@@ -443,10 +448,14 @@ frozen temporal-semantics version. Under unavailable semantics, temporal
 requirements remain unsatisfied even when every preregistered evidence ID is
 cited; preserved non-temporal requirements remain independently evaluable.
 
-Execution is staged: run the eight-call `temporal-ablation-v1` negative control
-first, stop for analysis, and execute the four supporting destructive baselines
-only after review. This order does not alter the preregistered configs or
-analysis plan.
+The eight-call `temporal-ablation-v1` negative control is complete and frozen at
+SHA-256
+`aebe64d289c9a0f1d201a8066e6678b0c386bcfaf07026eb73377bc475432922`.
+Exact RCA remained 8/8, but evidence-support-v4 was 0/8 and a deterministic
+cue audit showed perfect non-temporal target/control separability. Execution of
+redaction, HMAC, tokenization, and format-preserving is **PAUSED — pending
+benchmark-cue investigation**. Their configs and preregistered hashes remain
+unchanged.
 
 ## Interpretation limits
 

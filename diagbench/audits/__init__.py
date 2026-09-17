@@ -19,6 +19,11 @@ from diagbench.audits.incident_003_destructive_baselines import (
     audit_destructive_evidence_satisfiability_incident,
     audit_destructive_evidence_satisfiability_range,
 )
+from diagbench.audits.incident_003_cue_audit import (
+    CUE_AUDIT_VERSION as INCIDENT_003_CUE_AUDIT_VERSION,
+    audit_incident_003_cue_range,
+    audit_incident_003_cues,
+)
 from diagbench.audits.relative_time_v1 import (
     audit_relative_time_incident,
     audit_relative_time_range,
@@ -44,4 +49,7 @@ __all__ = [
     "audit_destructive_baseline_range",
     "audit_destructive_evidence_satisfiability_incident",
     "audit_destructive_evidence_satisfiability_range",
+    "INCIDENT_003_CUE_AUDIT_VERSION",
+    "audit_incident_003_cue_range",
+    "audit_incident_003_cues",
 ]
