@@ -64,6 +64,36 @@ The four remaining destructive configs stay preregistered and frozen, but
 their execution is **PAUSED — pending benchmark-cue investigation**. No
 validation or held-out Incident 003 observation exists.
 
+Incident 003 v3 is now an offline, separately versioned causal-isolation
+candidate under `incident-003-generator-v3` and
+`incident-003-temporal-protocol-v3`. Each queried target has an exact
+non-temporal temporal twin: the target has execution/compensation overlap,
+while the twin has a serialized state-transition defect. Across development
+seeds 1200–1399, all 200 pairs have equal non-temporal projections, all four v2
+signature families collide in 200/200 pairs, and no audited single feature or
+known 2/3/4-feature conjunction separates target from twin. Raw and
+relative-time evidence-v4 obligations are satisfiable; temporal ablation makes
+the four causal temporal obligations unavailable. This is offline construction
+evidence only. No v3 provider config or observation exists. See
+`docs/INCIDENT_003_V3_CAUSAL_ISOLATION_PROTOCOL.md`.
+
+The final identifier/position audit initially found a blocking fixed raw-log
+order: target, temporal twin, then safe control. The approved offline correction
+keeps logs globally chronological but allocates each operation's absolute time
+window through a dedicated role-neutral deterministic RNG stream. Across 200
+constructions, every hidden role now occupies every block position and no
+positional separator remains.
+
+V3 also supports paired target and temporal-twin queries over byte-identical
+evidence serialization. Their scored RCA labels differ only in mechanism:
+`incorrect_concurrency_control` versus `incorrect_state_transition`. Raw and
+relative-time evidence obligations are satisfiable for both roles in 200/200;
+after temporal ablation the rendered pair is structurally isomorphic and
+neither mechanism-specific rubric is satisfied, while the hidden mechanism
+oracles conflict. All original and updated offline gates pass. Status is
+**READY TO COMMIT**, not ready for provider execution. No v3 provider config or
+observation exists.
+
 ## Frozen Incident 003 v1 raw qualification
 
 The development-only raw Sol observation produced:

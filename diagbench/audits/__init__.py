@@ -24,6 +24,17 @@ from diagbench.audits.incident_003_cue_audit import (
     audit_incident_003_cue_range,
     audit_incident_003_cues,
 )
+from diagbench.audits.incident_003_v3 import (
+    AUDIT_VERSION as INCIDENT_003_V3_CAUSAL_ISOLATION_AUDIT_VERSION,
+    PROJECTION_VERSION as INCIDENT_003_V3_PROJECTION_VERSION,
+    audit_incident_003_v3,
+    audit_incident_003_v3_range,
+    non_temporal_operation_projection,
+)
+from diagbench.audits.incident_003_v3_leakage import (
+    LEAKAGE_AUDIT_VERSION as INCIDENT_003_V3_LEAKAGE_AUDIT_VERSION,
+    audit_incident_003_v3_leakage_range,
+)
 from diagbench.audits.relative_time_v1 import (
     audit_relative_time_incident,
     audit_relative_time_range,
@@ -52,4 +63,11 @@ __all__ = [
     "INCIDENT_003_CUE_AUDIT_VERSION",
     "audit_incident_003_cue_range",
     "audit_incident_003_cues",
+    "INCIDENT_003_V3_CAUSAL_ISOLATION_AUDIT_VERSION",
+    "INCIDENT_003_V3_PROJECTION_VERSION",
+    "audit_incident_003_v3",
+    "audit_incident_003_v3_range",
+    "non_temporal_operation_projection",
+    "INCIDENT_003_V3_LEAKAGE_AUDIT_VERSION",
+    "audit_incident_003_v3_leakage_range",
 ]

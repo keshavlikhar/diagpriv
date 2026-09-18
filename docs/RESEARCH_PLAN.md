@@ -99,6 +99,14 @@ fictional and synthetic.
     terminal-state, record-presence, and event-kind signatures each perfectly
     separate targets from controls without temporal semantics. See
     `docs/INCIDENT_003_TEMPORAL_ABLATION_FINDINGS.md`.
+17. **Incident 003 v3 causal-isolation candidate:** the final order-sensitive
+    audit found a fixed raw-log position shortcut before provider preparation.
+    The reviewed correction preserves global chronology while allocating
+    operation windows through a role-neutral deterministic stream. Balanced
+    target/twin query cases now share identical evidence and differ only in
+    mechanism oracle. All original and updated 200-instance offline gates pass;
+    no provider config or observation exists. See
+    `docs/INCIDENT_003_V3_CAUSAL_ISOLATION_PROTOCOL.md`.
 
 ## Roadmap and decision gates
 
@@ -108,10 +116,13 @@ fictional and synthetic.
   003 v2, its configs, or its artifacts.
 - Keep redaction-v1, HMAC-v1, tokenization-v1, and format-preserving-v1
   preregistered but **PAUSED — pending benchmark-cue investigation**.
-- Design separately versioned `incident-003-generator-v3` and
-  `incident-003-temporal-protocol-v3` candidates whose hard controls share
-  target non-temporal terminal, record-type, message-category, and role
-  signatures.
+- Review the offline `incident-003-generator-v3` and
+  `incident-003-temporal-protocol-v3` candidate. Its hard temporal twin shares
+  the target's non-temporal terminal, record-type, message-category, and role
+  signatures exactly under the frozen projection. The fixed raw-log block
+  shortcut has been removed offline and the paired-query identifiability audit
+  passes. Commit and review this benchmark checkpoint before any provider
+  configuration is prepared.
 - Require raw temporal relations to distinguish target from controls,
   relative-time to preserve those distinctions, and temporal ablation to make
   them unavailable while producing target/control non-temporal collisions.
@@ -119,6 +130,9 @@ fictional and synthetic.
   before any v3 provider run.
 - Preserve `evidence-support-v4` separation between label correctness and
   model-visible semantic support.
+- Do not prepare a v3 provider config until the temporal-twin operational
+  plausibility, neutral subject query, evidence requirements, and shortcut
+  audits receive methodology approval.
 
 ### 2. DiagPriv task-aware selection
 
