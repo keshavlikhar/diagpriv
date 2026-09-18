@@ -8,8 +8,21 @@ import json
 from pathlib import Path
 from typing import Iterable
 
+from diagpriv.evaluation.incident_families import (
+    INCIDENT_003_V3_QUALIFICATION_SEEDS,
+)
 from diagpriv.evaluation.manifest import ExperimentManifest
 from diagpriv.evaluation.pricing import PricingSnapshot
+
+_TARGET_MECHANISM = "incorrect_concurrency_control"
+_TWIN_MECHANISM = "incorrect_state_transition"
+_PAIR_PATTERNS = (
+    "correct_flip",
+    "both_concurrency",
+    "both_state_transition",
+    "reversed",
+    "one_or_both_other",
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -69,17 +82,68 @@ class SplitSummary:
 
 
 @dataclass(frozen=True, slots=True)
+class PairedCaseSummary:
+    construction_seed: int
+    target_case_id: str | None
+    temporal_twin_case_id: str | None
+    target_parse_status: str | None
+    temporal_twin_parse_status: str | None
+    target_mechanism: str | None
+    temporal_twin_mechanism: str | None
+    pattern: str | None
+    paired_mechanism_correct: bool
+    paired_exact_rca_correct: bool
+
+    def to_dict(self) -> dict[str, object]:
+        return asdict(self)
+
+
+@dataclass(frozen=True, slots=True)
+class PairedQualificationSummary:
+    status: str
+    condition: str
+    planned_constructions: int
+    observed_constructions: int
+    complete_pairs: int
+    target_runs: int
+    temporal_twin_runs: int
+    target_valid_responses: int
+    temporal_twin_valid_responses: int
+    target_mechanism_correct: int
+    temporal_twin_mechanism_correct: int
+    target_mechanism_accuracy: float | None
+    temporal_twin_mechanism_accuracy: float | None
+    paired_mechanism_correct: int
+    paired_mechanism_accuracy: float | None
+    paired_exact_rca_correct: int
+    paired_exact_rca_accuracy: float | None
+    evidence_supported: int
+    overall_correct: int
+    pair_patterns: dict[str, int]
+    pairs: tuple[PairedCaseSummary, ...]
+
+    def to_dict(self) -> dict[str, object]:
+        data = asdict(self)
+        data["pairs"] = [pair.to_dict() for pair in self.pairs]
+        return data
+
+
+@dataclass(frozen=True, slots=True)
 class PilotSummary:
     pricing_snapshot: dict[str, object] | None
     development: SplitSummary
     validation: SplitSummary
+    paired_qualification: PairedQualificationSummary | None = None
 
     def to_dict(self) -> dict[str, object]:
-        return {
+        data: dict[str, object] = {
             "pricing_snapshot": self.pricing_snapshot,
             "development": self.development.to_dict(),
             "validation": self.validation.to_dict(),
         }
+        if self.paired_qualification is not None:
+            data["paired_qualification"] = self.paired_qualification.to_dict()
+        return data
 
     def to_json(self) -> str:
         return json.dumps(self.to_dict(), indent=2, sort_keys=True) + "\n"
@@ -91,6 +155,169 @@ def _rate(numerator: int, denominator: int) -> float | None:
 
 def _average(values: list[float]) -> float | None:
     return sum(values) / len(values) if values else None
+
+
+def _mechanism(manifest: ExperimentManifest | None) -> str | None:
+    if manifest is None or manifest.response.response is None:
+        return None
+    return manifest.response.response.failure_mechanism
+
+
+def _pair_pattern(target: str | None, twin: str | None) -> str:
+    if target == _TARGET_MECHANISM and twin == _TWIN_MECHANISM:
+        return "correct_flip"
+    if target == _TARGET_MECHANISM and twin == _TARGET_MECHANISM:
+        return "both_concurrency"
+    if target == _TWIN_MECHANISM and twin == _TWIN_MECHANISM:
+        return "both_state_transition"
+    if target == _TWIN_MECHANISM and twin == _TARGET_MECHANISM:
+        return "reversed"
+    return "one_or_both_other"
+
+
+def _score_flag(manifest: ExperimentManifest | None, field: str) -> bool:
+    if manifest is None or manifest.score is None:
+        return False
+    return bool(getattr(manifest.score, field))
+
+
+def _summarize_paired_qualification(
+    manifests: list[ExperimentManifest],
+) -> PairedQualificationSummary | None:
+    paired = [
+        manifest
+        for manifest in manifests
+        if manifest.manifest_schema_version == "raw-rca-manifest-v11"
+    ]
+    if not paired:
+        return None
+    if len(paired) != len(manifests):
+        raise ValueError("Cannot mix paired manifest v11 with historical manifests")
+
+    conditions = {manifest.condition for manifest in paired}
+    if len(conditions) != 1:
+        raise ValueError("Paired qualification summary requires exactly one condition")
+    if any(manifest.split != "development" for manifest in paired):
+        raise ValueError("Paired qualification summary supports development runs only")
+
+    by_seed: dict[int, dict[str, ExperimentManifest]] = {}
+    for manifest in paired:
+        if manifest.construction_seed is None or manifest.query_role is None:
+            raise ValueError("Manifest v11 is missing paired identity")
+        roles = by_seed.setdefault(manifest.construction_seed, {})
+        if manifest.query_role in roles:
+            raise ValueError(
+                "Duplicate paired observation for "
+                f"{manifest.construction_seed}:{manifest.query_role}"
+            )
+        roles[manifest.query_role] = manifest
+
+    expected_seeds = tuple(INCIDENT_003_V3_QUALIFICATION_SEEDS)
+    unexpected_seeds = set(by_seed).difference(expected_seeds)
+    if unexpected_seeds:
+        raise ValueError(
+            f"Unexpected paired qualification seeds: {sorted(unexpected_seeds)}"
+        )
+
+    pattern_counts = {pattern: 0 for pattern in _PAIR_PATTERNS}
+    pair_summaries: list[PairedCaseSummary] = []
+    complete_pairs = 0
+    paired_mechanism_correct = 0
+    paired_exact_rca_correct = 0
+    for seed in expected_seeds:
+        roles = by_seed.get(seed, {})
+        target = roles.get("target")
+        twin = roles.get("temporal_twin")
+        complete = target is not None and twin is not None
+        target_mechanism = _mechanism(target)
+        twin_mechanism = _mechanism(twin)
+        pattern = (
+            _pair_pattern(target_mechanism, twin_mechanism) if complete else None
+        )
+        mechanism_correct = complete and all(
+            (
+                _score_flag(target, "failure_mechanism_correct"),
+                _score_flag(twin, "failure_mechanism_correct"),
+            )
+        )
+        exact_correct = complete and all(
+            (
+                _score_flag(target, "exact_root_cause_correct"),
+                _score_flag(twin, "exact_root_cause_correct"),
+            )
+        )
+        if complete:
+            complete_pairs += 1
+            if pattern is None:
+                raise AssertionError("Complete pair must have a classified pattern")
+            pattern_counts[pattern] += 1
+        paired_mechanism_correct += mechanism_correct
+        paired_exact_rca_correct += exact_correct
+        pair_summaries.append(
+            PairedCaseSummary(
+                construction_seed=seed,
+                target_case_id=None if target is None else target.case_id,
+                temporal_twin_case_id=None if twin is None else twin.case_id,
+                target_parse_status=None if target is None else target.response.status,
+                temporal_twin_parse_status=(
+                    None if twin is None else twin.response.status
+                ),
+                target_mechanism=target_mechanism,
+                temporal_twin_mechanism=twin_mechanism,
+                pattern=pattern,
+                paired_mechanism_correct=mechanism_correct,
+                paired_exact_rca_correct=exact_correct,
+            )
+        )
+
+    planned_count = len(expected_seeds)
+    targets = [manifest for manifest in paired if manifest.query_role == "target"]
+    twins = [
+        manifest for manifest in paired if manifest.query_role == "temporal_twin"
+    ]
+    target_mechanism_correct = sum(
+        _score_flag(manifest, "failure_mechanism_correct") for manifest in targets
+    )
+    twin_mechanism_correct = sum(
+        _score_flag(manifest, "failure_mechanism_correct") for manifest in twins
+    )
+    return PairedQualificationSummary(
+        status="complete" if complete_pairs == planned_count else "partial",
+        condition=next(iter(conditions)),
+        planned_constructions=planned_count,
+        observed_constructions=len(by_seed),
+        complete_pairs=complete_pairs,
+        target_runs=len(targets),
+        temporal_twin_runs=len(twins),
+        target_valid_responses=sum(
+            manifest.response.status == "valid" for manifest in targets
+        ),
+        temporal_twin_valid_responses=sum(
+            manifest.response.status == "valid" for manifest in twins
+        ),
+        target_mechanism_correct=target_mechanism_correct,
+        temporal_twin_mechanism_correct=twin_mechanism_correct,
+        target_mechanism_accuracy=_rate(target_mechanism_correct, planned_count),
+        temporal_twin_mechanism_accuracy=_rate(
+            twin_mechanism_correct, planned_count
+        ),
+        paired_mechanism_correct=paired_mechanism_correct,
+        paired_mechanism_accuracy=_rate(
+            paired_mechanism_correct, planned_count
+        ),
+        paired_exact_rca_correct=paired_exact_rca_correct,
+        paired_exact_rca_accuracy=_rate(
+            paired_exact_rca_correct, planned_count
+        ),
+        evidence_supported=sum(
+            _score_flag(manifest, "evidence_supported") for manifest in paired
+        ),
+        overall_correct=sum(
+            _score_flag(manifest, "overall_correct") for manifest in paired
+        ),
+        pair_patterns=pattern_counts,
+        pairs=tuple(pair_summaries),
+    )
 
 
 def _summarize_split(
@@ -272,17 +499,19 @@ def _summarize_split(
 def summarize_manifests(
     manifests: Iterable[ExperimentManifest], pricing: PricingSnapshot | None = None
 ) -> PilotSummary:
+    manifest_list = list(manifests)
     grouped: dict[str, list[ExperimentManifest]] = {
         "development": [],
         "validation": [],
     }
-    for manifest in manifests:
+    for manifest in manifest_list:
         if manifest.split in grouped:
             grouped[manifest.split].append(manifest)
     return PilotSummary(
         pricing_snapshot=None if pricing is None else pricing.to_dict(),
         development=_summarize_split(grouped["development"], pricing),
         validation=_summarize_split(grouped["validation"], pricing),
+        paired_qualification=_summarize_paired_qualification(manifest_list),
     )
 
 
@@ -315,6 +544,27 @@ def inspection_records(path: Path) -> list[dict[str, object]]:
                 "manifest_schema_version": manifest.manifest_schema_version,
                 "incident_family": manifest.incident_family,
                 "seed": manifest.seed,
+                **(
+                    {
+                        "construction_seed": manifest.construction_seed,
+                        "query_role": manifest.query_role,
+                        "case_id": manifest.case_id,
+                        "paired_query_protocol_version": (
+                            manifest.paired_query_protocol_version
+                        ),
+                        "anchor_allocation_version": (
+                            manifest.anchor_allocation_version
+                        ),
+                        "evidence_requirement_version": (
+                            manifest.evidence_requirement_version
+                        ),
+                        "semantic_evaluator_version": (
+                            manifest.semantic_evaluator_version
+                        ),
+                    }
+                    if manifest.manifest_schema_version == "raw-rca-manifest-v11"
+                    else {}
+                ),
                 **(
                     {"trial_index": manifest.trial_index}
                     if manifest.trial_index is not None

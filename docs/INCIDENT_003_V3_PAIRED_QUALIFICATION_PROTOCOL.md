@@ -162,6 +162,20 @@ The frozen directional expectation is:
 
 No numeric pass/fail threshold is defined.
 
+## Offline reporting readiness
+
+Manifest-v11 summaries implement the preregistered paired analysis without
+making a provider call. The `paired_qualification` summary reports role-specific
+mechanism accuracy, paired mechanism and exact-RCA accuracy,
+`evidence_supported` and `overall_correct` counts, all five mechanism-flip
+patterns, and the result for each construction. A partial result file is marked
+`partial`; duplicate roles, mixed conditions, and mixed historical/v11 inputs
+fail rather than silently collapsing observations.
+
+Individual inspection records include construction seed, query role, stable
+case ID, paired-query protocol, anchor allocation, evidence-requirement
+version, and semantic-evaluator version.
+
 ## Staged execution and failure policy
 
 Stage 1 is raw (eight calls), followed by mandatory review. Stage 2 is relative

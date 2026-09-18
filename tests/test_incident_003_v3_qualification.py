@@ -30,9 +30,10 @@ from diagpriv.evaluation.incident_families import (
     incident_003_v3_case_id,
     select_incident_003_v3_qualification_seeds,
 )
-from diagpriv.evaluation.manifest import ExperimentManifest
+from diagpriv.evaluation.manifest import ExperimentManifest, append_manifest
 from diagpriv.evaluation.pilot import PilotDefinition
 from diagpriv.evaluation.providers import FakeProvider
+from diagpriv.evaluation.reporting import inspection_records, summarize_manifests
 from diagpriv.evaluation.response import RCAResponseV3
 from diagpriv.evaluation.runner import (
     ProtectedSeedError,
@@ -138,6 +139,22 @@ def _response(seed: int, query_role: str) -> RCAResponseV3:
         supporting_evidence=citations,
         explanation="Offline paired-query fixture.",
         confidence=0.9,
+    )
+
+
+def _manifest(
+    definition: PilotDefinition,
+    case_id: str,
+    *,
+    mechanism: str | None = None,
+) -> ExperimentManifest:
+    seed_text, query_role = case_id.split(":", maxsplit=1)
+    response = _response(int(seed_text), query_role)
+    if mechanism is not None:
+        response = replace(response, failure_mechanism=mechanism)
+    return run_raw_experiment(
+        _run_config(definition, case_id),
+        FakeProvider(raw_output=response.to_json()),
     )
 
 
@@ -295,6 +312,146 @@ def test_manifest_v11_round_trip_persists_unambiguous_pair_identity() -> None:
         "incident-003-v3-evidence-semantic-evaluator-v2"
     )
     assert ExperimentManifest.from_json(manifest.to_json()) == manifest
+
+
+def test_paired_summary_reports_preregistered_metrics_and_case_results() -> None:
+    definition = PilotDefinition.load(CONFIGS["raw"])
+    manifests = [
+        _manifest(definition, case_id)
+        for _, _, case_id in definition.paired_case_plan()
+    ]
+
+    summary = summarize_manifests(manifests)
+    paired = summary.paired_qualification
+    assert paired is not None
+    assert paired.status == "complete"
+    assert paired.condition == "raw"
+    assert paired.planned_constructions == 4
+    assert paired.observed_constructions == 4
+    assert paired.complete_pairs == 4
+    assert paired.target_runs == 4
+    assert paired.temporal_twin_runs == 4
+    assert paired.target_valid_responses == 4
+    assert paired.temporal_twin_valid_responses == 4
+    assert paired.target_mechanism_correct == 4
+    assert paired.temporal_twin_mechanism_correct == 4
+    assert paired.target_mechanism_accuracy == 1.0
+    assert paired.temporal_twin_mechanism_accuracy == 1.0
+    assert paired.paired_mechanism_correct == 4
+    assert paired.paired_mechanism_accuracy == 1.0
+    assert paired.paired_exact_rca_correct == 4
+    assert paired.paired_exact_rca_accuracy == 1.0
+    assert paired.evidence_supported == 8
+    assert paired.overall_correct == 8
+    assert paired.pair_patterns == {
+        "correct_flip": 4,
+        "both_concurrency": 0,
+        "both_state_transition": 0,
+        "reversed": 0,
+        "one_or_both_other": 0,
+    }
+    assert {pair.construction_seed for pair in paired.pairs} == set(
+        INCIDENT_003_V3_QUALIFICATION_SEEDS
+    )
+    assert all(pair.paired_mechanism_correct for pair in paired.pairs)
+    assert all(pair.paired_exact_rca_correct for pair in paired.pairs)
+    assert summary.to_dict()["paired_qualification"] == paired.to_dict()
+
+
+@pytest.mark.parametrize(
+    ("target_mechanism", "twin_mechanism", "expected_pattern"),
+    (
+        ("incorrect_concurrency_control", "incorrect_state_transition", "correct_flip"),
+        (
+            "incorrect_concurrency_control",
+            "incorrect_concurrency_control",
+            "both_concurrency",
+        ),
+        (
+            "incorrect_state_transition",
+            "incorrect_state_transition",
+            "both_state_transition",
+        ),
+        ("incorrect_state_transition", "incorrect_concurrency_control", "reversed"),
+        (
+            "unknown_failure_mechanism",
+            "incorrect_state_transition",
+            "one_or_both_other",
+        ),
+    ),
+)
+def test_paired_summary_classifies_mechanism_patterns(
+    target_mechanism: str,
+    twin_mechanism: str,
+    expected_pattern: str,
+) -> None:
+    definition = PilotDefinition.load(CONFIGS["raw"])
+    manifests = (
+        _manifest(definition, "1319:target", mechanism=target_mechanism),
+        _manifest(definition, "1319:temporal_twin", mechanism=twin_mechanism),
+    )
+    paired = summarize_manifests(manifests).paired_qualification
+    assert paired is not None
+    assert paired.complete_pairs == 1
+    assert paired.pair_patterns[expected_pattern] == 1
+    assert sum(paired.pair_patterns.values()) == 1
+    assert paired.pairs[0].pattern == expected_pattern
+
+
+def test_paired_summary_marks_partial_results_and_rejects_duplicate_roles() -> None:
+    definition = PilotDefinition.load(CONFIGS["raw"])
+    target = _manifest(definition, "1319:target")
+
+    paired = summarize_manifests((target,)).paired_qualification
+    assert paired is not None
+    assert paired.status == "partial"
+    assert paired.planned_constructions == 4
+    assert paired.observed_constructions == 1
+    assert paired.complete_pairs == 0
+    assert len(paired.pairs) == 4
+    target_pair = next(pair for pair in paired.pairs if pair.construction_seed == 1319)
+    assert target_pair.pattern is None
+    assert paired.target_mechanism_accuracy == 0.25
+    assert sum(paired.pair_patterns.values()) == 0
+
+    with pytest.raises(ValueError, match="Duplicate paired observation"):
+        summarize_manifests((target, target))
+
+
+def test_paired_summary_rejects_mixed_conditions() -> None:
+    raw = PilotDefinition.load(CONFIGS["raw"])
+    relative = PilotDefinition.load(CONFIGS["relative-time-v1"])
+    manifests = (
+        _manifest(raw, "1319:target"),
+        _manifest(relative, "1319:temporal_twin"),
+    )
+
+    with pytest.raises(ValueError, match="exactly one condition"):
+        summarize_manifests(manifests)
+
+
+def test_inspection_exposes_v11_pair_identity(tmp_path: Path) -> None:
+    definition = PilotDefinition.load(CONFIGS["raw"])
+    manifest = _manifest(definition, "1319:target")
+    path = tmp_path / "paired.jsonl"
+    append_manifest(path, manifest)
+
+    record = inspection_records(path)[0]
+    assert record["construction_seed"] == 1319
+    assert record["query_role"] == "target"
+    assert record["case_id"] == "1319:target"
+    assert record["paired_query_protocol_version"] == (
+        "incident-003-v3-paired-query-v1"
+    )
+    assert record["anchor_allocation_version"] == (
+        "incident-003-v3-role-neutral-anchor-allocation-v1"
+    )
+    assert record["evidence_requirement_version"] == (
+        "incident-003-v3-evidence-requirements-v2"
+    )
+    assert record["semantic_evaluator_version"] == (
+        "incident-003-v3-evidence-semantic-evaluator-v2"
+    )
 
 
 def test_v11_rejects_role_or_case_mismatch_before_provider_invocation() -> None:

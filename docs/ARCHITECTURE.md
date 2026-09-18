@@ -95,8 +95,9 @@ does not provide complete temporal anonymization.
 - `pilot.py`: TOML loading plus protocol/seed/config validation.
 - `manifest.py`: append-only JSONL records with backward-compatible loading;
   schema v6 adds an exact rendered model-input hash for new observations.
-- `reporting.py`: split summaries, individual response inspection, usage, and
-  cost aggregation.
+- `reporting.py`: split summaries, manifest-v11 paired qualification metrics,
+  individual response and pair-provenance inspection, usage, and cost
+  aggregation.
 - `pricing.py`: versioned cost snapshots outside scientific scoring.
 - `cli.py`: dry-run, explicitly authorized execution, summary, and inspection.
 

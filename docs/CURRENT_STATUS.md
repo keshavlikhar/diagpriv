@@ -1,6 +1,6 @@
 # Current Status
 
-Last updated: 2026-09-18.
+Last updated: 2026-09-19.
 
 ## Handoff point
 
@@ -98,6 +98,20 @@ Manifest v11 records case role and evidence-dispatch provenance; all 24
 model-input hashes and eight transformation-independent rubric hashes are
 frozen. No v3 provider observation or result JSONL exists. See
 `docs/INCIDENT_003_V3_PAIRED_QUALIFICATION_PROTOCOL.md`.
+
+The paired reporting path is now hardened offline. For manifest-v11 result
+files, `summarize` reports target and temporal-twin mechanism accuracy, paired
+mechanism and exact-RCA accuracy, all five preregistered mechanism-flip
+patterns, evidence-supported and overall-correct counts, and a per-construction
+record. `inspect` exposes the construction seed, query role, case ID, and
+paired/evidence provenance for every run. Focused fake-provider tests cover the
+eight-case successful path and every mechanism-pattern class. This development
+made no provider calls, produced no result artifact, changed no frozen input,
+and does not authorize any qualification stage.
+
+Targeted offline verification passed 132 tests. One unrelated historical-v1
+compatibility test was deselected because its Git-ignored JSONL fixture is not
+present in a fresh clone; the full suite was intentionally not run.
 
 ## Frozen Incident 003 v1 raw qualification
 
