@@ -457,6 +457,40 @@ redaction, HMAC, tokenization, and format-preserving is **PAUSED — pending
 benchmark-cue investigation**. Their configs and preregistered hashes remain
 unchanged.
 
+## Incident 003 v3 offline causal-isolation candidate
+
+Incident 003 v3 is separately versioned as
+`incident_003_temporal_compensation_v3`, `incident-003-generator-v3`, and
+`incident-003-temporal-protocol-v3`. It does not mutate v2 construction,
+configs, artifacts, or findings. The candidate keeps `rca-taxonomy-v3`,
+`raw-rca-v3`, `raw-rca-scorer-v3`, and generic `evidence-support-v4`.
+
+The development-only construction audit is restricted to seeds 1200–1399.
+Each target is paired with a model-visible temporal twin whose non-temporal
+projection is exactly equal but whose execution completes before deadline
+compensation without overlap. A safe cancellation/compensation control shares
+the same record and event inventory. All 200 constructions pass target/control
+temporal invariants, relative-time preservation, temporal-ablation destruction,
+signature-collision, feature-leakage, message, schema, role, linkage, and
+evidence-support gates.
+
+The Incident 003 v3 requirement constructor is separately versioned and does
+not reuse v2 rubric hashes. Raw and relative-time views satisfy its six target
+essential requirements; temporal ablation leaves the four temporal essentials
+unsatisfied.
+
+The final order-sensitive leakage audit found and blocked a fixed target/twin/
+safe raw-log order before provider preparation. The approved correction retains
+global chronology while assigning absolute operation windows with a dedicated
+role-neutral deterministic stream. Each construction now also exposes balanced
+target and temporal-twin query cases over identical evidence serialization.
+Only their query ID and mechanism oracle differ. Both have satisfiable raw and
+relative-time evidence obligations; their ablated views are structurally
+isomorphic while their mechanism oracles conflict and neither temporal rubric
+is satisfied. All 200-instance gates pass. No provider config, model-input hash
+set, result path, or provider observation has been prepared. See
+`docs/INCIDENT_003_V3_CAUSAL_ISOLATION_PROTOCOL.md`.
+
 ## Interpretation limits
 
 Five- and ten-instance pilots are development measurements, not publication
