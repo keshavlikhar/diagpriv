@@ -107,6 +107,12 @@ fictional and synthetic.
     mechanism oracle. All original and updated 200-instance offline gates pass;
     no provider config or observation exists. See
     `docs/INCIDENT_003_V3_CAUSAL_ISOLATION_PROTOCOL.md`.
+18. **Incident 003 v3 paired qualification preparation:** four constructions
+    were selected by a frozen content-independent hash rule. Raw,
+    `relative-time-v1`, and `temporal-ablation-v1` each contain eight paired
+    query cases with frozen model-input and evidence-requirement hashes under
+    manifest v11. This is preparation only; all 24 provider calls remain
+    unexecuted. See `docs/INCIDENT_003_V3_PAIRED_QUALIFICATION_PROTOCOL.md`.
 
 ## Roadmap and decision gates
 
@@ -130,9 +136,9 @@ fictional and synthetic.
   before any v3 provider run.
 - Preserve `evidence-support-v4` separation between label correctness and
   model-visible semantic support.
-- Do not prepare a v3 provider config until the temporal-twin operational
-  plausibility, neutral subject query, evidence requirements, and shortcut
-  audits receive methodology approval.
+- Execute the prepared v3 qualification only in separately approved stages:
+  raw, then relative time, then temporal ablation. Stop for review after each
+  eight-call stage; do not chain them.
 
 ### 2. DiagPriv task-aware selection
 

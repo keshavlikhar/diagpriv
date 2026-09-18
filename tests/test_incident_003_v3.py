@@ -210,8 +210,14 @@ def test_v3_audit_rejects_non_audit_and_protected_seed_ranges(
         audit_incident_003_v3_range(seeds)
 
 
-def test_v3_preparation_has_no_provider_config_or_result_artifact() -> None:
-    assert list((ROOT / "experiments").glob("*incident_003*v3*")) == []
+def test_v3_preparation_has_only_the_reviewed_configs_and_no_result_artifact() -> None:
+    assert {
+        path.name for path in (ROOT / "experiments").glob("*incident_003*v3*")
+    } == {
+        "incident_003_v3_raw_paired_sol_development.toml",
+        "incident_003_v3_relative_time_v1_paired_sol_development.toml",
+        "incident_003_v3_temporal_ablation_v1_paired_sol_development.toml",
+    }
     assert list((ROOT / "results").glob("*incident_003*v3*")) == []
 
 

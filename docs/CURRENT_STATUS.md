@@ -1,6 +1,6 @@
 # Current Status
 
-Last updated: 2026-09-17.
+Last updated: 2026-09-18.
 
 ## Handoff point
 
@@ -90,9 +90,14 @@ evidence serialization. Their scored RCA labels differ only in mechanism:
 relative-time evidence obligations are satisfiable for both roles in 200/200;
 after temporal ablation the rendered pair is structurally isomorphic and
 neither mechanism-specific rubric is satisfied, while the hidden mechanism
-oracles conflict. All original and updated offline gates pass. Status is
-**READY TO COMMIT**, not ready for provider execution. No v3 provider config or
-observation exists.
+oracles conflict. All original and updated offline gates pass. The paired
+provider qualification is now prepared but remains unexecuted. Four
+constructions selected by the content-independent hash rule yield eight cases
+per condition under raw, `relative-time-v1`, and `temporal-ablation-v1`.
+Manifest v11 records case role and evidence-dispatch provenance; all 24
+model-input hashes and eight transformation-independent rubric hashes are
+frozen. No v3 provider observation or result JSONL exists. See
+`docs/INCIDENT_003_V3_PAIRED_QUALIFICATION_PROTOCOL.md`.
 
 ## Frozen Incident 003 v1 raw qualification
 

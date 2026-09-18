@@ -216,6 +216,13 @@ class ExperimentManifest:
     incident_protocol_version: str | None = None
     evidence_requirement_set_sha256: str | None = None
     transformation_provenance: TransformationProvenance | None = None
+    construction_seed: int | None = None
+    query_role: Literal["target", "temporal_twin"] | None = None
+    case_id: str | None = None
+    paired_query_protocol_version: str | None = None
+    anchor_allocation_version: str | None = None
+    evidence_requirement_version: str | None = None
+    semantic_evaluator_version: str | None = None
 
     def __post_init__(self) -> None:
         schema_label = self.manifest_schema_version.rsplit("-", maxsplit=1)[-1]
@@ -229,6 +236,7 @@ class ExperimentManifest:
             "raw-rca-manifest-v8",
             "raw-rca-manifest-v9",
             "raw-rca-manifest-v10",
+            "raw-rca-manifest-v11",
         }:
             raise ValueError(
                 f"Unsupported manifest schema: {self.manifest_schema_version}"
@@ -239,6 +247,7 @@ class ExperimentManifest:
             "raw-rca-manifest-v8",
             "raw-rca-manifest-v9",
             "raw-rca-manifest-v10",
+            "raw-rca-manifest-v11",
         }:
             if not isinstance(self.model_input_sha256, str) or re.fullmatch(
                 r"[0-9a-f]{64}", self.model_input_sha256
@@ -247,6 +256,7 @@ class ExperimentManifest:
                     "raw-rca-manifest-v8",
                     "raw-rca-manifest-v9",
                     "raw-rca-manifest-v10",
+                    "raw-rca-manifest-v11",
                 }:
                     raise ValueError(
                         f"Manifest schema {schema_label} "
@@ -282,6 +292,7 @@ class ExperimentManifest:
         if self.manifest_schema_version in {
             "raw-rca-manifest-v9",
             "raw-rca-manifest-v10",
+            "raw-rca-manifest-v11",
         }:
             if (
                 self.prompt_version != "raw-rca-v3"
@@ -298,9 +309,13 @@ class ExperimentManifest:
                     "prompt-template SHA-256"
                 )
             expected_evidence_versions = (
-                {"evidence-support-v3", "evidence-support-v4"}
-                if self.manifest_schema_version == "raw-rca-manifest-v10"
-                else {"evidence-support-v3"}
+                {"evidence-support-v4"}
+                if self.manifest_schema_version == "raw-rca-manifest-v11"
+                else (
+                    {"evidence-support-v3", "evidence-support-v4"}
+                    if self.manifest_schema_version == "raw-rca-manifest-v10"
+                    else {"evidence-support-v3"}
+                )
             )
             if self.evidence_support_version not in expected_evidence_versions:
                 raise ValueError(
@@ -330,7 +345,7 @@ class ExperimentManifest:
                 )
         elif self.evidence_support_version is not None:
             raise ValueError(
-                "evidence_support_version is valid only in manifest schema v9 or v10"
+                "evidence_support_version is valid only in manifest schema v9 or later"
             )
         elif any(
             value is not None
@@ -342,9 +357,12 @@ class ExperimentManifest:
         ):
             raise ValueError(
                 "Incident/rubric provenance fields are valid only in manifest schema "
-                "v9 or v10"
+                "v9 or later"
             )
-        if self.manifest_schema_version == "raw-rca-manifest-v10":
+        if self.manifest_schema_version in {
+            "raw-rca-manifest-v10",
+            "raw-rca-manifest-v11",
+        }:
             if not isinstance(self.transformation_provenance, TransformationProvenance):
                 raise ValueError(
                     "Manifest schema v10 requires transformation provenance"
@@ -359,8 +377,39 @@ class ExperimentManifest:
                 )
         elif self.transformation_provenance is not None:
             raise ValueError(
-                "Transformation provenance is valid only in manifest schema v10"
+                "Transformation provenance is valid only in manifest schema v10 or v11"
             )
+        paired_fields = (
+            self.construction_seed,
+            self.query_role,
+            self.case_id,
+            self.paired_query_protocol_version,
+            self.anchor_allocation_version,
+            self.evidence_requirement_version,
+            self.semantic_evaluator_version,
+        )
+        if self.manifest_schema_version == "raw-rca-manifest-v11":
+            if self.construction_seed != self.seed:
+                raise ValueError("Manifest v11 construction_seed must equal seed")
+            if self.query_role not in {"target", "temporal_twin"}:
+                raise ValueError("Manifest v11 requires a paired query role")
+            expected_case_id = f"{self.construction_seed}:{self.query_role}"
+            if self.case_id != expected_case_id:
+                raise ValueError("Manifest v11 case_id does not match seed and role")
+            if not all(
+                isinstance(value, str) and bool(value)
+                for value in (
+                    self.paired_query_protocol_version,
+                    self.anchor_allocation_version,
+                    self.evidence_requirement_version,
+                    self.semantic_evaluator_version,
+                )
+            ):
+                raise ValueError(
+                    "Manifest v11 requires paired-query and evidence dispatch provenance"
+                )
+        elif any(value is not None for value in paired_fields):
+            raise ValueError("Paired-query provenance requires manifest schema v11")
 
     def to_dict(self) -> dict[str, object]:
         data: dict[str, object] = {
@@ -427,6 +476,22 @@ class ExperimentManifest:
         if self.transformation_provenance is not None:
             data["transformation_provenance"] = (
                 self.transformation_provenance.to_dict()
+            )
+        if self.construction_seed is not None:
+            data.update(
+                {
+                    "construction_seed": self.construction_seed,
+                    "query_role": self.query_role,
+                    "case_id": self.case_id,
+                    "paired_query_protocol_version": (
+                        self.paired_query_protocol_version
+                    ),
+                    "anchor_allocation_version": self.anchor_allocation_version,
+                    "evidence_requirement_version": (
+                        self.evidence_requirement_version
+                    ),
+                    "semantic_evaluator_version": self.semantic_evaluator_version,
+                }
             )
         return data
 
@@ -546,6 +611,15 @@ class ExperimentManifest:
                 if transformation_data is None
                 else TransformationProvenance.from_dict(transformation_data)
             ),
+            construction_seed=data.get("construction_seed"),
+            query_role=data.get("query_role"),
+            case_id=data.get("case_id"),
+            paired_query_protocol_version=data.get(
+                "paired_query_protocol_version"
+            ),
+            anchor_allocation_version=data.get("anchor_allocation_version"),
+            evidence_requirement_version=data.get("evidence_requirement_version"),
+            semantic_evaluator_version=data.get("semantic_evaluator_version"),
         )
 
     @classmethod

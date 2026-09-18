@@ -19,9 +19,14 @@ from diagpriv.evaluation.incident_families import (
     INCIDENT_003_V2_DEVELOPMENT_SEEDS,
     INCIDENT_003_V2_FAMILY,
     INCIDENT_003_V2_SEED_SELECTION_VERSION,
+    INCIDENT_003_V3_FAMILY,
+    INCIDENT_003_V3_QUALIFICATION_SEEDS,
+    INCIDENT_003_V3_QUERY_ROLES,
+    INCIDENT_003_V3_SEED_SELECTION_VERSION,
     SUPPORTED_INCIDENT_FAMILIES,
     evaluation_seed_split,
     generate_evaluation_incident,
+    incident_003_v3_case_id,
 )
 from diagpriv.evaluation.prompt import (
     PROMPT_SHA256 as PROMPT_SHA256_V1,
@@ -125,6 +130,13 @@ class PilotDefinition:
     expected_evidence_support_version: str | None
     expected_transformation_key_fingerprint: str | None
     expected_transformation_configuration_sha256: str | None
+    query_roles: tuple[str, ...]
+    expected_model_input_sha256_by_case_id: dict[str, str]
+    expected_evidence_requirement_set_sha256_by_case_id: dict[str, str]
+    expected_paired_query_protocol_version: str | None
+    expected_anchor_allocation_version: str | None
+    expected_evidence_requirement_version: str | None
+    expected_semantic_evaluator_version: str | None
 
     @classmethod
     def load(cls, path: Path) -> Self:
@@ -157,6 +169,16 @@ class PilotDefinition:
         )
         if not isinstance(expected_rubric_hashes, dict):
             raise ValueError("Evidence requirement-set hashes must be a table")
+        expected_case_hashes = input_provenance.get(
+            "model_input_sha256_by_case_id", {}
+        )
+        if not isinstance(expected_case_hashes, dict):
+            raise ValueError("Case input-provenance hashes must be a table")
+        expected_case_rubric_hashes = input_provenance.get(
+            "evidence_requirement_set_sha256_by_case_id", {}
+        )
+        if not isinstance(expected_case_rubric_hashes, dict):
+            raise ValueError("Case evidence requirement-set hashes must be a table")
         protocol = FROZEN_PROTOCOLS.get(pilot["prompt_version"])
         default_taxonomy = None if protocol is None else protocol[1]
         default_scorer = None if protocol is None else protocol[2]
@@ -260,6 +282,27 @@ class PilotDefinition:
             expected_transformation_configuration_sha256=input_provenance.get(
                 "transformation_configuration_sha256"
             ),
+            query_roles=tuple(pilot.get("query_roles", ())),
+            expected_model_input_sha256_by_case_id={
+                str(case_id): digest
+                for case_id, digest in expected_case_hashes.items()
+            },
+            expected_evidence_requirement_set_sha256_by_case_id={
+                str(case_id): digest
+                for case_id, digest in expected_case_rubric_hashes.items()
+            },
+            expected_paired_query_protocol_version=incident_protocol.get(
+                "paired_query_protocol_version"
+            ),
+            expected_anchor_allocation_version=incident_protocol.get(
+                "anchor_allocation_version"
+            ),
+            expected_evidence_requirement_version=incident_protocol.get(
+                "evidence_requirement_version"
+            ),
+            expected_semantic_evaluator_version=incident_protocol.get(
+                "semantic_evaluator_version"
+            ),
         )
         definition.validate()
         return definition
@@ -273,6 +316,7 @@ class PilotDefinition:
             "raw-rca-manifest-v7",
             "raw-rca-manifest-v9",
             "raw-rca-manifest-v10",
+            "raw-rca-manifest-v11",
         }:
             raise ValueError(
                 f"Unsupported manifest schema: {self.manifest_schema_version}"
@@ -306,7 +350,10 @@ class PilotDefinition:
             "scope_policy": self.transformation_scope_policy,
         }
         configured_values = tuple(transformation_configuration.values())
-        if self.manifest_schema_version == "raw-rca-manifest-v10":
+        if self.manifest_schema_version in {
+            "raw-rca-manifest-v10",
+            "raw-rca-manifest-v11",
+        }:
             expected_configuration = transformation_configuration_for_condition(
                 self.condition
             )
@@ -534,6 +581,68 @@ class PilotDefinition:
                 raise ValueError(
                     "Incident 003 v2 pilot requires a previously absent result path"
                 )
+        elif self.incident_family == INCIDENT_003_V3_FAMILY:
+            if self.seed_scope != "development_only":
+                raise ValueError("Incident 003 v3 pilot must be development-only")
+            if self.development_seeds != INCIDENT_003_V3_QUALIFICATION_SEEDS:
+                raise ValueError(
+                    "Incident 003 v3 pilot must use exactly the frozen "
+                    "qualification seeds"
+                )
+            if (
+                self.development_seed_selection_version
+                != INCIDENT_003_V3_SEED_SELECTION_VERSION
+            ):
+                raise ValueError(
+                    "Incident 003 v3 pilot requires the frozen seed-selection rule"
+                )
+            if self.query_roles != INCIDENT_003_V3_QUERY_ROLES:
+                raise ValueError(
+                    "Incident 003 v3 pilot requires both frozen query roles"
+                )
+            if self.manifest_schema_version != "raw-rca-manifest-v11":
+                raise ValueError("Incident 003 v3 paired pilot requires manifest v11")
+            if self.prompt_version != PROMPT_VERSION_V3:
+                raise ValueError("Incident 003 v3 pilot requires raw-rca-v3")
+            if self.condition not in {
+                "raw",
+                "relative-time-v1",
+                "temporal-ablation-v1",
+            }:
+                raise ValueError(
+                    "Incident 003 v3 qualification supports only its three "
+                    "preregistered conditions"
+                )
+            expected_versions = (
+                "incident-003-generator-v3",
+                "incident-003-temporal-protocol-v3",
+                EVIDENCE_SUPPORT_VERSION_V4,
+                "incident-003-v3-paired-query-v1",
+                "incident-003-v3-role-neutral-anchor-allocation-v1",
+                "incident-003-v3-evidence-requirements-v2",
+                "incident-003-v3-evidence-semantic-evaluator-v2",
+            )
+            actual_versions = (
+                self.expected_incident_generator_version,
+                self.expected_incident_protocol_version,
+                self.expected_evidence_support_version,
+                self.expected_paired_query_protocol_version,
+                self.expected_anchor_allocation_version,
+                self.expected_evidence_requirement_version,
+                self.expected_semantic_evaluator_version,
+            )
+            if actual_versions != expected_versions:
+                raise ValueError(
+                    "Incident 003 v3 pilot requires frozen paired protocol versions"
+                )
+            if self.calls_per_seed != 1:
+                raise ValueError(
+                    "Incident 003 v3 qualification requires one call per paired case"
+                )
+            if not self.result_path_must_not_exist:
+                raise ValueError(
+                    "Incident 003 v3 pilot requires a previously absent result path"
+                )
         elif self.development_seed_selection_version is not None:
             if (
                 self.development_seed_selection_version
@@ -557,7 +666,32 @@ class PilotDefinition:
                     "Incident 003 v2 seed-selection metadata is valid only for "
                     "Incident 003 v2"
                 )
+            if (
+                self.development_seed_selection_version
+                == INCIDENT_003_V3_SEED_SELECTION_VERSION
+            ):
+                raise ValueError(
+                    "Incident 003 v3 seed-selection metadata is valid only for "
+                    "Incident 003 v3"
+                )
             raise ValueError("Unknown family-specific seed-selection metadata")
+        if self.incident_family != INCIDENT_003_V3_FAMILY and (
+            self.query_roles
+            or self.expected_model_input_sha256_by_case_id
+            or self.expected_evidence_requirement_set_sha256_by_case_id
+            or any(
+                value is not None
+                for value in (
+                    self.expected_paired_query_protocol_version,
+                    self.expected_anchor_allocation_version,
+                    self.expected_evidence_requirement_version,
+                    self.expected_semantic_evaluator_version,
+                )
+            )
+        ):
+            raise ValueError(
+                "Paired-query configuration is valid only for Incident 003 v3"
+            )
         self._validate_matched_inputs()
         self._validate_input_provenance()
         if not self.pricing_snapshot_path.is_file():
@@ -597,6 +731,40 @@ class PilotDefinition:
         hashes = self.expected_model_input_sha256_by_seed
         rubric_hashes = self.expected_evidence_requirement_set_sha256_by_seed
         fingerprint = self.expected_transformation_key_fingerprint
+        if self.incident_family == INCIDENT_003_V3_FAMILY:
+            if hashes or rubric_hashes:
+                raise ValueError(
+                    "Incident 003 v3 provenance must be keyed by paired case ID"
+                )
+            expected_case_ids = {
+                incident_003_v3_case_id(seed, role)  # type: ignore[arg-type]
+                for seed in self.development_seeds
+                for role in self.query_roles
+            }
+            case_hashes = self.expected_model_input_sha256_by_case_id
+            case_rubric_hashes = (
+                self.expected_evidence_requirement_set_sha256_by_case_id
+            )
+            if set(case_hashes) != expected_case_ids:
+                raise ValueError(
+                    "Model-input hashes must cover exactly the paired case IDs"
+                )
+            if set(case_rubric_hashes) != expected_case_ids:
+                raise ValueError(
+                    "Evidence requirement hashes must cover exactly the paired case IDs"
+                )
+            for label, values in (
+                ("Model-input", case_hashes),
+                ("Evidence requirement-set", case_rubric_hashes),
+            ):
+                for case_id, digest in values.items():
+                    if not isinstance(digest, str) or not _is_sha256(digest):
+                        raise ValueError(f"{label} SHA-256 is invalid for {case_id}")
+            if fingerprint is not None:
+                raise ValueError(
+                    "Incident 003 v3 qualification does not use HMAC provenance"
+                )
+            return
         if not hashes and not rubric_hashes and fingerprint is None:
             return
         if not hashes:
@@ -638,6 +806,16 @@ class PilotDefinition:
                 "Transformation-key fingerprint is valid only for hmac-v1"
             )
 
+    def paired_case_plan(self) -> tuple[tuple[int, str, str], ...]:
+        """Return stable seed/role/case identities without seed-only deduplication."""
+        if self.incident_family != INCIDENT_003_V3_FAMILY:
+            return ()
+        return tuple(
+            (seed, role, incident_003_v3_case_id(seed, role))  # type: ignore[arg-type]
+            for seed in self.development_seeds
+            for role in self.query_roles
+        )
+
     def to_dict(self) -> dict[str, Any]:
         data: dict[str, Any] = {
             "pilot_id": self.pilot_id,
@@ -657,6 +835,11 @@ class PilotDefinition:
             "validation_seeds": list(self.validation_seeds),
             "held_out_seeds": list(self.held_out_seeds),
             "calls_per_seed": self.calls_per_seed,
+            **(
+                {"query_roles": list(self.query_roles)}
+                if self.query_roles
+                else {}
+            ),
             **(
                 {"result_path_must_not_exist": True}
                 if self.result_path_must_not_exist
@@ -697,8 +880,29 @@ class PilotDefinition:
                 "generator_version": self.expected_incident_generator_version,
                 "protocol_version": self.expected_incident_protocol_version,
                 "evidence_protocol_version": self.expected_evidence_support_version,
+                **(
+                    {
+                        "paired_query_protocol_version": (
+                            self.expected_paired_query_protocol_version
+                        ),
+                        "anchor_allocation_version": (
+                            self.expected_anchor_allocation_version
+                        ),
+                        "evidence_requirement_version": (
+                            self.expected_evidence_requirement_version
+                        ),
+                        "semantic_evaluator_version": (
+                            self.expected_semantic_evaluator_version
+                        ),
+                    }
+                    if self.expected_paired_query_protocol_version is not None
+                    else {}
+                ),
             }
-        if self.manifest_schema_version == "raw-rca-manifest-v10":
+        if self.manifest_schema_version in {
+            "raw-rca-manifest-v10",
+            "raw-rca-manifest-v11",
+        }:
             transformation: dict[str, object] = {
                 "transformation_version": self.transformation_version,
                 "temporal_semantics_version": (
@@ -766,6 +970,20 @@ class PilotDefinition:
                     )
                 }
             data["input_provenance"] = input_provenance
+        elif self.expected_model_input_sha256_by_case_id:
+            data["input_provenance"] = {
+                "transformation_configuration_sha256": (
+                    self.expected_transformation_configuration_sha256
+                ),
+                "model_input_sha256_by_case_id": dict(
+                    sorted(self.expected_model_input_sha256_by_case_id.items())
+                ),
+                "evidence_requirement_set_sha256_by_case_id": dict(
+                    sorted(
+                        self.expected_evidence_requirement_set_sha256_by_case_id.items()
+                    )
+                ),
+            }
         return data
 
 

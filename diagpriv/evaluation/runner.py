@@ -15,6 +15,9 @@ from diagbench.generators.incident_001 import (
     VALIDATION_SEEDS,
     generate_incident_001,  # compatibility hook for frozen seed-guard tests
 )
+from diagbench.generators.incident_003_v3 import (
+    ANCHOR_ALLOCATION_VERSION as INCIDENT_003_V3_ANCHOR_ALLOCATION_VERSION,
+)
 from diagpriv.evaluation.incident_families import (
     INCIDENT_001_FAMILY,
     INCIDENT_002_DEVELOPMENT_SEEDS,
@@ -23,8 +26,12 @@ from diagpriv.evaluation.incident_families import (
     INCIDENT_003_FAMILY,
     INCIDENT_003_V2_DEVELOPMENT_SEEDS,
     INCIDENT_003_V2_FAMILY,
+    INCIDENT_003_V3_QUALIFICATION_SEEDS,
+    INCIDENT_003_V3_FAMILY,
+    INCIDENT_003_V3_QUERY_ROLES,
     evaluation_seed_split,
     generate_evaluation_incident,
+    incident_003_v3_case_id,
 )
 from diagpriv.evaluation.evidence_protocols import (
     build_evidence_rubric_v3,
@@ -39,6 +46,12 @@ from diagpriv.evaluation.evidence_support_v3 import (
 from diagpriv.evaluation.evidence_support_v4 import (
     EVIDENCE_SUPPORT_VERSION as EVIDENCE_SUPPORT_VERSION_V4,
     EvidenceSemanticEvaluatorV4,
+)
+from diagpriv.evaluation.incident_003_v3_evidence import (
+    REQUIREMENT_CONSTRUCTOR_VERSION as INCIDENT_003_V3_REQUIREMENT_VERSION,
+)
+from diagpriv.evaluation.incident_003_v3_evidence_semantics import (
+    EVIDENCE_SEMANTIC_EVALUATOR_VERSION as INCIDENT_003_V3_SEMANTIC_EVALUATOR_VERSION,
 )
 from diagpriv.evaluation.manifest import (
     ExperimentManifest,
@@ -141,6 +154,12 @@ class RawRunConfig:
     expected_transformation_configuration_sha256: str | None = None
     trial_index: int | None = None
     recovery_provenance: RecoveryProvenance | None = None
+    query_role: Literal["target", "temporal_twin"] | None = None
+    case_id: str | None = None
+    expected_paired_query_protocol_version: str | None = None
+    expected_anchor_allocation_version: str | None = None
+    expected_evidence_requirement_version: str | None = None
+    expected_semantic_evaluator_version: str | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -163,6 +182,12 @@ class PreparedModelInput:
     evidence_support_version: str | None
     transformation_key_fingerprint: str | None
     transformation_provenance: TransformationProvenance | None
+    query_role: Literal["target", "temporal_twin"] | None
+    case_id: str | None
+    paired_query_protocol_version: str | None
+    anchor_allocation_version: str | None
+    evidence_requirement_version: str | None
+    semantic_evaluator_version: str | None
 
 
 def pilot_seed_plan(
@@ -292,6 +317,7 @@ def run_raw_experiment(
                 "raw-rca-manifest-v8",
                 "raw-rca-manifest-v9",
                 "raw-rca-manifest-v10",
+                "raw-rca-manifest-v11",
             }
             else None
         ),
@@ -300,28 +326,63 @@ def run_raw_experiment(
         evidence_support_version=(
             prepared.evidence_support_version
             if config.manifest_schema_version
-            in {"raw-rca-manifest-v9", "raw-rca-manifest-v10"}
+            in {"raw-rca-manifest-v9", "raw-rca-manifest-v10", "raw-rca-manifest-v11"}
             else None
         ),
         incident_generator_version=(
             prepared.incident_generator_version
             if config.manifest_schema_version
-            in {"raw-rca-manifest-v9", "raw-rca-manifest-v10"}
+            in {"raw-rca-manifest-v9", "raw-rca-manifest-v10", "raw-rca-manifest-v11"}
             else None
         ),
         incident_protocol_version=(
             prepared.incident_protocol_version
             if config.manifest_schema_version
-            in {"raw-rca-manifest-v9", "raw-rca-manifest-v10"}
+            in {"raw-rca-manifest-v9", "raw-rca-manifest-v10", "raw-rca-manifest-v11"}
             else None
         ),
         evidence_requirement_set_sha256=(
             prepared.evidence_requirement_set_sha256
             if config.manifest_schema_version
-            in {"raw-rca-manifest-v9", "raw-rca-manifest-v10"}
+            in {"raw-rca-manifest-v9", "raw-rca-manifest-v10", "raw-rca-manifest-v11"}
             else None
         ),
         transformation_provenance=prepared.transformation_provenance,
+        construction_seed=(
+            config.seed
+            if config.manifest_schema_version == "raw-rca-manifest-v11"
+            else None
+        ),
+        query_role=(
+            prepared.query_role
+            if config.manifest_schema_version == "raw-rca-manifest-v11"
+            else None
+        ),
+        case_id=(
+            prepared.case_id
+            if config.manifest_schema_version == "raw-rca-manifest-v11"
+            else None
+        ),
+        paired_query_protocol_version=(
+            prepared.paired_query_protocol_version
+            if config.manifest_schema_version == "raw-rca-manifest-v11"
+            else None
+        ),
+        anchor_allocation_version=(
+            prepared.anchor_allocation_version
+            if config.manifest_schema_version == "raw-rca-manifest-v11"
+            else None
+        ),
+        evidence_requirement_version=(
+            prepared.evidence_requirement_version
+            if config.manifest_schema_version == "raw-rca-manifest-v11"
+            else None
+        ),
+        semantic_evaluator_version=(
+            prepared.semantic_evaluator_version
+            if config.manifest_schema_version == "raw-rca-manifest-v11"
+            else None
+        ),
     )
     if result_path is not None:
         append_manifest(result_path, manifest)
@@ -360,17 +421,33 @@ def prepare_model_input(config: RawRunConfig) -> PreparedModelInput:
         raise ProtectedSeedError(
             "Incident 003 v2 evaluation is restricted to its frozen development seeds"
         )
+    if config.incident_family == INCIDENT_003_V3_FAMILY:
+        if config.seed not in INCIDENT_003_V3_QUALIFICATION_SEEDS:
+            raise ProtectedSeedError(
+                "Incident 003 v3 evaluation is restricted to the frozen "
+                "qualification seeds"
+            )
+        if config.manifest_schema_version != "raw-rca-manifest-v11":
+            raise ValueError("Incident 003 v3 paired evaluation requires manifest v11")
+        if config.query_role not in INCIDENT_003_V3_QUERY_ROLES:
+            raise ValueError("Incident 003 v3 requires an explicit query role")
+        expected_case_id = incident_003_v3_case_id(config.seed, config.query_role)
+        if config.case_id != expected_case_id:
+            raise ValueError("Incident 003 v3 case ID does not match seed and role")
+    elif config.query_role is not None or config.case_id is not None:
+        raise ValueError("Paired query identity is valid only for Incident 003 v3")
 
     if (
         config.prompt_version == PROMPT_VERSION_V3
-        and config.incident_family != INCIDENT_003_V2_FAMILY
+        and config.incident_family
+        not in {INCIDENT_003_V2_FAMILY, INCIDENT_003_V3_FAMILY}
     ):
-        raise ValueError("raw-rca-v3 currently requires Incident 003 v2")
+        raise ValueError("raw-rca-v3 currently requires Incident 003 v2 or v3")
     if (
-        config.incident_family == INCIDENT_003_V2_FAMILY
+        config.incident_family in {INCIDENT_003_V2_FAMILY, INCIDENT_003_V3_FAMILY}
         and config.prompt_version != PROMPT_VERSION_V3
     ):
-        raise ValueError("Incident 003 v2 requires raw-rca-v3")
+        raise ValueError("Incident 003 v2 and v3 require raw-rca-v3")
     if config.prompt_version == PROMPT_VERSION_V3 and (
         config.expected_evidence_requirement_set_sha256 is None
         or config.expected_incident_generator_version is None
@@ -390,6 +467,33 @@ def prepare_model_input(config: RawRunConfig) -> PreparedModelInput:
             raise ValueError(
                 f"Incident 003 v2 {config.condition} requires "
                 f"{expected_evidence_version}"
+            )
+    if config.incident_family == INCIDENT_003_V3_FAMILY:
+        if config.expected_evidence_support_version != EVIDENCE_SUPPORT_VERSION_V4:
+            raise ValueError("Incident 003 v3 requires evidence-support-v4")
+        expected_paired_versions = {
+            "paired_query_protocol_version": "incident-003-v3-paired-query-v1",
+            "anchor_allocation_version": INCIDENT_003_V3_ANCHOR_ALLOCATION_VERSION,
+            "evidence_requirement_version": INCIDENT_003_V3_REQUIREMENT_VERSION,
+            "semantic_evaluator_version": (
+                INCIDENT_003_V3_SEMANTIC_EVALUATOR_VERSION
+            ),
+        }
+        actual_paired_versions = {
+            "paired_query_protocol_version": (
+                config.expected_paired_query_protocol_version
+            ),
+            "anchor_allocation_version": config.expected_anchor_allocation_version,
+            "evidence_requirement_version": (
+                config.expected_evidence_requirement_version
+            ),
+            "semantic_evaluator_version": (
+                config.expected_semantic_evaluator_version
+            ),
+        }
+        if actual_paired_versions != expected_paired_versions:
+            raise ValueError(
+                "Incident 003 v3 paired/evidence dispatch provenance mismatch"
             )
 
     transformation_provenance = _prepare_transformation_provenance(config)
@@ -412,7 +516,11 @@ def prepare_model_input(config: RawRunConfig) -> PreparedModelInput:
     else:
         raise ValueError(f"Unsupported raw RCA prompt version: {config.prompt_version}")
 
-    incident = generate_evaluation_incident(config.incident_family, config.seed)
+    incident = generate_evaluation_incident(
+        config.incident_family,
+        config.seed,
+        query_role=config.query_role,
+    )
     # These fields are mandatory for the v9/v3 protocol, but older incident
     # families and historical manifest schemas never promised them.  Keep the
     # legacy preparation path tolerant while the v3 checks below fail closed.
@@ -428,6 +536,26 @@ def prepare_model_input(config: RawRunConfig) -> PreparedModelInput:
         and incident_protocol_version != config.expected_incident_protocol_version
     ):
         raise ValueError("Incident protocol version differs from frozen provenance")
+    paired_query_protocol_version: str | None = None
+    anchor_allocation_version: str | None = None
+    evidence_requirement_version: str | None = None
+    semantic_evaluator_version: str | None = None
+    if config.incident_family == INCIDENT_003_V3_FAMILY:
+        paired_query_protocol_version = str(incident.metadata["query_case_version"])
+        anchor_allocation_version = str(
+            incident.metadata["anchor_allocation_version"]
+        )
+        evidence_requirement_version = INCIDENT_003_V3_REQUIREMENT_VERSION
+        semantic_evaluator_version = INCIDENT_003_V3_SEMANTIC_EVALUATOR_VERSION
+        if (
+            paired_query_protocol_version
+            != config.expected_paired_query_protocol_version
+            or anchor_allocation_version
+            != config.expected_anchor_allocation_version
+        ):
+            raise ValueError(
+                "Generated paired-query provenance differs from frozen protocol"
+            )
     transformation_key_fingerprint: str | None = None
     if config.condition == "raw":
         model_view = incident.model_view()
@@ -445,13 +573,19 @@ def prepare_model_input(config: RawRunConfig) -> PreparedModelInput:
     elif config.condition == "format-preserving-v1":
         model_view = format_preserving_incident(incident)
     elif config.condition == "relative-time-v1":
-        if config.incident_family != INCIDENT_003_V2_FAMILY:
-            raise ValueError("relative-time-v1 currently supports Incident 003 v2 only")
+        if config.incident_family not in {
+            INCIDENT_003_V2_FAMILY,
+            INCIDENT_003_V3_FAMILY,
+        }:
+            raise ValueError("relative-time-v1 currently supports Incident 003 only")
         model_view = relative_time_incident(incident)
     elif config.condition == "temporal-ablation-v1":
-        if config.incident_family != INCIDENT_003_V2_FAMILY:
+        if config.incident_family not in {
+            INCIDENT_003_V2_FAMILY,
+            INCIDENT_003_V3_FAMILY,
+        }:
             raise ValueError(
-                "temporal-ablation-v1 currently supports Incident 003 v2 only"
+                "temporal-ablation-v1 currently supports Incident 003 only"
             )
         model_view = temporally_ablated_model_view(incident)
     else:
@@ -475,8 +609,13 @@ def prepare_model_input(config: RawRunConfig) -> PreparedModelInput:
     if config.prompt_version == PROMPT_VERSION_V3:
         evidence_rubric = build_evidence_rubric_v3(incident)
         validate_evidence_rubric_v3(model_view, evidence_rubric)
+        expected_incident_evidence_lineage = (
+            EVIDENCE_SUPPORT_VERSION_V4
+            if config.incident_family == INCIDENT_003_V3_FAMILY
+            else EVIDENCE_SUPPORT_VERSION_V3
+        )
         if incident.metadata.get("evidence_support_version") != (
-            EVIDENCE_SUPPORT_VERSION_V3
+            expected_incident_evidence_lineage
         ):
             raise ValueError(
                 "Incident evidence rubric lineage differs from frozen provenance"
@@ -496,6 +635,14 @@ def prepare_model_input(config: RawRunConfig) -> PreparedModelInput:
             evidence_semantic_evaluator = build_evidence_semantic_evaluator_v4(
                 incident, temporal_semantics_version
             )
+            if (
+                config.expected_semantic_evaluator_version is not None
+                and evidence_semantic_evaluator.version
+                != config.expected_semantic_evaluator_version
+            ):
+                raise ValueError(
+                    "Evidence semantic evaluator differs from frozen provenance"
+                )
         evidence_requirement_set_sha256 = evidence_requirement_set_sha256_v3(
             evidence_rubric
         )
@@ -533,13 +680,22 @@ def prepare_model_input(config: RawRunConfig) -> PreparedModelInput:
         incident_protocol_version=incident_protocol_version,
         evidence_support_version=evidence_support_version,
         transformation_provenance=transformation_provenance,
+        query_role=config.query_role,
+        case_id=config.case_id,
+        paired_query_protocol_version=paired_query_protocol_version,
+        anchor_allocation_version=anchor_allocation_version,
+        evidence_requirement_version=evidence_requirement_version,
+        semantic_evaluator_version=semantic_evaluator_version,
     )
 
 
 def _prepare_transformation_provenance(
     config: RawRunConfig,
 ) -> TransformationProvenance | None:
-    if config.manifest_schema_version != "raw-rca-manifest-v10":
+    if config.manifest_schema_version not in {
+        "raw-rca-manifest-v10",
+        "raw-rca-manifest-v11",
+    }:
         if config.expected_transformation_configuration_sha256 is not None:
             raise ValueError(
                 "Transformation configuration SHA-256 requires manifest schema v10"
