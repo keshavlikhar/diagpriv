@@ -243,8 +243,8 @@ def test_each_condition_dispatches_without_raw_fallback(condition: str) -> None:
     )
 
 
-def test_temporal_ablation_is_restricted_to_incident_003_v2() -> None:
-    with pytest.raises(ValueError, match="supports Incident 003 v2 only"):
+def test_temporal_ablation_is_restricted_to_incident_003_families() -> None:
+    with pytest.raises(ValueError, match="supports Incident 003 only"):
         prepare_model_input(
             replace(
                 _offline_run_config("temporal-ablation-v1", 1019),

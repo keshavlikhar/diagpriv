@@ -380,6 +380,14 @@ record.
 - `results/` is Git-ignored. Collaboration requires a separately reviewed
   artifact-sharing mechanism and digest verification.
 
+Paired Incident 003 v3 observations use append-only
+`raw-rca-manifest-v11`. V11 preserves v10 transformation provenance and adds
+`construction_seed`, `query_role`, `case_id`, paired-query and anchor-allocation
+versions, and evidence-requirement and semantic-evaluator versions. This is a
+required identity/provenance extension: target and temporal-twin observations
+share one construction seed and must never be deduplicated by seed. Historical
+v10 and earlier JSONLs retain their original interpretation.
+
 ## Pre-execution checklist
 
 1. Confirm explicit human approval for the exact condition and split.
@@ -487,9 +495,11 @@ target and temporal-twin query cases over identical evidence serialization.
 Only their query ID and mechanism oracle differ. Both have satisfiable raw and
 relative-time evidence obligations; their ablated views are structurally
 isomorphic while their mechanism oracles conflict and neither temporal rubric
-is satisfied. All 200-instance gates pass. No provider config, model-input hash
-set, result path, or provider observation has been prepared. See
-`docs/INCIDENT_003_V3_CAUSAL_ISOLATION_PROTOCOL.md`.
+is satisfied. All 200-instance gates pass. The subsequent paired qualification
+preparation freezes three eight-case configs, 24 model-input hashes, and eight
+case-level requirement hashes without making a provider call. See
+`docs/INCIDENT_003_V3_CAUSAL_ISOLATION_PROTOCOL.md` and
+`docs/INCIDENT_003_V3_PAIRED_QUALIFICATION_PROTOCOL.md`.
 
 ## Interpretation limits
 

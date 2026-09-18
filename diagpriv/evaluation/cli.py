@@ -61,7 +61,10 @@ def _run_pilot(args: argparse.Namespace) -> None:
         )
     if not args.execute:
         input_preflight = None
-        if definition.expected_model_input_sha256_by_seed:
+        if (
+            definition.expected_model_input_sha256_by_seed
+            or definition.expected_model_input_sha256_by_case_id
+        ):
             input_preflight = _input_preflight(
                 definition,
                 hmac_key=_external_hmac_key(definition),
@@ -70,8 +73,12 @@ def _run_pilot(args: argparse.Namespace) -> None:
             "execution": "pending",
             "pilot": definition.to_dict(),
             "scheduled_calls": (
-                len(definition.development_seeds)
-                + len(definition.validation_seeds)
+                len(definition.paired_case_plan())
+                if definition.paired_case_plan()
+                else (
+                    len(definition.development_seeds)
+                    + len(definition.validation_seeds)
+                )
             )
             * definition.calls_per_seed,
         }
@@ -90,11 +97,23 @@ def _run_pilot(args: argparse.Namespace) -> None:
             "Repeated-trial results path already exists; refusing to call provider"
         )
     hmac_key = _external_hmac_key(definition)
-    if definition.expected_model_input_sha256_by_seed:
+    if (
+        definition.expected_model_input_sha256_by_seed
+        or definition.expected_model_input_sha256_by_case_id
+    ):
         _input_preflight(definition, hmac_key=hmac_key)
     provider, model_version = _openai_provider(definition)
 
-    for seed in (*definition.development_seeds, *definition.validation_seeds):
+    paired_plan = definition.paired_case_plan()
+    observation_plan = (
+        paired_plan
+        if paired_plan
+        else tuple(
+            (seed, None, None)
+            for seed in (*definition.development_seeds, *definition.validation_seeds)
+        )
+    )
+    for seed, query_role, case_id in observation_plan:
         split = "development" if seed in definition.development_seeds else "validation"
         call_slots = (
             tuple(
@@ -108,7 +127,10 @@ def _run_pilot(args: argparse.Namespace) -> None:
             )
         )
         for trial_index, call_label in call_slots:
-            experiment_id = f"{definition.pilot_id}-{split}-{seed}-{call_label}"
+            identity = case_id or str(seed)
+            experiment_id = (
+                f"{definition.pilot_id}-{split}-{identity}-{call_label}"
+            )
             run_raw_experiment(
                 RawRunConfig(
                     experiment_id=experiment_id,
@@ -128,12 +150,16 @@ def _run_pilot(args: argparse.Namespace) -> None:
                     hmac_key=hmac_key,
                     transformation_key_id=definition.hmac_key_id,
                     expected_model_input_sha256=(
-                        definition.expected_model_input_sha256_by_seed.get(seed)
+                        definition.expected_model_input_sha256_by_case_id.get(case_id)
+                        if case_id is not None
+                        else definition.expected_model_input_sha256_by_seed.get(seed)
                     ),
                     expected_evidence_requirement_set_sha256=(
-                        definition.expected_evidence_requirement_set_sha256_by_seed.get(
-                            seed
+                        definition.expected_evidence_requirement_set_sha256_by_case_id.get(
+                            case_id
                         )
+                        if case_id is not None
+                        else definition.expected_evidence_requirement_set_sha256_by_seed.get(seed)
                     ),
                     expected_incident_generator_version=(
                         definition.expected_incident_generator_version
@@ -151,6 +177,20 @@ def _run_pilot(args: argparse.Namespace) -> None:
                         definition.expected_transformation_configuration_sha256
                     ),
                     trial_index=trial_index,
+                    query_role=query_role,
+                    case_id=case_id,
+                    expected_paired_query_protocol_version=(
+                        definition.expected_paired_query_protocol_version
+                    ),
+                    expected_anchor_allocation_version=(
+                        definition.expected_anchor_allocation_version
+                    ),
+                    expected_evidence_requirement_version=(
+                        definition.expected_evidence_requirement_version
+                    ),
+                    expected_semantic_evaluator_version=(
+                        definition.expected_semantic_evaluator_version
+                    ),
                 ),
                 provider,
                 result_path=args.results,
@@ -169,16 +209,26 @@ def _input_preflight(
     }
     fingerprint: str | None = None
     transformation_configuration_digest: str | None = None
-    for seed in (*definition.development_seeds, *definition.validation_seeds):
+    paired_plan = definition.paired_case_plan()
+    observation_plan = (
+        paired_plan
+        if paired_plan
+        else tuple(
+            (seed, None, None)
+            for seed in (*definition.development_seeds, *definition.validation_seeds)
+        )
+    )
+    for seed, query_role, case_id in observation_plan:
+        identity = case_id or str(seed)
         indices: tuple[int | None, ...] = (
             definition.trial_indices if definition.trial_indices else (None,)
         )
-        prepared_for_seed = []
+        prepared_for_case = []
         for trial_index in indices:
             prepared = prepare_model_input(
                 RawRunConfig(
                     experiment_id=(
-                        f"{definition.pilot_id}-input-preflight-{seed}"
+                        f"{definition.pilot_id}-input-preflight-{identity}"
                     ),
                     seed=seed,
                     model=definition.requested_model,
@@ -196,12 +246,16 @@ def _input_preflight(
                     hmac_key=hmac_key,
                     transformation_key_id=definition.hmac_key_id,
                     expected_model_input_sha256=(
-                        definition.expected_model_input_sha256_by_seed[seed]
+                        definition.expected_model_input_sha256_by_case_id[case_id]
+                        if case_id is not None
+                        else definition.expected_model_input_sha256_by_seed[seed]
                     ),
                     expected_evidence_requirement_set_sha256=(
-                        definition.expected_evidence_requirement_set_sha256_by_seed.get(
-                            seed
+                        definition.expected_evidence_requirement_set_sha256_by_case_id.get(
+                            case_id
                         )
+                        if case_id is not None
+                        else definition.expected_evidence_requirement_set_sha256_by_seed.get(seed)
                     ),
                     expected_incident_generator_version=(
                         definition.expected_incident_generator_version
@@ -219,11 +273,25 @@ def _input_preflight(
                         definition.expected_transformation_configuration_sha256
                     ),
                     trial_index=trial_index,
+                    query_role=query_role,
+                    case_id=case_id,
+                    expected_paired_query_protocol_version=(
+                        definition.expected_paired_query_protocol_version
+                    ),
+                    expected_anchor_allocation_version=(
+                        definition.expected_anchor_allocation_version
+                    ),
+                    expected_evidence_requirement_version=(
+                        definition.expected_evidence_requirement_version
+                    ),
+                    expected_semantic_evaluator_version=(
+                        definition.expected_semantic_evaluator_version
+                    ),
                 )
             )
-            prepared_for_seed.append(prepared)
+            prepared_for_case.append(prepared)
             if trial_index is not None:
-                trial_hashes[str(trial_index)][str(seed)] = (
+                trial_hashes[str(trial_index)][identity] = (
                     prepared.model_input_sha256
                 )
             if prepared.transformation_key_fingerprint is not None:
@@ -242,22 +310,34 @@ def _input_preflight(
                     )
                 transformation_configuration_digest = digest
         distinct_hashes = {
-            prepared.model_input_sha256 for prepared in prepared_for_seed
+            prepared.model_input_sha256 for prepared in prepared_for_case
         }
         if len(distinct_hashes) != 1:
             raise ValueError(
-                f"Trial index altered model-visible input for seed {seed}"
+                f"Trial index altered model-visible input for {identity}"
             )
-        hashes[str(seed)] = prepared_for_seed[0].model_input_sha256
-        rubric_hash = prepared_for_seed[0].evidence_requirement_set_sha256
+        hashes[identity] = prepared_for_case[0].model_input_sha256
+        rubric_hash = prepared_for_case[0].evidence_requirement_set_sha256
         if rubric_hash is not None:
-            rubric_hashes[str(seed)] = rubric_hash
+            rubric_hashes[identity] = rubric_hash
+    hash_key = (
+        "model_input_sha256_by_case_id"
+        if paired_plan
+        else "model_input_sha256_by_seed"
+    )
+    rubric_key = (
+        "evidence_requirement_set_sha256_by_case_id"
+        if paired_plan
+        else "evidence_requirement_set_sha256_by_seed"
+    )
     data: dict[str, object] = {
         "status": "verified",
-        "model_input_sha256_by_seed": hashes,
+        hash_key: hashes,
     }
     if rubric_hashes:
-        data["evidence_requirement_set_sha256_by_seed"] = rubric_hashes
+        data[rubric_key] = rubric_hashes
+    if paired_plan:
+        data["case_ids"] = [case_id for _, _, case_id in paired_plan]
     if definition.hmac_key_id is not None:
         data["transformation_key_id"] = definition.hmac_key_id
     if transformation_configuration_digest is not None:
