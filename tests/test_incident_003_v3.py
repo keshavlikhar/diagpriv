@@ -219,6 +219,7 @@ def test_v3_preparation_has_only_reviewed_configs_and_no_tracked_result() -> Non
         "incident_003_v3_relative_time_v1_paired_sol_development.toml",
         "incident_003_v3_relative_time_v1_paired_sol_development_v5.toml",
         "incident_003_v3_temporal_ablation_v1_paired_sol_development.toml",
+        "incident_003_v3_temporal_ablation_v1_paired_sol_development_v5.toml",
     }
     artifacts = list((ROOT / "results").glob("*incident_003*v3*"))
     # A locally completed historical or future observation may exist; the

@@ -134,6 +134,18 @@ v4 and post-hoc v5 scores remain distinct from Stage-2 prospective v5;
 Stage 3 remains unexecuted. See
 `docs/INCIDENT_003_V3_STAGE2_RELATIVE_RESULTS.md`.
 
+Issue #38 separately prepares temporal-ablation Stage 3 **offline** under
+prospective manifest v13 and evidence-support-v5. Its eight model-input hashes
+remain identical to the historical v11 preparation, while eight resolved v5
+requirement hashes are newly pinned. The selected four ablated query pairs
+remain structurally isomorphic after identifier normalization and have
+conflicting mechanism oracles. Under unavailable temporal semantics, neither
+role's temporal essentials can be satisfied even with all visible evidence;
+wrong-role and safe-control evidence do not replace them. This is a construction
+audit, not a provider result or a post-hoc acceptance threshold. Stage 3 has
+not been executed. See
+`docs/INCIDENT_003_V3_STAGE3_EVIDENCE_V5_PROTOCOL.md`.
+
 ## Frozen Incident 003 v1 raw qualification
 
 The development-only raw Sol observation produced:

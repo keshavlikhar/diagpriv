@@ -17,6 +17,10 @@ from diagpriv.evaluation.stage2_v5_reporting import (
     stage2_v5_result_sha256,
     summarize_stage2_v5,
 )
+from diagpriv.evaluation.stage3_v5_reporting import (
+    stage3_v5_result_sha256,
+    summarize_stage3_v5,
+)
 from diagpriv.evaluation.runner import (
     RawRunConfig,
     prepare_model_input,
@@ -451,6 +455,18 @@ def _summarize_stage2_v5(args: argparse.Namespace) -> None:
     print(json.dumps(report, indent=2, sort_keys=True))
 
 
+def _summarize_stage3_v5(args: argparse.Namespace) -> None:
+    definition = PilotDefinition.load(args.config)
+    pricing = None if args.pricing is None else PricingSnapshot.load(args.pricing)
+    report = summarize_stage3_v5(
+        definition,
+        load_manifests(args.results),
+        pricing=pricing,
+        result_sha256=stage3_v5_result_sha256(args.results),
+    )
+    print(json.dumps(report, indent=2, sort_keys=True))
+
+
 def _run_recovery(args: argparse.Namespace) -> None:
     definition = RecoveryDefinition.load(args.config)
     definition.check_result_path(args.results)
@@ -541,6 +557,14 @@ def build_parser() -> argparse.ArgumentParser:
     stage2_parser.add_argument("--results", type=Path, required=True)
     stage2_parser.add_argument("--pricing", type=Path)
     stage2_parser.set_defaults(handler=_summarize_stage2_v5)
+
+    stage3_parser = subparsers.add_parser(
+        "summarize-stage3-v5", help="Coverage-aware paired Stage-3 v5 report"
+    )
+    stage3_parser.add_argument("--config", type=Path, required=True)
+    stage3_parser.add_argument("--results", type=Path, required=True)
+    stage3_parser.add_argument("--pricing", type=Path)
+    stage3_parser.set_defaults(handler=_summarize_stage3_v5)
 
     inspect_parser = subparsers.add_parser(
         "inspect", help="Show every raw response and individual score"
