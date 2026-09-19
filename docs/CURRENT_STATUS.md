@@ -75,9 +75,9 @@ known 2/3/4-feature conjunction separates target from twin. Raw and
 relative-time evidence-v4 obligations are satisfiable; temporal ablation makes
 the four causal temporal obligations unavailable. Those statements describe
 the offline benchmark-construction phase. The paired provider protocol was
-subsequently prepared, and raw Stage 1 is now complete and frozen. The matched
-Incident 003 v3 `relative-time-v1` Stage 2 and `temporal-ablation-v1` Stage 3
-remain unexecuted. See `docs/INCIDENT_003_V3_CAUSAL_ISOLATION_PROTOCOL.md`.
+subsequently prepared, and raw Stage 1 and matched `relative-time-v1` Stage 2
+are now complete and frozen. Incident 003 v3 `temporal-ablation-v1` Stage 3
+remains unexecuted. See `docs/INCIDENT_003_V3_CAUSAL_ISOLATION_PROTOCOL.md`.
 
 The final identifier/position audit initially found a blocking fixed raw-log
 order: target, temporal twin, then safe control. The approved offline correction
@@ -117,18 +117,22 @@ complete four-endpoint positive-overlap citation path;
 obligations, and `1222:temporal_twin` remains the sole RCA mechanism failure.
 The parity correction did not change the 3/8 secondary result. These are
 post-hoc development findings, not experimental validation; v4 remains the
-frozen Stage-1 primary score, and prospective v5 use requires separate approval.
-Relative-time Stage 2 and temporal-ablation Stage 3 remain unexecuted. See
+frozen Stage-1 primary score. Stage 2 subsequently used v5 prospectively under
+separate approval; temporal-ablation Stage 3 remains unexecuted. See
 `docs/EVIDENCE_SUPPORT_V5_METHODOLOGY.md` and
 `docs/INCIDENT_003_V3_STAGE1_EVIDENCE_V5_ANALYSIS.md`.
 
-Issue #33 has a separate prospective, offline Stage-2 preparation on
-`feat/incident-003-v3-stage2-v5-preparation`: manifest v12, v5 requirement
-hashes, and coverage-aware paired reporting are pinned for the eight existing
-relative-time cases. All eight previously frozen model-input hashes remain
-unchanged. The historical Stage-1 v4 result and its post-hoc v5 rescore stay
-distinct; Stage-2 execution requires separate approval, and Stage 3 remains
-unexecuted. See `docs/INCIDENT_003_V3_STAGE2_EVIDENCE_V5_PROTOCOL.md`.
+Issue #33 froze Stage-2 preparation in PR #36: manifest v12, v5 requirement
+hashes, and coverage-aware paired reporting for the eight existing relative-time
+cases. Issue #34 then authorized exactly eight calls. Stage 2 recorded 8/8 valid,
+6/8 exact RCA, 4/4 target mechanisms, 2/4 temporal-twin mechanisms, 2/4
+paired mechanisms, 2/4 paired exact, and 4/8 evidence-supported under
+prospective v5. Its result SHA-256 is
+`f020511aeb497eab8c4ca5da4487ed87e20c6fe5e8b37a56613eb521297536e4`.
+All eight frozen model-input hashes matched before execution. Stage-1 primary
+v4 and post-hoc v5 scores remain distinct from Stage-2 prospective v5;
+Stage 3 remains unexecuted. See
+`docs/INCIDENT_003_V3_STAGE2_RELATIVE_RESULTS.md`.
 
 ## Frozen Incident 003 v1 raw qualification
 
