@@ -12,6 +12,14 @@ This is a qualification with four underlying constructions, not an inferential
 study. It cannot establish statistical significance, population accuracy,
 external validity, held-out performance, or cross-model generality.
 
+The raw Stage-1 observation is now executed and frozen under evidence-support-v4.
+Its evidence-support-v5 rescore is post-hoc/secondary. The originally prepared
+v11 relative-time config remains a historical preparation artifact; the
+prospective Stage-2 evidence-v5 amendment is separately versioned in
+`docs/INCIDENT_003_V3_STAGE2_EVIDENCE_V5_PROTOCOL.md`. Stage 2 and Stage 3 have
+not been executed. Nothing in this historical v11 protocol is silently
+reinterpreted as a v5 provider observation.
+
 ## Frozen benchmark and evaluation versions
 
 - family: `incident_003_temporal_compensation_v3`;

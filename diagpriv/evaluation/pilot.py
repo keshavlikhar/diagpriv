@@ -317,6 +317,7 @@ class PilotDefinition:
             "raw-rca-manifest-v9",
             "raw-rca-manifest-v10",
             "raw-rca-manifest-v11",
+            "raw-rca-manifest-v12",
         }:
             raise ValueError(
                 f"Unsupported manifest schema: {self.manifest_schema_version}"
@@ -353,6 +354,7 @@ class PilotDefinition:
         if self.manifest_schema_version in {
             "raw-rca-manifest-v10",
             "raw-rca-manifest-v11",
+            "raw-rca-manifest-v12",
         }:
             expected_configuration = transformation_configuration_for_condition(
                 self.condition
@@ -600,8 +602,10 @@ class PilotDefinition:
                 raise ValueError(
                     "Incident 003 v3 pilot requires both frozen query roles"
                 )
-            if self.manifest_schema_version != "raw-rca-manifest-v11":
-                raise ValueError("Incident 003 v3 paired pilot requires manifest v11")
+            if self.manifest_schema_version not in {
+                "raw-rca-manifest-v11", "raw-rca-manifest-v12"
+            }:
+                raise ValueError("Incident 003 v3 paired pilot requires manifest v11 or v12")
             if self.prompt_version != PROMPT_VERSION_V3:
                 raise ValueError("Incident 003 v3 pilot requires raw-rca-v3")
             if self.condition not in {
@@ -613,14 +617,17 @@ class PilotDefinition:
                     "Incident 003 v3 qualification supports only its three "
                     "preregistered conditions"
                 )
+            prospective_v5 = self.manifest_schema_version == "raw-rca-manifest-v12"
+            if prospective_v5 and self.condition != "relative-time-v1":
+                raise ValueError("Prospective v12 is reserved for Stage-2 relative-time-v1")
             expected_versions = (
                 "incident-003-generator-v3",
                 "incident-003-temporal-protocol-v3",
-                EVIDENCE_SUPPORT_VERSION_V4,
+                "evidence-support-v5" if prospective_v5 else EVIDENCE_SUPPORT_VERSION_V4,
                 "incident-003-v3-paired-query-v1",
                 "incident-003-v3-role-neutral-anchor-allocation-v1",
-                "incident-003-v3-evidence-requirements-v2",
-                "incident-003-v3-evidence-semantic-evaluator-v2",
+                "incident-003-v3-evidence-requirements-v3" if prospective_v5 else "incident-003-v3-evidence-requirements-v2",
+                "incident-003-v3-evidence-semantic-evaluator-v3" if prospective_v5 else "incident-003-v3-evidence-semantic-evaluator-v2",
             )
             actual_versions = (
                 self.expected_incident_generator_version,
@@ -635,6 +642,14 @@ class PilotDefinition:
                 raise ValueError(
                     "Incident 003 v3 pilot requires frozen paired protocol versions"
                 )
+            if prospective_v5 and (
+                self.requested_model != "gpt-5.6-sol"
+                or self.reasoning_effort != "medium"
+                or self.decoding_settings != {"max_output_tokens": 4096}
+                or self.intended_temperature != 0.0
+                or self.effective_temperature is not None
+            ):
+                raise ValueError("Stage-2 v12 requires the matched Sol decoding protocol")
             if self.calls_per_seed != 1:
                 raise ValueError(
                     "Incident 003 v3 qualification requires one call per paired case"
@@ -902,6 +917,7 @@ class PilotDefinition:
         if self.manifest_schema_version in {
             "raw-rca-manifest-v10",
             "raw-rca-manifest-v11",
+            "raw-rca-manifest-v12",
         }:
             transformation: dict[str, object] = {
                 "transformation_version": self.transformation_version,

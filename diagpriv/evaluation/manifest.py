@@ -237,6 +237,7 @@ class ExperimentManifest:
             "raw-rca-manifest-v9",
             "raw-rca-manifest-v10",
             "raw-rca-manifest-v11",
+            "raw-rca-manifest-v12",
         }:
             raise ValueError(
                 f"Unsupported manifest schema: {self.manifest_schema_version}"
@@ -248,6 +249,7 @@ class ExperimentManifest:
             "raw-rca-manifest-v9",
             "raw-rca-manifest-v10",
             "raw-rca-manifest-v11",
+            "raw-rca-manifest-v12",
         }:
             if not isinstance(self.model_input_sha256, str) or re.fullmatch(
                 r"[0-9a-f]{64}", self.model_input_sha256
@@ -257,6 +259,7 @@ class ExperimentManifest:
                     "raw-rca-manifest-v9",
                     "raw-rca-manifest-v10",
                     "raw-rca-manifest-v11",
+                    "raw-rca-manifest-v12",
                 }:
                     raise ValueError(
                         f"Manifest schema {schema_label} "
@@ -293,6 +296,7 @@ class ExperimentManifest:
             "raw-rca-manifest-v9",
             "raw-rca-manifest-v10",
             "raw-rca-manifest-v11",
+            "raw-rca-manifest-v12",
         }:
             if (
                 self.prompt_version != "raw-rca-v3"
@@ -309,12 +313,16 @@ class ExperimentManifest:
                     "prompt-template SHA-256"
                 )
             expected_evidence_versions = (
-                {"evidence-support-v4"}
-                if self.manifest_schema_version == "raw-rca-manifest-v11"
+                {"evidence-support-v5"}
+                if self.manifest_schema_version == "raw-rca-manifest-v12"
                 else (
-                    {"evidence-support-v3", "evidence-support-v4"}
-                    if self.manifest_schema_version == "raw-rca-manifest-v10"
-                    else {"evidence-support-v3"}
+                    {"evidence-support-v4"}
+                    if self.manifest_schema_version == "raw-rca-manifest-v11"
+                    else (
+                        {"evidence-support-v3", "evidence-support-v4"}
+                        if self.manifest_schema_version == "raw-rca-manifest-v10"
+                        else {"evidence-support-v3"}
+                    )
                 )
             )
             if self.evidence_support_version not in expected_evidence_versions:
@@ -362,6 +370,7 @@ class ExperimentManifest:
         if self.manifest_schema_version in {
             "raw-rca-manifest-v10",
             "raw-rca-manifest-v11",
+            "raw-rca-manifest-v12",
         }:
             if not isinstance(self.transformation_provenance, TransformationProvenance):
                 raise ValueError(
@@ -377,7 +386,7 @@ class ExperimentManifest:
                 )
         elif self.transformation_provenance is not None:
             raise ValueError(
-                "Transformation provenance is valid only in manifest schema v10 or v11"
+                "Transformation provenance is valid only in manifest schema v10 or later"
             )
         paired_fields = (
             self.construction_seed,
@@ -388,7 +397,9 @@ class ExperimentManifest:
             self.evidence_requirement_version,
             self.semantic_evaluator_version,
         )
-        if self.manifest_schema_version == "raw-rca-manifest-v11":
+        if self.manifest_schema_version in {
+            "raw-rca-manifest-v11", "raw-rca-manifest-v12"
+        }:
             if self.construction_seed != self.seed:
                 raise ValueError("Manifest v11 construction_seed must equal seed")
             if self.query_role not in {"target", "temporal_twin"}:
@@ -409,7 +420,52 @@ class ExperimentManifest:
                     "Manifest v11 requires paired-query and evidence dispatch provenance"
                 )
         elif any(value is not None for value in paired_fields):
-            raise ValueError("Paired-query provenance requires manifest schema v11")
+            raise ValueError("Paired-query provenance requires manifest schema v11 or v12")
+        if self.manifest_schema_version == "raw-rca-manifest-v12":
+            if (
+                self.incident_family != "incident_003_temporal_compensation_v3"
+                or self.condition != "relative-time-v1"
+                or self.seed not in {1319, 1299, 1387, 1222}
+                or self.split != "development"
+                or self.requested_model != "gpt-5.6-sol"
+                or self.reasoning_effort != "medium"
+            ):
+                raise ValueError("Manifest v12 is restricted to frozen Stage-2 cases and settings")
+            if (
+                self.prompt_sha256
+                != "a2fc07481c9cd33776086d16cd76fafaa27c2fdf162f4ae634885187d0d22139"
+                or self.evidence_requirement_version
+                != "incident-003-v3-evidence-requirements-v3"
+                or self.semantic_evaluator_version
+                != "incident-003-v3-evidence-semantic-evaluator-v3"
+                or self.incident_generator_version != "incident-003-generator-v3"
+                or self.incident_protocol_version != "incident-003-temporal-protocol-v3"
+                or self.paired_query_protocol_version != "incident-003-v3-paired-query-v1"
+                or self.anchor_allocation_version
+                != "incident-003-v3-role-neutral-anchor-allocation-v1"
+            ):
+                raise ValueError("Manifest v12 requires frozen Stage-2 protocol provenance")
+            if (
+                self.temperature is not None
+                or self.intended_temperature != 0.0
+                or not self.temperature_omission_reason
+                or "temperature" in self.decoding_settings
+                or self.decoding_settings != {"max_output_tokens": 4096}
+            ):
+                raise ValueError("Manifest v12 requires the frozen omitted-temperature decoding protocol")
+            if (
+                self.transformation_provenance is None
+                or self.transformation_provenance.temporal_semantics_version
+                != "relative-time-semantics-v1"
+                or self.transformation_provenance.transformation_configuration_sha256
+                != "cf91779e926974db44fcc71422a31d12b6271c88711322c9151968dbd4c01660"
+            ):
+                raise ValueError("Manifest v12 requires frozen relative-time provenance")
+            if self.response.status == "valid" and (
+                self.response.response is None
+                or not isinstance(self.score, RCAScoreV3)
+            ):
+                raise ValueError("Valid manifest v12 responses require parsed RCA and evidence scores")
 
     def to_dict(self) -> dict[str, object]:
         data: dict[str, object] = {

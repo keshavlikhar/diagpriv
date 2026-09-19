@@ -16,6 +16,11 @@ from diagpriv.evaluation.evidence_support_v4 import (
     EvidenceSemanticEvaluatorV4,
     score_evidence_support_v4,
 )
+from diagpriv.evaluation.evidence_support_v5 import (
+    EVIDENCE_SUPPORT_VERSION as EVIDENCE_SUPPORT_VERSION_V5,
+    EvidenceSemanticEvaluatorV5,
+    score_evidence_support_v5,
+)
 from diagpriv.evaluation.response import RCAResponseV3
 from diagpriv.evaluation.scoring_v2 import ProtocolVersionError
 
@@ -102,7 +107,7 @@ def score_response_v3(
     *,
     evidence_support_version: str = EVIDENCE_SUPPORT_VERSION_V3,
     model_view: ModelView | None = None,
-    semantic_evaluator: EvidenceSemanticEvaluatorV4 | None = None,
+    semantic_evaluator: EvidenceSemanticEvaluatorV4 | EvidenceSemanticEvaluatorV5 | None = None,
 ) -> RCAScoreV3:
     """Score unchanged RCA-v3 labels with an explicit evidence protocol."""
     if not isinstance(response, RCAResponseV3):
@@ -141,6 +146,18 @@ def score_response_v3(
                 "semantic evaluator"
             )
         evidence = score_evidence_support_v4(
+            response.supporting_evidence,
+            model_view,
+            rubric,
+            semantic_evaluator,
+        )
+    elif evidence_support_version == EVIDENCE_SUPPORT_VERSION_V5:
+        if model_view is None or semantic_evaluator is None:
+            raise ProtocolVersionError(
+                "evidence-support-v5 requires a transformed ModelView and "
+                "semantic evaluator"
+            )
+        evidence = score_evidence_support_v5(
             response.supporting_evidence,
             model_view,
             rubric,
