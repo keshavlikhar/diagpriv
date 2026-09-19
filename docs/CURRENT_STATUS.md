@@ -1,6 +1,6 @@
 # Current Status
 
-Last updated: 2026-09-18.
+Last updated: 2026-09-19.
 
 ## Handoff point
 
@@ -75,9 +75,10 @@ known 2/3/4-feature conjunction separates target from twin. Raw and
 relative-time evidence-v4 obligations are satisfiable; temporal ablation makes
 the four causal temporal obligations unavailable. Those statements describe
 the offline benchmark-construction phase. The paired provider protocol was
-subsequently prepared, and raw Stage 1 and matched `relative-time-v1` Stage 2
-are now complete and frozen. Incident 003 v3 `temporal-ablation-v1` Stage 3
-remains unexecuted. See `docs/INCIDENT_003_V3_CAUSAL_ISOLATION_PROTOCOL.md`.
+subsequently prepared, and raw Stage 1, matched `relative-time-v1` Stage 2,
+and prospective-v5 `temporal-ablation-v1` Stage 3 are now complete and frozen.
+See `docs/INCIDENT_003_V3_CAUSAL_ISOLATION_PROTOCOL.md` and
+`docs/INCIDENT_003_V3_STAGE3_ABLATION_RESULTS.md`.
 
 The final identifier/position audit initially found a blocking fixed raw-log
 order: target, temporal twin, then safe control. The approved offline correction
@@ -117,8 +118,8 @@ complete four-endpoint positive-overlap citation path;
 obligations, and `1222:temporal_twin` remains the sole RCA mechanism failure.
 The parity correction did not change the 3/8 secondary result. These are
 post-hoc development findings, not experimental validation; v4 remains the
-frozen Stage-1 primary score. Stage 2 subsequently used v5 prospectively under
-separate approval; temporal-ablation Stage 3 remains unexecuted. See
+frozen Stage-1 primary score. Stages 2 and 3 subsequently used v5
+prospectively under separate approvals. See
 `docs/EVIDENCE_SUPPORT_V5_METHODOLOGY.md` and
 `docs/INCIDENT_003_V3_STAGE1_EVIDENCE_V5_ANALYSIS.md`.
 
@@ -130,11 +131,11 @@ paired mechanisms, 2/4 paired exact, and 4/8 evidence-supported under
 prospective v5. Its result SHA-256 is
 `f020511aeb497eab8c4ca5da4487ed87e20c6fe5e8b37a56613eb521297536e4`.
 All eight frozen model-input hashes matched before execution. Stage-1 primary
-v4 and post-hoc v5 scores remain distinct from Stage-2 prospective v5;
-Stage 3 remains unexecuted. See
+v4 and post-hoc v5 scores remain distinct from Stages 2 and 3 prospective v5.
+See
 `docs/INCIDENT_003_V3_STAGE2_RELATIVE_RESULTS.md`.
 
-Issue #38 separately prepares temporal-ablation Stage 3 **offline** under
+Issue #38 separately prepared temporal-ablation Stage 3 **offline** under
 prospective manifest v13 and evidence-support-v5. Its eight model-input hashes
 remain identical to the historical v11 preparation, while eight resolved v5
 requirement hashes are newly pinned. The selected four ablated query pairs
@@ -142,9 +143,15 @@ remain structurally isomorphic after identifier normalization and have
 conflicting mechanism oracles. Under unavailable temporal semantics, neither
 role's temporal essentials can be satisfied even with all visible evidence;
 wrong-role and safe-control evidence do not replace them. This is a construction
-audit, not a provider result or a post-hoc acceptance threshold. Stage 3 has
-not been executed. See
-`docs/INCIDENT_003_V3_STAGE3_EVIDENCE_V5_PROTOCOL.md`.
+audit, not a provider result or a post-hoc acceptance threshold. Issue #39
+then authorized exactly eight Stage-3 calls. They yielded 8/8 valid, 4/8 exact
+RCA, 4/4 correct target mechanisms, 0/4 correct temporal-twin mechanisms,
+0/4 paired mechanism flips, and 0/8 evidence-supported under prospective v5.
+All four pairs were `both_concurrency`. The ignored, untracked result SHA-256 is
+`40d48f58f95b9bf837fa75a6a13209f6d00c6bbedca8c24d90ddb0927e1bb55a`.
+These are descriptive development observations, not validation or a causal
+estimate. See `docs/INCIDENT_003_V3_STAGE3_EVIDENCE_V5_PROTOCOL.md` and
+`docs/INCIDENT_003_V3_STAGE3_ABLATION_RESULTS.md`.
 
 ## Frozen Incident 003 v1 raw qualification
 

@@ -1,9 +1,12 @@
 # Incident 003 v3 Stage-3 prospective evidence-v5 preparation
 
-Status: **offline preparation only**. Issue #38 starts from synchronized
+Historical status at preparation: **offline preparation only**. Issue #38 starts from synchronized
 `main` commit `74949bc3ccf54205c0177f728a0c4a31278291ee` after the Stage-2
-results PR. Stage 3 has no provider observation or result JSONL. Execution
-requires separate, explicit authorization after review of this preparation.
+results PR. At that checkpoint Stage 3 had no provider observation or result
+JSONL, and execution required separate authorization. Issue #39 subsequently
+authorized and completed the eight Stage-3 calls without changing this frozen
+protocol; the separate result is documented in
+`docs/INCIDENT_003_V3_STAGE3_ABLATION_RESULTS.md`.
 
 ## Scientific question and frozen boundary
 
