@@ -16,4 +16,6 @@ Clean-clone success establishes software compatibility only. Exact historical
 observations remain local, immutable records; no fixture here certifies their
 bytes or replaces their provenance. The separate optional Incident 003 archival
 hash/rescoring test remains unchanged. This repair follows the audit in issue
-#23 and requires review independently from the CI infrastructure change.
+#23. It ships alongside the CI workflow so clean-clone CI can run the full
+suite, but it is a software-only fixture and should be reviewed on its own
+merits rather than as CI configuration.

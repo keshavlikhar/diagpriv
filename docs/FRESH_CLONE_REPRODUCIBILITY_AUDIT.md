@@ -5,6 +5,14 @@ Issue #23, phase 1: audit only. Audited on 2026-09-19 at commit
 match main `85e0c1a`. The only intervening changes are under `.github/`.
 This report changes no test, fixture, result, scorer, or frozen hash.
 
+> **Status:** the synthetic-fixture repair recommended under
+> [Repair alternatives](#repair-alternatives-and-implications) ships in the same
+> pull request as this audit. It renames the dependent test to
+> `test_v1_manifest_cannot_be_scored_as_v2`, adds
+> `tests/fixtures/synthetic_raw_v1_manifest.json` (see `tests/fixtures/README.md`),
+> and changes no other finding below. The audit body records the pre-repair state
+> at the audited commit.
+
 ## Result
 
 A clean clone installs successfully but its complete test suite fails:
