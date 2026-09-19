@@ -14,8 +14,10 @@ malformed present files fail rather than falling back to synthetic data.
 
 Clean-clone success establishes software compatibility only. Exact historical
 observations remain local, immutable records; no fixture here certifies their
-bytes or replaces their provenance. The separate optional Incident 003 archival
-hash/rescoring test remains unchanged. This repair follows the audit in issue
+bytes or replaces their provenance. The optional Incident 003 v2 archival
+hash/rescoring test and the optional v3 Stage-1 evidence-v5 rescore test both
+remain unchanged and still skip when their artifacts are absent.
+This repair follows the audit in issue
 #23. It ships alongside the CI workflow so clean-clone CI can run the full
 suite, but it is a software-only fixture and should be reviewed on its own
 merits rather than as CI configuration.
