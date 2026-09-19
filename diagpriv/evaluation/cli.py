@@ -12,6 +12,11 @@ from diagpriv.evaluation.pilot import PilotDefinition
 from diagpriv.evaluation.pricing import PricingSnapshot
 from diagpriv.evaluation.providers import OpenAIResponsesProvider
 from diagpriv.evaluation.reporting import inspection_json, summarize_path
+from diagpriv.evaluation.reporting import load_manifests
+from diagpriv.evaluation.stage2_v5_reporting import (
+    stage2_v5_result_sha256,
+    summarize_stage2_v5,
+)
 from diagpriv.evaluation.runner import (
     RawRunConfig,
     prepare_model_input,
@@ -434,6 +439,18 @@ def _summarize(args: argparse.Namespace) -> None:
     print(summarize_path(args.results, pricing).to_json(), end="")
 
 
+def _summarize_stage2_v5(args: argparse.Namespace) -> None:
+    definition = PilotDefinition.load(args.config)
+    pricing = None if args.pricing is None else PricingSnapshot.load(args.pricing)
+    report = summarize_stage2_v5(
+        definition,
+        load_manifests(args.results),
+        pricing=pricing,
+        result_sha256=stage2_v5_result_sha256(args.results),
+    )
+    print(json.dumps(report, indent=2, sort_keys=True))
+
+
 def _run_recovery(args: argparse.Namespace) -> None:
     definition = RecoveryDefinition.load(args.config)
     definition.check_result_path(args.results)
@@ -516,6 +533,14 @@ def build_parser() -> argparse.ArgumentParser:
         help="Versioned pricing snapshot used only for cost estimation",
     )
     summary_parser.set_defaults(handler=_summarize)
+
+    stage2_parser = subparsers.add_parser(
+        "summarize-stage2-v5", help="Coverage-aware paired Stage-2 v5 report"
+    )
+    stage2_parser.add_argument("--config", type=Path, required=True)
+    stage2_parser.add_argument("--results", type=Path, required=True)
+    stage2_parser.add_argument("--pricing", type=Path)
+    stage2_parser.set_defaults(handler=_summarize_stage2_v5)
 
     inspect_parser = subparsers.add_parser(
         "inspect", help="Show every raw response and individual score"

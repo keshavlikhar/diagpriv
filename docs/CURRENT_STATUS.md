@@ -122,6 +122,14 @@ Relative-time Stage 2 and temporal-ablation Stage 3 remain unexecuted. See
 `docs/EVIDENCE_SUPPORT_V5_METHODOLOGY.md` and
 `docs/INCIDENT_003_V3_STAGE1_EVIDENCE_V5_ANALYSIS.md`.
 
+Issue #33 has a separate prospective, offline Stage-2 preparation on
+`feat/incident-003-v3-stage2-v5-preparation`: manifest v12, v5 requirement
+hashes, and coverage-aware paired reporting are pinned for the eight existing
+relative-time cases. All eight previously frozen model-input hashes remain
+unchanged. The historical Stage-1 v4 result and its post-hoc v5 rescore stay
+distinct; Stage-2 execution requires separate approval, and Stage 3 remains
+unexecuted. See `docs/INCIDENT_003_V3_STAGE2_EVIDENCE_V5_PROTOCOL.md`.
+
 ## Frozen Incident 003 v1 raw qualification
 
 The development-only raw Sol observation produced:

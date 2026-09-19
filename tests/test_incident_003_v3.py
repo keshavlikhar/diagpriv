@@ -217,12 +217,12 @@ def test_v3_preparation_has_only_reviewed_configs_and_no_tracked_result() -> Non
     } == {
         "incident_003_v3_raw_paired_sol_development.toml",
         "incident_003_v3_relative_time_v1_paired_sol_development.toml",
+        "incident_003_v3_relative_time_v1_paired_sol_development_v5.toml",
         "incident_003_v3_temporal_ablation_v1_paired_sol_development.toml",
     }
     artifacts = list((ROOT / "results").glob("*incident_003*v3*"))
-    assert {path.name for path in artifacts} <= {
-        "incident_003_v3_raw_paired_sol_development_gpt_5_6_sol_medium.jsonl"
-    }
+    # A locally completed historical or future observation may exist; the
+    # invariant is that none is ever tracked, not that local results are absent.
     for path in artifacts:
         assert subprocess.run(
             ["git", "check-ignore", "-q", str(path)], cwd=ROOT, check=False
