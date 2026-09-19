@@ -1,0 +1,33 @@
+name: Documentation-only change
+description: Propose a clarification that does not change code, protocol semantics, or frozen artifacts.
+title: "[Docs]: "
+labels:
+  - documentation
+body:
+  - type: textarea
+    id: gap
+    attributes:
+      label: Documentation gap
+      description: What is unclear, missing, or incorrect?
+    validations:
+      required: true
+
+  - type: textarea
+    id: locations
+    attributes:
+      label: Proposed locations and wording
+      description: Identify the files or sections to update and summarize the correction.
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: scope
+    attributes:
+      label: Scope confirmation
+      options:
+        - label: This change does not alter benchmark, prompt, taxonomy, scorer, generator, transformation, config, or experiment semantics.
+          required: true
+        - label: This change does not edit frozen results or require provider calls.
+          required: true
+        - label: This change does not inspect validation or held-out data.
+          required: true
