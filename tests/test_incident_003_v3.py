@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 from pathlib import Path
+import subprocess
 
 import pytest
 
@@ -210,7 +211,7 @@ def test_v3_audit_rejects_non_audit_and_protected_seed_ranges(
         audit_incident_003_v3_range(seeds)
 
 
-def test_v3_preparation_has_only_the_reviewed_configs_and_no_result_artifact() -> None:
+def test_v3_preparation_has_only_reviewed_configs_and_no_tracked_result() -> None:
     assert {
         path.name for path in (ROOT / "experiments").glob("*incident_003*v3*")
     } == {
@@ -218,7 +219,17 @@ def test_v3_preparation_has_only_the_reviewed_configs_and_no_result_artifact() -
         "incident_003_v3_relative_time_v1_paired_sol_development.toml",
         "incident_003_v3_temporal_ablation_v1_paired_sol_development.toml",
     }
-    assert list((ROOT / "results").glob("*incident_003*v3*")) == []
+    artifacts = list((ROOT / "results").glob("*incident_003*v3*"))
+    assert {path.name for path in artifacts} <= {
+        "incident_003_v3_raw_paired_sol_development_gpt_5_6_sol_medium.jsonl"
+    }
+    for path in artifacts:
+        assert subprocess.run(
+            ["git", "check-ignore", "-q", str(path)], cwd=ROOT, check=False
+        ).returncode == 0
+        assert not subprocess.check_output(
+            ["git", "ls-files", "--", str(path)], cwd=ROOT
+        ).strip()
 
 
 def test_all_v3_raw_timestamps_are_strictly_parseable() -> None:
