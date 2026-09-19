@@ -1,9 +1,11 @@
 # Incident 003 v3 Stage-2 Evidence-v5 Prospective Preparation
 
-Status: **offline preparation only; no Stage-2 or Stage-3 provider observation**.
-This issue #33 amendment is based on synchronized main
-`7910bb27644d2291f90d8859be3a591d006747ae`. Execution requires a separate,
-explicit approval after review of the preparation PR.
+Status at this document's issue #33 freeze: **offline preparation only**.
+Issue #34 subsequently executed and froze Stage 2 without changing this
+prospective protocol; see `docs/INCIDENT_003_V3_STAGE2_RELATIVE_RESULTS.md`.
+Stage 3 remains unexecuted. This issue #33 amendment is based on synchronized main
+`7910bb27644d2291f90d8859be3a591d006747ae`. Execution required separate,
+explicit approval after review of the preparation PR, which issue #34 supplied.
 
 ## Historical boundary and question
 
