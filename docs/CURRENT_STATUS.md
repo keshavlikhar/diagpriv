@@ -73,9 +73,11 @@ seeds 1200–1399, all 200 pairs have equal non-temporal projections, all four v
 signature families collide in 200/200 pairs, and no audited single feature or
 known 2/3/4-feature conjunction separates target from twin. Raw and
 relative-time evidence-v4 obligations are satisfiable; temporal ablation makes
-the four causal temporal obligations unavailable. This is offline construction
-evidence only. No v3 provider config or observation exists. See
-`docs/INCIDENT_003_V3_CAUSAL_ISOLATION_PROTOCOL.md`.
+the four causal temporal obligations unavailable. Those statements describe
+the offline benchmark-construction phase. The paired provider protocol was
+subsequently prepared, and raw Stage 1 is now complete and frozen. The matched
+Incident 003 v3 `relative-time-v1` Stage 2 and `temporal-ablation-v1` Stage 3
+remain unexecuted. See `docs/INCIDENT_003_V3_CAUSAL_ISOLATION_PROTOCOL.md`.
 
 The final identifier/position audit initially found a blocking fixed raw-log
 order: target, temporal twin, then safe control. The approved offline correction
@@ -90,14 +92,35 @@ evidence serialization. Their scored RCA labels differ only in mechanism:
 relative-time evidence obligations are satisfiable for both roles in 200/200;
 after temporal ablation the rendered pair is structurally isomorphic and
 neither mechanism-specific rubric is satisfied, while the hidden mechanism
-oracles conflict. All original and updated offline gates pass. The paired
-provider qualification is now prepared but remains unexecuted. Four
+oracles conflict. All original and updated offline gates pass. Four
 constructions selected by the content-independent hash rule yield eight cases
 per condition under raw, `relative-time-v1`, and `temporal-ablation-v1`.
 Manifest v11 records case role and evidence-dispatch provenance; all 24
 model-input hashes and eight transformation-independent rubric hashes are
-frozen. No v3 provider observation or result JSONL exists. See
+frozen. The raw Stage-1 observation is complete and frozen: 8/8 valid, 7/8
+exact RCA, and 0/8 evidence-supported under frozen evidence-support-v4. The
+sole RCA error is `1222:temporal_twin`. See
 `docs/INCIDENT_003_V3_PAIRED_QUALIFICATION_PROTOCOL.md`.
+
+Evidence-support-v5 is now an offline candidate developed post hoc from the
+Stage-1 forensic audit. It adds generic structured/log alternatives while
+retaining subject binding and strict semantic predicates. The final parity
+review aligned three remaining structured/log obligations: active effect before
+deadline before compensation start; successful active effect with compensated
+workflow; and successful execution completion before compensation start. Across
+seeds 1200–1399, complete raw and relative-time structured/log proofs pass
+200/200 per query role; temporal ablation, wrong-role evidence, and safe-control-
+as-failure proof are rejected 200/200. An explicit secondary rescore recognizes
+3/8 Stage-1 responses as evidence-supported. All four target responses lack a
+complete four-endpoint positive-overlap citation path;
+`1299:temporal_twin` remains unsupported for two serialized-transition
+obligations, and `1222:temporal_twin` remains the sole RCA mechanism failure.
+The parity correction did not change the 3/8 secondary result. These are
+post-hoc development findings, not experimental validation; v4 remains the
+frozen Stage-1 primary score, and prospective v5 use requires separate approval.
+Relative-time Stage 2 and temporal-ablation Stage 3 remain unexecuted. See
+`docs/EVIDENCE_SUPPORT_V5_METHODOLOGY.md` and
+`docs/INCIDENT_003_V3_STAGE1_EVIDENCE_V5_ANALYSIS.md`.
 
 ## Frozen Incident 003 v1 raw qualification
 
