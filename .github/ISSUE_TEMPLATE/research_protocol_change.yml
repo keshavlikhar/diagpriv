@@ -1,0 +1,81 @@
+name: Research or protocol change
+description: Propose a change to scientific meaning, versioned methods, experiments, or frozen-compatible behavior.
+title: "[Research/protocol]: "
+labels:
+  - enhancement
+body:
+  - type: textarea
+    id: motivation
+    attributes:
+      label: Research motivation
+      description: State the question, hypothesis, or methodological defect being addressed.
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed change
+      description: Describe scope, affected files, and any new protocol/version names.
+    validations:
+      required: true
+
+  - type: textarea
+    id: scientific_effect
+    attributes:
+      label: Scientific and model-visible impact
+      description: Explain changes to evidence, labels, scoring, transformations, comparability, or interpretation.
+    validations:
+      required: true
+
+  - type: textarea
+    id: hashes
+    attributes:
+      label: Versioned assets and hashes
+      description: List affected prompt, taxonomy, scorer, generator, transformation, config, and artifact hashes; use `None` where applicable.
+    validations:
+      required: true
+
+  - type: textarea
+    id: seeds
+    attributes:
+      label: Seeds and data boundaries
+      description: List generated or inspected seeds and whether validation or held-out data is involved.
+    validations:
+      required: true
+
+  - type: textarea
+    id: execution
+    attributes:
+      label: Provider calls and result artifacts
+      description: State whether calls or artifact changes are proposed, the exact scope, and the approval required. Use `None` if not applicable.
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Offline acceptance criteria
+      description: Define deterministic tests, compatibility checks, and documentation required before any execution.
+    validations:
+      required: true
+
+  - type: textarea
+    id: decisions
+    attributes:
+      label: Decisions requiring team approval
+      description: List unresolved methodology or authorization decisions.
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: boundaries
+    attributes:
+      label: Research-safety boundaries
+      options:
+        - label: Existing frozen artifacts will not be edited or silently regenerated.
+          required: true
+        - label: Validation or held-out data will not be inspected without explicit approval.
+          required: true
+        - label: Provider execution will remain blocked until the exact protocol is approved.
+          required: true

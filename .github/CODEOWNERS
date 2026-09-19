@@ -1,0 +1,26 @@
+# Review-routing signal only. Enforcement requires branch protection or a ruleset,
+# which this repository does not currently have enabled.
+#
+# IMPORTANT: CODEOWNERS does not provide a two-approval guarantee. When
+# enforcement is enabled, a single approval from any one listed owner satisfies
+# the rule. Listing several accounts on one line makes them ALTERNATIVES, not
+# co-required reviewers. To actually require two people, configure a branch
+# protection rule or ruleset with a required approval count of at least two, in
+# addition to required code-owner review.
+#
+# Research-sensitive paths therefore name a single accountable owner below.
+# Two-person review of these paths remains a team norm, not a mechanism enforced
+# by this file.
+
+# Research-sensitive: scientific meaning, frozen artifacts, and observations.
+/diagbench/ @keshavlikhar
+/diagpriv/evaluation/ @keshavlikhar
+/diagpriv/transformations/ @keshavlikhar
+/experiments/ @keshavlikhar
+/results/ @keshavlikhar
+
+# Includes research RFCs, audits, baseline specifications, and protocol ledgers.
+/docs/ @keshavlikhar
+
+# Ordinary repository infrastructure; either maintainer may review.
+/.github/ @DaxMaxim @keshavlikhar

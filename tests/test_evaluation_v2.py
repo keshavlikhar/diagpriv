@@ -40,6 +40,12 @@ from diagpriv.evaluation.taxonomy_v2 import (
 
 ROOT = Path(__file__).parents[1]
 VALIDATION_CONFIG = ROOT / "experiments" / "raw_pilot_v2_validation.toml"
+SYNTHETIC_V1_MANIFEST = ROOT / "tests/fixtures/synthetic_raw_v1_manifest.json"
+HISTORICAL_V1_MANIFEST = (
+    ROOT
+    / "results"
+    / "raw_pilot_v1_gpt_5_6_luna_medium_temperature_omitted_diagnostic_seed_1000.jsonl"
+)
 
 
 def _expected_ids(seed: int = 1001) -> tuple[str, ...]:
@@ -141,21 +147,39 @@ def test_v1_prompt_parser_and_alias_behavior_remain_frozen() -> None:
     assert "subsequent_action" not in response.to_dict()
 
 
-def test_historical_v1_result_cannot_be_scored_as_v2() -> None:
-    historical_path = (
-        ROOT
-        / "results"
-        / "raw_pilot_v1_gpt_5_6_luna_medium_temperature_omitted_diagnostic_seed_1000.jsonl"
-    )
-    manifest = ExperimentManifest.from_json(
-        historical_path.read_text(encoding="utf-8").strip()
-    )
+def _assert_v1_manifest_rejected_by_v2(manifest: ExperimentManifest) -> None:
     assert manifest.prompt_version == "raw-rca-v1"
     assert manifest.taxonomy_version == "rca-taxonomy-v1"
     assert manifest.scorer_version == "raw-rca-scorer-v1"
     assert isinstance(manifest.response.response, RCAResponse)
     with pytest.raises(ProtocolVersionError, match="RCAResponseV2"):
         score_response_v2(generate_incident_001(1000), manifest.response.response)
+
+
+@pytest.mark.parametrize(
+    "manifest_path",
+    [SYNTHETIC_V1_MANIFEST]
+    + ([HISTORICAL_V1_MANIFEST] if HISTORICAL_V1_MANIFEST.exists() else []),
+    ids=lambda path: path.name,
+)
+def test_v1_manifest_cannot_be_scored_as_v2(manifest_path: Path) -> None:
+    # The software guard always runs; available archival bytes get the same checks.
+    manifest = ExperimentManifest.from_json(manifest_path.read_text(encoding="utf-8"))
+    _assert_v1_manifest_rejected_by_v2(manifest)
+    _assert_v1_manifest_rejected_by_v2(ExperimentManifest.from_json(manifest.to_json()))
+
+
+def test_legacy_v1_manifest_defaults_cannot_promote_response_to_v2() -> None:
+    payload = json.loads(SYNTHETIC_V1_MANIFEST.read_text(encoding="utf-8"))
+    del payload["taxonomy_version"]
+    del payload["scorer_version"]
+    manifest = ExperimentManifest.from_json(json.dumps(payload))
+    assert manifest.requested_model == "offline-synthetic-fixture"
+    assert manifest.model_version_metadata == "test-only"
+    parsed = parse_response(manifest.response.raw_output)
+    assert parsed.status == "valid"
+    assert manifest.response.response == parsed.response
+    _assert_v1_manifest_rejected_by_v2(manifest)
 
 
 def test_v2_ground_truth_and_other_oracle_data_are_absent_from_model_view() -> None:

@@ -1,0 +1,60 @@
+name: Software bug
+description: Report an implementation defect that does not intentionally change research semantics.
+title: "[Bug]: "
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use the research/protocol-change template if the proposed fix changes a benchmark, prompt, scorer, transformation, experiment, or frozen artifact.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What happened, and what did you expect instead?
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Minimal offline reproduction
+      description: Include commands, inputs, and relevant sanitized output. Do not include secrets.
+      placeholder: |
+        1. Run ...
+        2. Observe ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Include OS, Python version, DiagPriv commit, and installation method.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: scientific_scope
+    attributes:
+      label: Could the fix change scientific meaning or a frozen artifact?
+      options:
+        - "No"
+        - "Unsure — research review required"
+        - "Yes — use the research/protocol template"
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: safety
+    attributes:
+      label: Safety confirmation
+      options:
+        - label: I did not make a provider call merely to reproduce this bug.
+          required: true
+        - label: I did not inspect validation or held-out instances.
+          required: true
+        - label: I removed credentials, authorization headers, and unsanitized provider output.
+          required: true
