@@ -90,14 +90,27 @@ evidence serialization. Their scored RCA labels differ only in mechanism:
 relative-time evidence obligations are satisfiable for both roles in 200/200;
 after temporal ablation the rendered pair is structurally isomorphic and
 neither mechanism-specific rubric is satisfied, while the hidden mechanism
-oracles conflict. All original and updated offline gates pass. The paired
-provider qualification is now prepared but remains unexecuted. Four
+oracles conflict. All original and updated offline gates pass. Four
 constructions selected by the content-independent hash rule yield eight cases
 per condition under raw, `relative-time-v1`, and `temporal-ablation-v1`.
 Manifest v11 records case role and evidence-dispatch provenance; all 24
 model-input hashes and eight transformation-independent rubric hashes are
-frozen. No v3 provider observation or result JSONL exists. See
+frozen. The raw Stage-1 observation is complete and frozen: 8/8 valid, 7/8
+exact RCA, and 0/8 evidence-supported under frozen evidence-support-v4. The
+sole RCA error is `1222:temporal_twin`. See
 `docs/INCIDENT_003_V3_PAIRED_QUALIFICATION_PROTOCOL.md`.
+
+Evidence-support-v5 is now an offline candidate developed post hoc from the
+Stage-1 forensic audit. It adds generic structured/log alternatives while
+retaining subject binding and strict semantic predicates. Across seeds
+1200–1399, complete raw and relative-time structured/log proofs pass 200/200
+per query role; temporal ablation, wrong-role evidence, and safe-control-as-
+failure proof are rejected 200/200. An explicit secondary rescore recognizes
+7/8 Stage-1 responses as evidence-supported; `1299:temporal_twin` remains
+unsupported, and `1222:temporal_twin` remains the sole RCA mechanism failure.
+These are post-hoc development findings, not experimental validation. See
+`docs/EVIDENCE_SUPPORT_V5_METHODOLOGY.md` and
+`docs/INCIDENT_003_V3_STAGE1_EVIDENCE_V5_ANALYSIS.md`.
 
 ## Frozen Incident 003 v1 raw qualification
 

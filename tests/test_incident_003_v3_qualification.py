@@ -68,6 +68,9 @@ SELECTION_DIGESTS = {
     1387: "0309d5c21954a9ea8b06358c1f4cccad9256f88daf0f0ede0444a729bd1b6966",
     1222: "04b22773b02d9c607e3ec290259ac51250268ce373cde8a2ef9a47b336d5b447",
 }
+FROZEN_RAW_RESULT_SHA256 = (
+    "b5b567e5966047bc075cdfa2287b13a700e83eb870f2366ee0291dac595505a2"
+)
 
 
 def _run_config(definition: PilotDefinition, case_id: str) -> RawRunConfig:
@@ -173,7 +176,11 @@ def test_paired_configs_are_isolated_and_preregister_eight_cases(
     assert {
         case_id for _, _, case_id in plan
     } == set(definition.expected_model_input_sha256_by_case_id)
-    assert not RESULTS[condition].exists()
+    if RESULTS[condition].exists():
+        assert condition == "raw"
+        assert hashlib.sha256(RESULTS[condition].read_bytes()).hexdigest() == (
+            FROZEN_RAW_RESULT_SHA256
+        )
 
 
 def test_target_and_twin_share_exact_evidence_and_neutral_question_template() -> None:
@@ -443,10 +450,15 @@ def test_condition_cannot_silently_fall_back_to_raw(tmp_path: Path) -> None:
         PilotDefinition.load(changed)
 
 
-def test_result_paths_are_unique_ignored_untracked_and_absent() -> None:
+def test_result_paths_are_unique_ignored_untracked_and_unexecuted_paths_absent() -> None:
     assert len(set(RESULTS.values())) == 3
-    for path in RESULTS.values():
-        assert not path.exists()
+    for condition, path in RESULTS.items():
+        if condition != "raw":
+            assert not path.exists()
+        elif path.exists():
+            assert hashlib.sha256(path.read_bytes()).hexdigest() == (
+                FROZEN_RAW_RESULT_SHA256
+            )
         assert subprocess.run(
             ["git", "check-ignore", "-q", str(path)], cwd=ROOT, check=False
         ).returncode == 0
