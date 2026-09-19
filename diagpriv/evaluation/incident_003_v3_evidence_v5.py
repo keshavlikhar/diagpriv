@@ -143,7 +143,12 @@ def _target_requirements() -> tuple[_RequirementTemplate, ...]:
             "target",
             "target_execution_compensation_overlap",
             ("execution_observations", "compensation_records"),
-            ("compensation_started", "execution_completed"),
+            (
+                "execution_started",
+                "execution_completed",
+                "compensation_started",
+                "compensation_completed",
+            ),
         ),
         _requirement(
             "late_successful_original_effect",
@@ -158,7 +163,7 @@ def _target_requirements() -> tuple[_RequirementTemplate, ...]:
         _requirement(
             "inconsistent_terminal_workflow_effect_state",
             "essential",
-            "Compensated workflow state coexists with completed compensation and an active successful effect.",
+            "Compensated workflow state coexists with an active successful effect.",
             "queried-subject",
             "target",
             "inconsistent_terminal_state",
@@ -204,7 +209,7 @@ def _twin_requirements() -> tuple[_RequirementTemplate, ...]:
         _requirement(
             "compensation_after_committed_success",
             "essential",
-            "Completed compensation begins only after the committed active effect and deadline.",
+            "Compensation begins only after the committed active effect and deadline.",
             "queried-subject",
             "temporal_twin",
             "twin_compensation_after_committed_success",
@@ -251,7 +256,12 @@ def _twin_requirements() -> tuple[_RequirementTemplate, ...]:
             "target",
             "target_execution_compensation_overlap",
             ("execution_observations", "compensation_records"),
-            ("compensation_started", "execution_completed"),
+            (
+                "execution_started",
+                "execution_completed",
+                "compensation_started",
+                "compensation_completed",
+            ),
         ),
         _safe_control_requirement(),
         *_supportive_requirements("temporal_twin"),
@@ -326,7 +336,7 @@ def _supportive_requirements(subject_role: str) -> tuple[_RequirementTemplate, .
         _logs_only_requirement(
             "queried_terminal_outcome_support",
             "supportive",
-            "Lifecycle logs show successful execution, active effect, completed compensation, and compensated workflow state.",
+            "Lifecycle logs show successful execution, an active effect, and compensated workflow state.",
             subject_role,
             "inconsistent_terminal_state",
             (

@@ -133,12 +133,11 @@ class Incident003V3EvidenceSemanticEvaluatorV5:
 
     def _target_overlap(self, items: tuple[_EvidenceItem, ...]) -> bool:
         if _is_log_path(items):
-            # A start of compensation strictly before execution completion is
-            # positive overlap: completion certifies that execution remained
-            # active until the later event.  Mere coexistence is insufficient.
-            return self._before(
-                _log(items, "compensation_started").data["timestamp"],
+            return self._overlap(
+                _log(items, "execution_started").data["timestamp"],
                 _log(items, "execution_completed").data["timestamp"],
+                _log(items, "compensation_started").data["timestamp"],
+                _log(items, "compensation_completed").data["timestamp"],
             )
         execution = _source(items, "execution_observations").data
         compensation = _source(items, "compensation_records").data

@@ -77,6 +77,56 @@ def _score(incident, citations, *, view=None, semantics=TEMPORAL_SEMANTICS_VERSI
     )
 
 
+def _target_interval_view(
+    incident,
+    *,
+    execution_start: int,
+    execution_end: int,
+    compensation_start: int,
+    compensation_end: int,
+) -> ModelView:
+    """Set identical visible intervals in structured rows and lifecycle logs."""
+    data = deepcopy(incident.model_view().to_dict())
+    queried = incident.metadata["target_operation_id"]
+
+    def timestamp(second: int) -> str:
+        return f"2042-01-01T00:00:{second:02d}.000Z"
+
+    structured = data["structured_evidence"]
+    assert isinstance(structured, dict)
+    execution = next(
+        row
+        for row in structured["execution_observations"]
+        if row["operation_id"] == queried
+    )
+    compensation = next(
+        row
+        for row in structured["compensation_records"]
+        if row["operation_id"] == queried
+    )
+    execution["started_at"] = timestamp(execution_start)
+    execution["completed_at"] = timestamp(execution_end)
+    compensation["started_at"] = timestamp(compensation_start)
+    compensation["completed_at"] = timestamp(compensation_end)
+
+    event_times = {
+        "execution_started": execution_start,
+        "execution_completed": execution_end,
+        "compensation_started": compensation_start,
+        "compensation_completed": compensation_end,
+    }
+    logs = data["log_evidence"]
+    assert isinstance(logs, list)
+    for entry in logs:
+        attributes = entry["attributes"]
+        if attributes["operation_id"] != queried:
+            continue
+        event_kind = attributes["event_kind"]
+        if event_kind in event_times:
+            entry["timestamp"] = timestamp(event_times[event_kind])
+    return ModelView.from_dict(data)
+
+
 def test_v5_protocol_is_new_and_v4_requirement_hashes_are_unchanged() -> None:
     assert EVIDENCE_SUPPORT_VERSION == "evidence-support-v5"
     assert RUBRIC_SCHEMA_VERSION == "evidence-rubric-v5"
@@ -265,32 +315,46 @@ def test_v5_correct_subject_with_wrong_temporal_relation_fails() -> None:
     assert "execution_compensation_overlap" in score.missing_essential_requirements
 
 
-def test_v5_overlap_requires_strict_order_not_event_coexistence() -> None:
+@pytest.mark.parametrize(
+    ("name", "execution_start", "execution_end", "compensation_start", "compensation_end", "expected"),
+    (
+        ("genuine_overlap", 10, 30, 20, 40, True),
+        ("compensation_fully_before_execution", 20, 30, 0, 10, False),
+        ("execution_fully_before_compensation", 0, 10, 20, 30, False),
+        ("boundary_touch", 0, 10, 10, 20, False),
+        ("malformed_execution_interval", 20, 10, 5, 25, False),
+        ("malformed_compensation_interval", 0, 30, 20, 10, False),
+    ),
+)
+def test_v5_overlap_representation_invariance_under_adversarial_intervals(
+    name: str,
+    execution_start: int,
+    execution_end: int,
+    compensation_start: int,
+    compensation_end: int,
+    expected: bool,
+) -> None:
     incident = generate_incident_003_v3(1200, "target")
     rubric = build_incident_003_v3_evidence_rubric_v5(incident)
-    data = deepcopy(incident.model_view().to_dict())
-    queried = incident.metadata["target_operation_id"]
-    logs = data["log_evidence"]
-    assert isinstance(logs, list)
-    compensation = next(
-        entry
-        for entry in logs
-        if entry["attributes"]["operation_id"] == queried
-        and entry["attributes"]["event_kind"] == "compensation_started"
+    requirement = _requirement(rubric, "execution_compensation_overlap")
+    view = _target_interval_view(
+        incident,
+        execution_start=execution_start,
+        execution_end=execution_end,
+        compensation_start=compensation_start,
+        compensation_end=compensation_end,
     )
-    completed = next(
-        entry
-        for entry in logs
-        if entry["attributes"]["operation_id"] == queried
-        and entry["attributes"]["event_kind"] == "execution_completed"
+    evaluator = Incident003V3EvidenceSemanticEvaluatorV5(
+        TEMPORAL_SEMANTICS_VERSION
     )
-    compensation["timestamp"] = completed["timestamp"]
-    view = ModelView.from_dict(data)
-    citations = _path(
-        _requirement(rubric, "execution_compensation_overlap"), "logs"
-    ).evidence_ids
-    score = _score(incident, citations, view=view)
-    assert "execution_compensation_overlap" in score.missing_essential_requirements
+    structured = _path(requirement, "structured")
+    logs = _path(requirement, "logs")
+    assert len(logs.evidence_ids) == 4
+    structured_truth = evaluator.evaluate_path(structured, view, rubric)
+    log_truth = evaluator.evaluate_path(logs, view, rubric)
+    assert structured_truth is expected, name
+    assert log_truth is expected, name
+    assert structured_truth is log_truth, name
 
 
 def test_v5_twin_rejects_success_after_deadline_and_compensation() -> None:
@@ -420,7 +484,7 @@ def test_v5_secondary_rescore_is_explicit_and_does_not_mutate_history() -> None:
     assert hashlib.sha256(before).hexdigest() == FROZEN_STAGE1_SHA256
     report = analyze_frozen_stage1_v5(STAGE1)
     assert report["v4_evidence_supported_count"] == 0
-    assert report["v5_evidence_supported_count"] == 7
+    assert report["v5_evidence_supported_count"] == 3
     assert report["frozen_rca_exact_count"] == 7
     assert report["frozen_mechanism_failure_case_ids"] == ["1222:temporal_twin"]
     assert STAGE1.read_bytes() == before

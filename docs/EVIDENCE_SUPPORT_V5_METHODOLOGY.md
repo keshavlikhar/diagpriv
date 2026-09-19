@@ -74,7 +74,7 @@ records cannot satisfy queried essentials.
 | Queried subject identity | any one queried row | any one queried event | visibly binds a cited fact to the query |
 | Deadline before completion | workflow + execution | deadline reached + successful execution completed | proves strict deadline-before-success order |
 | Compensation after deadline | workflow + compensation | deadline reached + compensation started | proves strict trigger/action order |
-| Execution/compensation overlap | execution interval + compensation interval | compensation started + later execution completed | the later completion proves execution remained active for positive time after compensation began; coexistence without strict order fails |
+| Execution/compensation overlap | execution interval + compensation interval | execution started + execution completed + compensation started + compensation completed | both representations prove valid intervals and strict positive overlap using `max(start) < min(end)`; disjoint and boundary-touch cases fail |
 | Late successful original effect | execution + effect + compensation | compensation started + successful execution completed + active effect recorded | proves successful completion and active effect after compensation began |
 | Inconsistent terminal state | workflow + execution + effect | successful execution completed + active effect recorded + compensated workflow recorded | proves successful active effect coexists with compensated workflow state |
 
@@ -152,9 +152,13 @@ roles:
 Focused negative tests cover wrong temporal relations, strict-overlap failure,
 post-deadline twin effects, wrong subjects, lone deadline/success/compensation
 events, incomplete overlap and serialized paths, safe-control confusion,
-nonexistent IDs, other operations, and target/twin cross-use. The four frozen
-qualification constructions—1319, 1299, 1387, and 1222—pass the same generic
-benchmark-derived complete-path checks for both roles.
+nonexistent IDs, other operations, and target/twin cross-use. Structured and
+log overlap paths are also compared under genuine overlap, compensation fully
+before execution, execution fully before compensation, equality at a boundary,
+and malformed execution or compensation intervals. Both representations return
+the same truth value in every case. The four frozen qualification
+constructions—1319, 1299, 1387, and 1222—pass the same generic benchmark-derived
+complete-path checks for both roles.
 
 ## Raw, relative-time, and ablation expectations
 
@@ -195,9 +199,8 @@ preregistration. Offline secondary analysis requires no provider manifest.
 ## Limitations
 
 - V5 is post hoc for raw Stage 1 and is not experimentally validated.
-- Minimal event semantics (for example, completion implies execution was active
-  immediately beforehand) are explicit assumptions and require reviewer
-  agreement.
+- Event interval semantics require explicit start and completion endpoints.
+  Positive overlap is strict; equality at a boundary is not overlap.
 - Flat citation lists cannot express which statement each ID was intended to
   support; the deterministic scorer selects the smallest passing path.
 - Contrast non-gating is a methodology choice, not evidence that controls are

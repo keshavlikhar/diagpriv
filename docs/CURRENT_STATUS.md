@@ -73,9 +73,11 @@ seeds 1200–1399, all 200 pairs have equal non-temporal projections, all four v
 signature families collide in 200/200 pairs, and no audited single feature or
 known 2/3/4-feature conjunction separates target from twin. Raw and
 relative-time evidence-v4 obligations are satisfiable; temporal ablation makes
-the four causal temporal obligations unavailable. This is offline construction
-evidence only. No v3 provider config or observation exists. See
-`docs/INCIDENT_003_V3_CAUSAL_ISOLATION_PROTOCOL.md`.
+the four causal temporal obligations unavailable. Those statements describe
+the offline benchmark-construction phase. The paired provider protocol was
+subsequently prepared, and raw Stage 1 is now complete and frozen. The matched
+Incident 003 v3 `relative-time-v1` Stage 2 and `temporal-ablation-v1` Stage 3
+remain unexecuted. See `docs/INCIDENT_003_V3_CAUSAL_ISOLATION_PROTOCOL.md`.
 
 The final identifier/position audit initially found a blocking fixed raw-log
 order: target, temporal twin, then safe control. The approved offline correction
@@ -106,8 +108,10 @@ retaining subject binding and strict semantic predicates. Across seeds
 1200–1399, complete raw and relative-time structured/log proofs pass 200/200
 per query role; temporal ablation, wrong-role evidence, and safe-control-as-
 failure proof are rejected 200/200. An explicit secondary rescore recognizes
-7/8 Stage-1 responses as evidence-supported; `1299:temporal_twin` remains
-unsupported, and `1222:temporal_twin` remains the sole RCA mechanism failure.
+3/8 Stage-1 responses as evidence-supported. All four target responses lack a
+complete four-endpoint positive-overlap citation path;
+`1299:temporal_twin` remains unsupported for two serialized-transition
+obligations, and `1222:temporal_twin` remains the sole RCA mechanism failure.
 These are post-hoc development findings, not experimental validation. See
 `docs/EVIDENCE_SUPPORT_V5_METHODOLOGY.md` and
 `docs/INCIDENT_003_V3_STAGE1_EVIDENCE_V5_ANALYSIS.md`.
