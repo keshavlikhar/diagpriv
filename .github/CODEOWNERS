@@ -8,12 +8,5 @@
 /experiments/ @DaxMaxim @keshavlikhar
 /results/ @DaxMaxim @keshavlikhar
 
-/docs/EXPERIMENT_PROTOCOL.md @DaxMaxim @keshavlikhar
-/docs/RESEARCH_PLAN.md @DaxMaxim @keshavlikhar
-/docs/THREAT_MODEL.md @DaxMaxim @keshavlikhar
-/docs/benchmark_spec.md @DaxMaxim @keshavlikhar
-/docs/research_charter.md @DaxMaxim @keshavlikhar
-/docs/*PROTOCOL*.md @DaxMaxim @keshavlikhar
-/docs/*protocol*.md @DaxMaxim @keshavlikhar
-/docs/*METHODOLOGY*.md @DaxMaxim @keshavlikhar
-/docs/*FINDINGS*.md @DaxMaxim @keshavlikhar
+# Includes research RFCs, audits, baseline specifications, and protocol ledgers.
+/docs/ @DaxMaxim @keshavlikhar
