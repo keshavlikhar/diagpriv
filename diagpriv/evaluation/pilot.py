@@ -47,6 +47,12 @@ from diagpriv.evaluation.evidence_support_v3 import (
 from diagpriv.evaluation.evidence_support_v4 import (
     EVIDENCE_SUPPORT_VERSION as EVIDENCE_SUPPORT_VERSION_V4,
 )
+from diagpriv.evaluation.stage3_v5_frozen import (
+    STAGE3_MANIFEST_VERSION,
+    STAGE3_MODEL_INPUT_SHA256_BY_CASE_ID,
+    STAGE3_TRANSFORMATION_SHA256,
+    STAGE3_V5_REQUIREMENT_SHA256_BY_CASE_ID,
+)
 from diagpriv.transformations.provenance import (
     transformation_configuration_for_condition,
     transformation_configuration_sha256,
@@ -318,6 +324,7 @@ class PilotDefinition:
             "raw-rca-manifest-v10",
             "raw-rca-manifest-v11",
             "raw-rca-manifest-v12",
+            STAGE3_MANIFEST_VERSION,
         }:
             raise ValueError(
                 f"Unsupported manifest schema: {self.manifest_schema_version}"
@@ -355,6 +362,7 @@ class PilotDefinition:
             "raw-rca-manifest-v10",
             "raw-rca-manifest-v11",
             "raw-rca-manifest-v12",
+            STAGE3_MANIFEST_VERSION,
         }:
             expected_configuration = transformation_configuration_for_condition(
                 self.condition
@@ -603,9 +611,9 @@ class PilotDefinition:
                     "Incident 003 v3 pilot requires both frozen query roles"
                 )
             if self.manifest_schema_version not in {
-                "raw-rca-manifest-v11", "raw-rca-manifest-v12"
+                "raw-rca-manifest-v11", "raw-rca-manifest-v12", STAGE3_MANIFEST_VERSION
             }:
-                raise ValueError("Incident 003 v3 paired pilot requires manifest v11 or v12")
+                raise ValueError("Incident 003 v3 paired pilot requires manifest v11, v12, or v13")
             if self.prompt_version != PROMPT_VERSION_V3:
                 raise ValueError("Incident 003 v3 pilot requires raw-rca-v3")
             if self.condition not in {
@@ -617,9 +625,13 @@ class PilotDefinition:
                     "Incident 003 v3 qualification supports only its three "
                     "preregistered conditions"
                 )
-            prospective_v5 = self.manifest_schema_version == "raw-rca-manifest-v12"
-            if prospective_v5 and self.condition != "relative-time-v1":
+            stage2_v5 = self.manifest_schema_version == "raw-rca-manifest-v12"
+            stage3_v5 = self.manifest_schema_version == STAGE3_MANIFEST_VERSION
+            prospective_v5 = stage2_v5 or stage3_v5
+            if stage2_v5 and self.condition != "relative-time-v1":
                 raise ValueError("Prospective v12 is reserved for Stage-2 relative-time-v1")
+            if stage3_v5 and self.condition != "temporal-ablation-v1":
+                raise ValueError("Prospective v13 is reserved for Stage-3 temporal-ablation-v1")
             expected_versions = (
                 "incident-003-generator-v3",
                 "incident-003-temporal-protocol-v3",
@@ -649,7 +661,17 @@ class PilotDefinition:
                 or self.intended_temperature != 0.0
                 or self.effective_temperature is not None
             ):
-                raise ValueError("Stage-2 v12 requires the matched Sol decoding protocol")
+                raise ValueError("Prospective v12/v13 requires the matched Sol decoding protocol")
+            if stage3_v5 and (
+                self.provider != "openai-responses"
+                or self.expected_transformation_configuration_sha256
+                != STAGE3_TRANSFORMATION_SHA256
+                or self.expected_model_input_sha256_by_case_id
+                != STAGE3_MODEL_INPUT_SHA256_BY_CASE_ID
+                or self.expected_evidence_requirement_set_sha256_by_case_id
+                != STAGE3_V5_REQUIREMENT_SHA256_BY_CASE_ID
+            ):
+                raise ValueError("Stage-3 v13 requires the exact frozen input and transformation hashes")
             if self.calls_per_seed != 1:
                 raise ValueError(
                     "Incident 003 v3 qualification requires one call per paired case"
@@ -918,6 +940,7 @@ class PilotDefinition:
             "raw-rca-manifest-v10",
             "raw-rca-manifest-v11",
             "raw-rca-manifest-v12",
+            STAGE3_MANIFEST_VERSION,
         }:
             transformation: dict[str, object] = {
                 "transformation_version": self.transformation_version,

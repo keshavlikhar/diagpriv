@@ -20,6 +20,9 @@ prospective Stage-2 evidence-v5 amendment is separately versioned in
 preparation checkpoint, Stage 2 and Stage 3 had not been executed. Stage 2 was
 subsequently executed under v12/v5 (see
 `docs/INCIDENT_003_V3_STAGE2_RELATIVE_RESULTS.md`); Stage 3 remains unexecuted.
+Stage 3 has a separate prospective v13/v5 offline preparation (see
+`docs/INCIDENT_003_V3_STAGE3_EVIDENCE_V5_PROTOCOL.md`) and must not inherit
+this historical v11/v4 evidence protocol.
 Nothing in this historical v11 protocol is silently
 reinterpreted as a v5 provider observation.
 

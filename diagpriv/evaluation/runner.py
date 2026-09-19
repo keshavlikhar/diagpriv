@@ -52,6 +52,12 @@ from diagpriv.evaluation.evidence_support_v5 import (
     EvidenceSemanticEvaluatorV5,
     validate_evidence_rubric_v5,
 )
+from diagpriv.evaluation.stage3_v5_frozen import (
+    STAGE3_MANIFEST_VERSION,
+    STAGE3_MODEL_INPUT_SHA256_BY_CASE_ID,
+    STAGE3_TRANSFORMATION_SHA256,
+    STAGE3_V5_REQUIREMENT_SHA256_BY_CASE_ID,
+)
 from diagpriv.evaluation.incident_003_v3_evidence_v5 import (
     REQUIREMENT_CONSTRUCTOR_VERSION as INCIDENT_003_V3_REQUIREMENT_VERSION_V5,
     build_incident_003_v3_evidence_rubric_v5,
@@ -332,6 +338,7 @@ def run_raw_experiment(
                 "raw-rca-manifest-v10",
                 "raw-rca-manifest-v11",
                 "raw-rca-manifest-v12",
+                STAGE3_MANIFEST_VERSION,
             }
             else None
         ),
@@ -340,61 +347,61 @@ def run_raw_experiment(
         evidence_support_version=(
             prepared.evidence_support_version
             if config.manifest_schema_version
-            in {"raw-rca-manifest-v9", "raw-rca-manifest-v10", "raw-rca-manifest-v11", "raw-rca-manifest-v12"}
+            in {"raw-rca-manifest-v9", "raw-rca-manifest-v10", "raw-rca-manifest-v11", "raw-rca-manifest-v12", STAGE3_MANIFEST_VERSION}
             else None
         ),
         incident_generator_version=(
             prepared.incident_generator_version
             if config.manifest_schema_version
-            in {"raw-rca-manifest-v9", "raw-rca-manifest-v10", "raw-rca-manifest-v11", "raw-rca-manifest-v12"}
+            in {"raw-rca-manifest-v9", "raw-rca-manifest-v10", "raw-rca-manifest-v11", "raw-rca-manifest-v12", STAGE3_MANIFEST_VERSION}
             else None
         ),
         incident_protocol_version=(
             prepared.incident_protocol_version
             if config.manifest_schema_version
-            in {"raw-rca-manifest-v9", "raw-rca-manifest-v10", "raw-rca-manifest-v11", "raw-rca-manifest-v12"}
+            in {"raw-rca-manifest-v9", "raw-rca-manifest-v10", "raw-rca-manifest-v11", "raw-rca-manifest-v12", STAGE3_MANIFEST_VERSION}
             else None
         ),
         evidence_requirement_set_sha256=(
             prepared.evidence_requirement_set_sha256
             if config.manifest_schema_version
-            in {"raw-rca-manifest-v9", "raw-rca-manifest-v10", "raw-rca-manifest-v11", "raw-rca-manifest-v12"}
+            in {"raw-rca-manifest-v9", "raw-rca-manifest-v10", "raw-rca-manifest-v11", "raw-rca-manifest-v12", STAGE3_MANIFEST_VERSION}
             else None
         ),
         transformation_provenance=prepared.transformation_provenance,
         construction_seed=(
             config.seed
-            if config.manifest_schema_version in {"raw-rca-manifest-v11", "raw-rca-manifest-v12"}
+            if config.manifest_schema_version in {"raw-rca-manifest-v11", "raw-rca-manifest-v12", STAGE3_MANIFEST_VERSION}
             else None
         ),
         query_role=(
             prepared.query_role
-            if config.manifest_schema_version in {"raw-rca-manifest-v11", "raw-rca-manifest-v12"}
+            if config.manifest_schema_version in {"raw-rca-manifest-v11", "raw-rca-manifest-v12", STAGE3_MANIFEST_VERSION}
             else None
         ),
         case_id=(
             prepared.case_id
-            if config.manifest_schema_version in {"raw-rca-manifest-v11", "raw-rca-manifest-v12"}
+            if config.manifest_schema_version in {"raw-rca-manifest-v11", "raw-rca-manifest-v12", STAGE3_MANIFEST_VERSION}
             else None
         ),
         paired_query_protocol_version=(
             prepared.paired_query_protocol_version
-            if config.manifest_schema_version in {"raw-rca-manifest-v11", "raw-rca-manifest-v12"}
+            if config.manifest_schema_version in {"raw-rca-manifest-v11", "raw-rca-manifest-v12", STAGE3_MANIFEST_VERSION}
             else None
         ),
         anchor_allocation_version=(
             prepared.anchor_allocation_version
-            if config.manifest_schema_version in {"raw-rca-manifest-v11", "raw-rca-manifest-v12"}
+            if config.manifest_schema_version in {"raw-rca-manifest-v11", "raw-rca-manifest-v12", STAGE3_MANIFEST_VERSION}
             else None
         ),
         evidence_requirement_version=(
             prepared.evidence_requirement_version
-            if config.manifest_schema_version in {"raw-rca-manifest-v11", "raw-rca-manifest-v12"}
+            if config.manifest_schema_version in {"raw-rca-manifest-v11", "raw-rca-manifest-v12", STAGE3_MANIFEST_VERSION}
             else None
         ),
         semantic_evaluator_version=(
             prepared.semantic_evaluator_version
-            if config.manifest_schema_version in {"raw-rca-manifest-v11", "raw-rca-manifest-v12"}
+            if config.manifest_schema_version in {"raw-rca-manifest-v11", "raw-rca-manifest-v12", STAGE3_MANIFEST_VERSION}
             else None
         ),
     )
@@ -415,6 +422,24 @@ def prepare_model_input(config: RawRunConfig) -> PreparedModelInput:
         or not config.temperature_omission_reason
     ):
         raise ValueError("Manifest v12 requires the frozen Stage-2 model protocol")
+    if config.manifest_schema_version == STAGE3_MANIFEST_VERSION and (
+        config.incident_family != INCIDENT_003_V3_FAMILY
+        or config.condition != "temporal-ablation-v1"
+        or config.case_id not in STAGE3_MODEL_INPUT_SHA256_BY_CASE_ID
+        or config.model != "gpt-5.6-sol"
+        or config.reasoning_effort != "medium"
+        or config.decoding_settings != {"max_output_tokens": 4096}
+        or config.intended_temperature != 0.0
+        or not config.temperature_omission_reason
+        or config.prompt_version != PROMPT_VERSION_V3
+        or config.expected_model_input_sha256
+        != STAGE3_MODEL_INPUT_SHA256_BY_CASE_ID.get(config.case_id)
+        or config.expected_evidence_requirement_set_sha256
+        != STAGE3_V5_REQUIREMENT_SHA256_BY_CASE_ID.get(config.case_id)
+        or config.expected_transformation_configuration_sha256
+        != STAGE3_TRANSFORMATION_SHA256
+    ):
+        raise ValueError("Manifest v13 requires the frozen Stage-3 input protocol")
     split = evaluation_seed_split(config.incident_family, config.seed)
     if split == "evaluation" and not config.allow_held_out:
         raise ProtectedSeedError(
@@ -452,9 +477,9 @@ def prepare_model_input(config: RawRunConfig) -> PreparedModelInput:
                 "qualification seeds"
             )
         if config.manifest_schema_version not in {
-            "raw-rca-manifest-v11", "raw-rca-manifest-v12"
+            "raw-rca-manifest-v11", "raw-rca-manifest-v12", STAGE3_MANIFEST_VERSION
         }:
-            raise ValueError("Incident 003 v3 paired evaluation requires manifest v11 or v12")
+            raise ValueError("Incident 003 v3 paired evaluation requires manifest v11, v12, or v13")
         if config.query_role not in INCIDENT_003_V3_QUERY_ROLES:
             raise ValueError("Incident 003 v3 requires an explicit query role")
         expected_case_id = incident_003_v3_case_id(config.seed, config.query_role)
@@ -495,14 +520,18 @@ def prepare_model_input(config: RawRunConfig) -> PreparedModelInput:
                 f"{expected_evidence_version}"
             )
     if config.incident_family == INCIDENT_003_V3_FAMILY:
-        expected_v5 = config.manifest_schema_version == "raw-rca-manifest-v12"
+        expected_v5 = config.manifest_schema_version in {
+            "raw-rca-manifest-v12", STAGE3_MANIFEST_VERSION
+        }
         expected_evidence = (
             EVIDENCE_SUPPORT_VERSION_V5 if expected_v5 else EVIDENCE_SUPPORT_VERSION_V4
         )
         if config.expected_evidence_support_version != expected_evidence:
             raise ValueError(f"Incident 003 v3 manifest requires {expected_evidence}")
-        if expected_v5 and config.condition != "relative-time-v1":
+        if config.manifest_schema_version == "raw-rca-manifest-v12" and config.condition != "relative-time-v1":
             raise ValueError("Manifest v12 is reserved for relative-time-v1 Stage 2")
+        if config.manifest_schema_version == STAGE3_MANIFEST_VERSION and config.condition != "temporal-ablation-v1":
+            raise ValueError("Manifest v13 is reserved for temporal-ablation-v1 Stage 3")
         expected_paired_versions = {
             "paired_query_protocol_version": "incident-003-v3-paired-query-v1",
             "anchor_allocation_version": INCIDENT_003_V3_ANCHOR_ALLOCATION_VERSION,
@@ -581,7 +610,9 @@ def prepare_model_input(config: RawRunConfig) -> PreparedModelInput:
         anchor_allocation_version = str(
             incident.metadata["anchor_allocation_version"]
         )
-        if config.manifest_schema_version == "raw-rca-manifest-v12":
+        if config.manifest_schema_version in {
+            "raw-rca-manifest-v12", STAGE3_MANIFEST_VERSION
+        }:
             evidence_requirement_version = INCIDENT_003_V3_REQUIREMENT_VERSION_V5
             semantic_evaluator_version = INCIDENT_003_V3_SEMANTIC_EVALUATOR_VERSION_V5
         else:
@@ -647,7 +678,9 @@ def prepare_model_input(config: RawRunConfig) -> PreparedModelInput:
     evidence_requirement_set_sha256: str | None = None
     evidence_support_version: str | None = None
     if config.prompt_version == PROMPT_VERSION_V3:
-        if config.manifest_schema_version == "raw-rca-manifest-v12":
+        if config.manifest_schema_version in {
+            "raw-rca-manifest-v12", STAGE3_MANIFEST_VERSION
+        }:
             evidence_rubric = build_incident_003_v3_evidence_rubric_v5(incident)
             validate_evidence_rubric_v5(model_view, evidence_rubric)
         else:
@@ -748,6 +781,7 @@ def _prepare_transformation_provenance(
         "raw-rca-manifest-v10",
         "raw-rca-manifest-v11",
         "raw-rca-manifest-v12",
+        STAGE3_MANIFEST_VERSION,
     }:
         if config.expected_transformation_configuration_sha256 is not None:
             raise ValueError(

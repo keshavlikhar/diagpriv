@@ -13,6 +13,13 @@ from diagpriv.evaluation.response import ParsedResponse
 from diagpriv.evaluation.scoring import RCAScore
 from diagpriv.evaluation.scoring_v2 import RCAScoreV2
 from diagpriv.evaluation.scoring_v3 import RCAScoreV3
+from diagpriv.evaluation.stage3_v5_frozen import (
+    STAGE3_MANIFEST_VERSION,
+    STAGE3_MODEL_INPUT_SHA256_BY_CASE_ID,
+    STAGE3_PROMPT_SHA256,
+    STAGE3_TRANSFORMATION_SHA256,
+    STAGE3_V5_REQUIREMENT_SHA256_BY_CASE_ID,
+)
 from diagpriv.transformations.provenance import (
     canonical_transformation_configuration_json,
     transformation_configuration_for_condition,
@@ -238,6 +245,7 @@ class ExperimentManifest:
             "raw-rca-manifest-v10",
             "raw-rca-manifest-v11",
             "raw-rca-manifest-v12",
+            STAGE3_MANIFEST_VERSION,
         }:
             raise ValueError(
                 f"Unsupported manifest schema: {self.manifest_schema_version}"
@@ -250,6 +258,7 @@ class ExperimentManifest:
             "raw-rca-manifest-v10",
             "raw-rca-manifest-v11",
             "raw-rca-manifest-v12",
+            STAGE3_MANIFEST_VERSION,
         }:
             if not isinstance(self.model_input_sha256, str) or re.fullmatch(
                 r"[0-9a-f]{64}", self.model_input_sha256
@@ -260,6 +269,7 @@ class ExperimentManifest:
                     "raw-rca-manifest-v10",
                     "raw-rca-manifest-v11",
                     "raw-rca-manifest-v12",
+                    STAGE3_MANIFEST_VERSION,
                 }:
                     raise ValueError(
                         f"Manifest schema {schema_label} "
@@ -297,6 +307,7 @@ class ExperimentManifest:
             "raw-rca-manifest-v10",
             "raw-rca-manifest-v11",
             "raw-rca-manifest-v12",
+            STAGE3_MANIFEST_VERSION,
         }:
             if (
                 self.prompt_version != "raw-rca-v3"
@@ -314,7 +325,9 @@ class ExperimentManifest:
                 )
             expected_evidence_versions = (
                 {"evidence-support-v5"}
-                if self.manifest_schema_version == "raw-rca-manifest-v12"
+                if self.manifest_schema_version in {
+                    "raw-rca-manifest-v12", STAGE3_MANIFEST_VERSION
+                }
                 else (
                     {"evidence-support-v4"}
                     if self.manifest_schema_version == "raw-rca-manifest-v11"
@@ -371,6 +384,7 @@ class ExperimentManifest:
             "raw-rca-manifest-v10",
             "raw-rca-manifest-v11",
             "raw-rca-manifest-v12",
+            STAGE3_MANIFEST_VERSION,
         }:
             if not isinstance(self.transformation_provenance, TransformationProvenance):
                 raise ValueError(
@@ -398,7 +412,7 @@ class ExperimentManifest:
             self.semantic_evaluator_version,
         )
         if self.manifest_schema_version in {
-            "raw-rca-manifest-v11", "raw-rca-manifest-v12"
+            "raw-rca-manifest-v11", "raw-rca-manifest-v12", STAGE3_MANIFEST_VERSION
         }:
             if self.construction_seed != self.seed:
                 raise ValueError("Manifest v11 construction_seed must equal seed")
@@ -466,6 +480,56 @@ class ExperimentManifest:
                 or not isinstance(self.score, RCAScoreV3)
             ):
                 raise ValueError("Valid manifest v12 responses require parsed RCA and evidence scores")
+        if self.manifest_schema_version == STAGE3_MANIFEST_VERSION:
+            if (
+                self.incident_family != "incident_003_temporal_compensation_v3"
+                or self.condition != "temporal-ablation-v1"
+                or self.case_id not in STAGE3_MODEL_INPUT_SHA256_BY_CASE_ID
+                or self.split != "development"
+                or self.requested_model != "gpt-5.6-sol"
+                or self.reasoning_effort != "medium"
+                or self.transformation_key_id is not None
+                or self.transformation_key_fingerprint is not None
+            ):
+                raise ValueError("Manifest v13 is restricted to frozen Stage-3 cases and settings")
+            if (
+                self.prompt_sha256 != STAGE3_PROMPT_SHA256
+                or self.evidence_requirement_version
+                != "incident-003-v3-evidence-requirements-v3"
+                or self.semantic_evaluator_version
+                != "incident-003-v3-evidence-semantic-evaluator-v3"
+                or self.incident_generator_version != "incident-003-generator-v3"
+                or self.incident_protocol_version != "incident-003-temporal-protocol-v3"
+                or self.paired_query_protocol_version != "incident-003-v3-paired-query-v1"
+                or self.anchor_allocation_version
+                != "incident-003-v3-role-neutral-anchor-allocation-v1"
+                or self.model_input_sha256
+                != STAGE3_MODEL_INPUT_SHA256_BY_CASE_ID[self.case_id]
+                or self.evidence_requirement_set_sha256
+                != STAGE3_V5_REQUIREMENT_SHA256_BY_CASE_ID[self.case_id]
+            ):
+                raise ValueError("Manifest v13 requires frozen Stage-3 input and evidence provenance")
+            if (
+                self.temperature is not None
+                or self.intended_temperature != 0.0
+                or not self.temperature_omission_reason
+                or "temperature" in self.decoding_settings
+                or self.decoding_settings != {"max_output_tokens": 4096}
+            ):
+                raise ValueError("Manifest v13 requires the frozen omitted-temperature decoding protocol")
+            if (
+                self.transformation_provenance is None
+                or self.transformation_provenance.temporal_semantics_version
+                != "temporal-semantics-unavailable-v1"
+                or self.transformation_provenance.transformation_configuration_sha256
+                != STAGE3_TRANSFORMATION_SHA256
+            ):
+                raise ValueError("Manifest v13 requires frozen temporal-ablation provenance")
+            if self.response.status == "valid" and (
+                self.response.response is None
+                or not isinstance(self.score, RCAScoreV3)
+            ):
+                raise ValueError("Valid manifest v13 responses require parsed RCA and evidence scores")
 
     def to_dict(self) -> dict[str, object]:
         data: dict[str, object] = {
