@@ -1,0 +1,33 @@
+{
+  "manifest_schema_version": "raw-rca-manifest-v2",
+  "experiment_id": "synthetic-unit-test-v1-compatibility-not-an-observation",
+  "benchmark_version": "0.2",
+  "incident_family": "incident_001_duplicate_payment",
+  "seed": 1000,
+  "split": "development",
+  "condition": "raw",
+  "model": "offline-synthetic-fixture",
+  "model_version": "test-only",
+  "prompt_version": "raw-rca-v1",
+  "prompt_sha256": "0c06c1ec6d72ca08927a367aaf873d7bea2b34c6210ceb74824263dd7f2bd9cd",
+  "taxonomy_version": "rca-taxonomy-v1",
+  "scorer_version": "raw-rca-scorer-v1",
+  "decoding_settings": {},
+  "timestamp": "2000-01-01T00:00:00+00:00",
+  "response": {
+    "status": "valid",
+    "raw_output": "{\"observed_outcome\":\"double_charge\",\"trigger\":\"caller_retry_after_timeout\",\"failure_mechanism\":\"missing_idempotency\",\"affected_component\":\"payment_worker\",\"supporting_evidence\":[],\"explanation\":\"Hand-authored synthetic compatibility input, not a provider observation.\",\"confidence\":0.5}",
+    "response": {
+      "observed_outcome": "double_charge",
+      "trigger": "caller_retry_after_timeout",
+      "failure_mechanism": "missing_idempotency",
+      "affected_component": "payment_worker",
+      "supporting_evidence": [],
+      "explanation": "Hand-authored synthetic compatibility input, not a provider observation.",
+      "confidence": 0.5
+    },
+    "error": null,
+    "unknown_fields": []
+  },
+  "score": null
+}
