@@ -223,7 +223,7 @@ def _twin_requirements() -> tuple[_RequirementTemplate, ...]:
         _requirement(
             "serialized_execution_before_compensation",
             "essential",
-            "Execution affirmatively completes before compensation begins.",
+            "Successful execution affirmatively completes before compensation begins.",
             "queried-subject",
             "temporal_twin",
             "twin_serialized_execution_before_compensation",

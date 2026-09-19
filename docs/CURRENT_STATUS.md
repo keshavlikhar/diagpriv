@@ -104,15 +104,21 @@ sole RCA error is `1222:temporal_twin`. See
 
 Evidence-support-v5 is now an offline candidate developed post hoc from the
 Stage-1 forensic audit. It adds generic structured/log alternatives while
-retaining subject binding and strict semantic predicates. Across seeds
-1200–1399, complete raw and relative-time structured/log proofs pass 200/200
-per query role; temporal ablation, wrong-role evidence, and safe-control-as-
-failure proof are rejected 200/200. An explicit secondary rescore recognizes
+retaining subject binding and strict semantic predicates. The final parity
+review aligned three remaining structured/log obligations: active effect before
+deadline before compensation start; successful active effect with compensated
+workflow; and successful execution completion before compensation start. Across
+seeds 1200–1399, complete raw and relative-time structured/log proofs pass
+200/200 per query role; temporal ablation, wrong-role evidence, and safe-control-
+as-failure proof are rejected 200/200. An explicit secondary rescore recognizes
 3/8 Stage-1 responses as evidence-supported. All four target responses lack a
 complete four-endpoint positive-overlap citation path;
 `1299:temporal_twin` remains unsupported for two serialized-transition
 obligations, and `1222:temporal_twin` remains the sole RCA mechanism failure.
-These are post-hoc development findings, not experimental validation. See
+The parity correction did not change the 3/8 secondary result. These are
+post-hoc development findings, not experimental validation; v4 remains the
+frozen Stage-1 primary score, and prospective v5 use requires separate approval.
+Relative-time Stage 2 and temporal-ablation Stage 3 remain unexecuted. See
 `docs/EVIDENCE_SUPPORT_V5_METHODOLOGY.md` and
 `docs/INCIDENT_003_V3_STAGE1_EVIDENCE_V5_ANALYSIS.md`.
 

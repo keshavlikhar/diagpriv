@@ -76,7 +76,7 @@ records cannot satisfy queried essentials.
 | Compensation after deadline | workflow + compensation | deadline reached + compensation started | proves strict trigger/action order |
 | Execution/compensation overlap | execution interval + compensation interval | execution started + execution completed + compensation started + compensation completed | both representations prove valid intervals and strict positive overlap using `max(start) < min(end)`; disjoint and boundary-touch cases fail |
 | Late successful original effect | execution + effect + compensation | compensation started + successful execution completed + active effect recorded | proves successful completion and active effect after compensation began |
-| Inconsistent terminal state | workflow + execution + effect | successful execution completed + active effect recorded + compensated workflow recorded | proves successful active effect coexists with compensated workflow state |
+| Inconsistent terminal state | workflow + execution + effect | successful execution completed + active effect recorded + compensated workflow recorded | proves exactly successful execution + active effect + compensated workflow; compensation completion is not an additional obligation |
 
 ### Temporal-twin query
 
@@ -84,9 +84,9 @@ records cannot satisfy queried essentials.
 |---|---|---|---|
 | Queried subject identity | any one queried row | any one queried event | visibly binds a cited fact to the query |
 | Successful active effect before deadline | workflow + execution + effect | successful execution completed + active effect recorded + deadline reached | proves strict success/effect/deadline order |
-| Compensation after committed success | workflow + effect + compensation | active effect recorded + deadline reached + compensation started | proves committed effect precedes deadline and later compensation initiation |
-| Serialized completion before compensation | execution + compensation | successful execution completed + compensation started | affirmative strict completion-before-action proof; absence of overlap citations alone never passes |
-| Inconsistent terminal state | workflow + execution + effect | successful execution completed + active effect recorded + compensated workflow recorded | proves the invalid post-success state even under serialization |
+| Compensation after committed success | workflow + effect + compensation | active effect recorded + deadline reached + compensation started | proves exactly active committed effect < deadline < compensation start; compensation result/completion is not an additional obligation |
+| Serialized completion before compensation | execution + compensation | successful execution completed + compensation started | proves exactly successful execution completion < compensation start; full interval validity is not part of this requirement |
+| Inconsistent terminal state | workflow + execution + effect | successful execution completed + active effect recorded + compensated workflow recorded | proves exactly successful execution + active effect + compensated workflow; compensation completion is not an additional obligation |
 
 No mixed-modality path is registered because neither family requirement needs
 one. A response may cite both modalities, but at least one complete structured
@@ -156,9 +156,13 @@ nonexistent IDs, other operations, and target/twin cross-use. Structured and
 log overlap paths are also compared under genuine overlap, compensation fully
 before execution, execution fully before compensation, equality at a boundary,
 and malformed execution or compensation intervals. Both representations return
-the same truth value in every case. The four frozen qualification
-constructions—1319, 1299, 1387, and 1222—pass the same generic benchmark-derived
-complete-path checks for both roles.
+the same truth value in every case. Structured/log parity tests separately
+exercise valid and adversarial cases for compensation-after-success, terminal
+state inconsistency, and serialized completion. They verify strict boundaries,
+inactive/cancelled/non-compensated states, and that non-normative compensation
+completion fields do not silently strengthen only the structured path. The
+four frozen qualification constructions—1319, 1299, 1387, and 1222—pass the
+same generic benchmark-derived complete-path checks for both roles.
 
 ## Raw, relative-time, and ablation expectations
 
@@ -199,8 +203,11 @@ preregistration. Offline secondary analysis requires no provider manifest.
 ## Limitations
 
 - V5 is post hoc for raw Stage 1 and is not experimentally validated.
-- Event interval semantics require explicit start and completion endpoints.
-  Positive overlap is strict; equality at a boundary is not overlap.
+- The positive-overlap requirement uses explicit start and completion endpoints
+  for both intervals and rejects malformed intervals. The separate serialized
+  requirement intentionally asks only whether a successful execution completion
+  strictly precedes compensation start; it does not certify full interval
+  well-formedness. Equality at either strict boundary does not pass.
 - Flat citation lists cannot express which statement each ID was intended to
   support; the deterministic scorer selects the smallest passing path.
 - Contrast non-gating is a methodology choice, not evidence that controls are

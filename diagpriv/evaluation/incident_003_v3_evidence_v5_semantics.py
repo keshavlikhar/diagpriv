@@ -209,10 +209,8 @@ class Incident003V3EvidenceSemanticEvaluatorV5:
         compensation = _source(items, "compensation_records").data
         return bool(
             effect.get("state") == "active"
-            and compensation.get("result") == "completed"
             and self._before(effect["created_at"], workflow["deadline_at"])
             and self._before(workflow["deadline_at"], compensation["started_at"])
-            and self._before(compensation["started_at"], compensation["completed_at"])
         )
 
     def _twin_serialized(self, items: tuple[_EvidenceItem, ...]) -> bool:
@@ -228,11 +226,12 @@ class Incident003V3EvidenceSemanticEvaluatorV5:
             )
         execution = _source(items, "execution_observations").data
         compensation = _source(items, "compensation_records").data
-        return self._serialized(
-            execution["started_at"],
-            execution["completed_at"],
-            compensation["started_at"],
-            compensation["completed_at"],
+        return bool(
+            execution.get("result") == "success"
+            and self._before(
+                execution["completed_at"],
+                compensation["started_at"],
+            )
         )
 
     def _safe_control(self, items: tuple[_EvidenceItem, ...]) -> bool:
@@ -288,15 +287,6 @@ class Incident003V3EvidenceSemanticEvaluatorV5:
             and max(start_a, start_b) < min(end_a, end_b)  # type: ignore[type-var,operator]
         )
 
-    def _serialized(self, a_start: object, a_end: object, b_start: object, b_end: object) -> bool:
-        return all(
-            (
-                self._before(a_start, a_end),
-                self._before(a_end, b_start),
-                self._before(b_start, b_end),
-            )
-        )
-
 
 def _evidence_index(view: ModelView) -> dict[str, _EvidenceItem]:
     result: dict[str, _EvidenceItem] = {}
@@ -343,7 +333,6 @@ def _inconsistent_terminal_state(items: tuple[_EvidenceItem, ...]) -> bool:
     workflow = _source(items, "workflow_attempts").data
     return bool(
         workflow.get("workflow_state") == "compensated"
-        and workflow.get("compensation_state") == "completed"
         and _source(items, "execution_observations").data.get("result") == "success"
         and _source(items, "effect_records").data.get("state") == "active"
     )

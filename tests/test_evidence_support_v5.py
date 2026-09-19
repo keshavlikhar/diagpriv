@@ -127,6 +127,94 @@ def _target_interval_view(
     return ModelView.from_dict(data)
 
 
+def _twin_semantics_view(
+    incident,
+    *,
+    execution_completed: int = 10,
+    execution_result: str = "success",
+    effect_created: int = 12,
+    effect_state: str = "active",
+    deadline: int = 20,
+    compensation_started: int = 30,
+    compensation_completed: int = 40,
+    compensation_result: str = "completed",
+    compensation_state: str = "completed",
+    workflow_state: str = "compensated",
+) -> ModelView:
+    """Set matching twin facts in structured rows and lifecycle logs."""
+    data = deepcopy(incident.model_view().to_dict())
+    queried = incident.metadata["temporal_twin_operation_id"]
+
+    def timestamp(second: int) -> str:
+        return f"2042-01-01T00:00:{second:02d}.000Z"
+
+    structured = data["structured_evidence"]
+    assert isinstance(structured, dict)
+
+    def row(source: str):
+        return next(
+            item for item in structured[source] if item["operation_id"] == queried
+        )
+
+    workflow = row("workflow_attempts")
+    execution = row("execution_observations")
+    effect = row("effect_records")
+    compensation = row("compensation_records")
+    workflow["deadline_at"] = timestamp(deadline)
+    workflow["compensation_state"] = compensation_state
+    workflow["workflow_state"] = workflow_state
+    execution["completed_at"] = timestamp(execution_completed)
+    execution["result"] = execution_result
+    effect["created_at"] = timestamp(effect_created)
+    effect["state"] = effect_state
+    compensation["started_at"] = timestamp(compensation_started)
+    compensation["completed_at"] = timestamp(compensation_completed)
+    compensation["result"] = compensation_result
+
+    event_times = {
+        "execution_completed": execution_completed,
+        "effect_recorded": effect_created,
+        "deadline_reached": deadline,
+        "compensation_started": compensation_started,
+        "compensation_completed": compensation_completed,
+    }
+    logs = data["log_evidence"]
+    assert isinstance(logs, list)
+    for entry in logs:
+        attributes = entry["attributes"]
+        if attributes["operation_id"] != queried:
+            continue
+        event_kind = attributes["event_kind"]
+        if event_kind in event_times:
+            entry["timestamp"] = timestamp(event_times[event_kind])
+        if event_kind == "execution_completed":
+            attributes["result"] = execution_result
+        elif event_kind == "effect_recorded":
+            attributes["state"] = effect_state
+        elif event_kind == "compensation_completed":
+            attributes["result"] = compensation_result
+        elif event_kind == "workflow_state_recorded":
+            attributes["workflow_state"] = workflow_state
+    return ModelView.from_dict(data)
+
+
+def _assert_modality_truth(
+    incident, requirement_name: str, view: ModelView, expected: bool
+) -> None:
+    rubric = build_incident_003_v3_evidence_rubric_v5(incident)
+    requirement = _requirement(rubric, requirement_name)
+    evaluator = Incident003V3EvidenceSemanticEvaluatorV5(
+        TEMPORAL_SEMANTICS_VERSION
+    )
+    structured_truth = evaluator.evaluate_path(
+        _path(requirement, "structured"), view, rubric
+    )
+    log_truth = evaluator.evaluate_path(_path(requirement, "logs"), view, rubric)
+    assert structured_truth is expected
+    assert log_truth is expected
+    assert structured_truth is log_truth
+
+
 def test_v5_protocol_is_new_and_v4_requirement_hashes_are_unchanged() -> None:
     assert EVIDENCE_SUPPORT_VERSION == "evidence-support-v5"
     assert RUBRIC_SCHEMA_VERSION == "evidence-rubric-v5"
@@ -355,6 +443,78 @@ def test_v5_overlap_representation_invariance_under_adversarial_intervals(
     assert structured_truth is expected, name
     assert log_truth is expected, name
     assert structured_truth is log_truth, name
+
+
+@pytest.mark.parametrize(
+    ("name", "changes", "expected"),
+    (
+        ("valid_minimal_order", {}, True),
+        ("compensation_before_deadline", {"compensation_started": 18}, False),
+        ("effect_after_deadline", {"effect_created": 22}, False),
+        ("inactive_effect", {"effect_state": "inactive"}, False),
+    ),
+)
+def test_v5_compensation_after_success_modality_equivalence(
+    name: str, changes: dict[str, object], expected: bool
+) -> None:
+    incident = generate_incident_003_v3(1200, "temporal_twin")
+    # Completion/result are deliberately non-normative for this requirement.
+    view = _twin_semantics_view(
+        incident,
+        compensation_completed=25,
+        compensation_result="failed",
+        **changes,
+    )
+    _assert_modality_truth(
+        incident, "compensation_after_committed_success", view, expected
+    )
+
+
+@pytest.mark.parametrize(
+    ("name", "changes", "expected"),
+    (
+        ("success_active_compensated", {}, True),
+        ("cancelled_execution", {"execution_result": "cancelled"}, False),
+        ("inactive_effect", {"effect_state": "inactive"}, False),
+        ("non_compensated_workflow", {"workflow_state": "completed"}, False),
+    ),
+)
+def test_v5_terminal_inconsistency_modality_equivalence(
+    name: str, changes: dict[str, object], expected: bool
+) -> None:
+    incident = generate_incident_003_v3(1200, "temporal_twin")
+    # The workflow's compensation-state field is deliberately non-normative:
+    # both paths prove only success + active effect + compensated workflow.
+    view = _twin_semantics_view(
+        incident,
+        compensation_state="not_started",
+        **changes,
+    )
+    _assert_modality_truth(
+        incident,
+        "inconsistent_terminal_workflow_effect_state",
+        view,
+        expected,
+    )
+
+
+@pytest.mark.parametrize(
+    ("name", "changes", "expected"),
+    (
+        ("valid_serialized_order", {}, True),
+        ("completion_after_compensation_start", {"execution_completed": 32}, False),
+        ("equality_at_boundary", {"execution_completed": 30}, False),
+        ("cancelled_execution", {"execution_result": "cancelled"}, False),
+    ),
+)
+def test_v5_serialized_completion_modality_equivalence(
+    name: str, changes: dict[str, object], expected: bool
+) -> None:
+    incident = generate_incident_003_v3(1200, "temporal_twin")
+    view = _twin_semantics_view(incident, **changes)
+    _assert_modality_truth(
+        incident, "serialized_execution_before_compensation", view, expected
+    )
 
 
 def test_v5_twin_rejects_success_after_deadline_and_compensation() -> None:

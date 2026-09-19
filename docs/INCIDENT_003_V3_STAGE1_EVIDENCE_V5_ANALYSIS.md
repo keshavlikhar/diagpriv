@@ -29,6 +29,11 @@ uncited endpoints. `1299:temporal_twin` separately omits the
 `compensation_started` event needed for both compensation-after-success and
 affirmative completion-before-compensation proof.
 
+The final modality-parity correction made the structured and log alternatives
+certify identical minimal obligations for compensation-after-success, terminal
+state inconsistency, and serialized completion. The provider-free rescore was
+repeated after the generic 200-construction audit; the result remained 3/8.
+
 ## Case comparison
 
 | Case | Frozen RCA exact | v4 support / essential coverage | v5 support / essential coverage | v5 useful precision | V5 missing essentials |
@@ -55,3 +60,5 @@ be independently supported under v5, but the submitted mechanism remains
 
 The result must be described as a broader representation-invariant model
 developed post hoc. It does not retroactively invalidate or overwrite v4.
+Prospective v5 use still requires a separate protocol freeze and approval.
+Relative-time Stage 2 and temporal-ablation Stage 3 remain unexecuted.
