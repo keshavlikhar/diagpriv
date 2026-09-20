@@ -17,9 +17,10 @@ are regenerated from frozen development data and the merged exposure artifact.
   and evidence-grounded RCA are established prior areas, so the manuscript
   makes no priority claim for either. RCAgent's internally deployed model is
   an explicit privacy-aware RCA alternative.
-- **Artifacts:** issue #35 must resolve provenance-safe distribution of
-  ignored provider JSONLs before claiming full public observation-level
-  reproduction.
+- **Artifacts:** `docs/FROZEN_ARTIFACT_ARCHIVE_RFC.md` and the tracked
+  manifest design a provenance-safe private archive and provider-free verifier,
+  but no JSONL has been distributed. Full public observation-level
+  reproduction is not yet available and requires separate review.
 - **External validity:** obtain human difficulty/annotation baselines,
   broader incident families and model families, and a preregistered final
   held-out evaluation. Incident 001's raw-only validation is not a matched
