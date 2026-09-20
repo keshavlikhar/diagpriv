@@ -1,6 +1,147 @@
-% Verified external literature entries only. None has been approved yet.
-% TODO(related-work): privacy-preserving LLM prompting and de-identification.
-% TODO(related-work): pseudonymization, tokenization, and format-preserving methods.
-% TODO(related-work): privacy-utility and representation-exposure measurement.
-% TODO(related-work): LLM incident/program diagnosis, observability, and AIOps.
-% TODO(related-work): task-aware data minimization and evidence attribution.
+% Metadata checked against linked publisher, proceedings, standards-body,
+% or original-author records. Preprints are explicitly marked.
+
+@inproceedings{berg2020impact,
+ author={Hanna Berg and Aron Henriksson and Hercules Dalianis},
+ title={The Impact of De-identification on Downstream Named Entity Recognition in Clinical Text},
+ booktitle={Proceedings of the 11th International Workshop on Health Text Mining and Information Analysis},
+ pages={1--11}, year={2020}, doi={10.18653/v1/2020.louhi-1.1},
+ url={https://aclanthology.org/2020.louhi-1.1/}
+}
+@inproceedings{bencheikhlarbi2023clinical,
+ author={Iyadh Ben Cheikh Larbi and Aljoscha Burchardt and Roland Roller},
+ title={Clinical Text Anonymization, its Influence on Downstream {NLP} Tasks and the Risk of Re-Identification},
+ booktitle={Proceedings of the 17th Conference of the European Chapter of the Association for Computational Linguistics: Student Research Workshop},
+ pages={105--111}, year={2023}, doi={10.18653/v1/2023.eacl-srw.11},
+ url={https://aclanthology.org/2023.eacl-srw.11/}
+}
+@inproceedings{pasch2025balancing,
+ author={Stefan Pasch and Min Chul Cha},
+ title={Balancing Privacy and Utility in Personal {LLM} Writing Tasks: An Automated Pipeline for Evaluating Anonymizations},
+ booktitle={Proceedings of the Sixth Workshop on Privacy in Natural Language Processing},
+ pages={32--41}, year={2025}, doi={10.18653/v1/2025.privatenlp-main.3},
+ url={https://aclanthology.org/2025.privatenlp-main.3/}
+}
+@inproceedings{singh2025redactor,
+ author={Praphul Singh and Charlotte Dzialo and Jangwon Kim and Sumana Srivatsa and Irfan Bulu and Sri Gadde and Krishnaram Kenthapadi},
+ title={{RedactOR}: An {LLM}-Powered Framework for Automatic Clinical Data De-Identification},
+ booktitle={Proceedings of the 63rd Annual Meeting of the Association for Computational Linguistics (Volume 6: Industry Track)},
+ pages={510--530}, year={2025}, doi={10.18653/v1/2025.acl-industry.36},
+ url={https://aclanthology.org/2025.acl-industry.36/}
+}
+@inproceedings{lin2025emojiprompt,
+ author={Sam Lin and Wenyue Hua and Zhenting Wang and Mingyu Jin and Lizhou Fan and Yongfeng Zhang},
+ title={{EmojiPrompt}: Generative Prompt Obfuscation for Privacy-Preserving Communication with Cloud-based {LLMs}},
+ booktitle={Proceedings of the 2025 Conference of the Nations of the Americas Chapter of the Association for Computational Linguistics: Human Language Technologies (Volume 1: Long Papers)},
+ pages={12342--12361}, year={2025}, doi={10.18653/v1/2025.naacl-long.614},
+ url={https://aclanthology.org/2025.naacl-long.614/}
+}
+@inproceedings{yang2025robust,
+ author={Tianyu Yang and Xiaodan Zhu and Iryna Gurevych},
+ title={Robust Utility-Preserving Text Anonymization Based on Large Language Models},
+ booktitle={Proceedings of the 63rd Annual Meeting of the Association for Computational Linguistics (Volume 1: Long Papers)},
+ pages={28922--28941}, year={2025}, doi={10.18653/v1/2025.acl-long.1404},
+ url={https://aclanthology.org/2025.acl-long.1404/}
+}
+@inproceedings{loiseau2025taueval,
+ author={Gabriel Loiseau and Damien Sileo and Damien Riquet and Maxime Meyer and Marc Tommasi},
+ title={{Tau-Eval}: A Unified Evaluation Framework for Useful and Private Text Anonymization},
+ booktitle={Proceedings of the 2025 Conference on Empirical Methods in Natural Language Processing: System Demonstrations},
+ pages={216--227}, year={2025}, doi={10.18653/v1/2025.emnlp-demos.16},
+ url={https://aclanthology.org/2025.emnlp-demos.16/}
+}
+@inproceedings{loiseau2026adaptive,
+ author={Gabriel Loiseau and Damien Sileo and Damien Riquet and Maxime Meyer and Marc Tommasi},
+ title={Adaptive Text Anonymization: Learning Privacy-Utility Trade-offs via Prompt Optimization},
+ booktitle={Findings of the Association for Computational Linguistics: ACL 2026},
+ pages={8207--8229}, year={2026}, doi={10.18653/v1/2026.findings-acl.401},
+ url={https://aclanthology.org/2026.findings-acl.401/}
+}
+@inproceedings{ponomarenko2026capid,
+ author={Mariia Ponomarenko and Sepideh Abedini and Masoumeh Shafieinejad and D. B. Emerson and Shubhankar Mohapatra and Xi He},
+ title={{CAPID}: Context-Aware {PII} Detection for Question-Answering Systems},
+ booktitle={Proceedings of the 19th Conference of the European Chapter of the Association for Computational Linguistics (Volume 4: Student Research Workshop)},
+ pages={320--331}, year={2026}, doi={10.18653/v1/2026.eacl-srw.23},
+ url={https://aclanthology.org/2026.eacl-srw.23/}
+}
+@techreport{mccallister2010pii,
+ author={Erika McCallister and Tim Grance and Karen Scarfone},
+ title={Guide to Protecting the Confidentiality of Personally Identifiable Information ({PII})},
+ institution={National Institute of Standards and Technology}, number={Special Publication 800-122},
+ year={2010}, doi={10.6028/NIST.SP.800-122},
+ url={https://csrc.nist.gov/pubs/sp/800/122/final}
+}
+@techreport{dworkin2016fpe,
+ author={Morris Dworkin},
+ title={Recommendation for Block Cipher Modes of Operation: Methods for Format-Preserving Encryption},
+ institution={National Institute of Standards and Technology}, number={Special Publication 800-38G},
+ year={2016}, doi={10.6028/NIST.SP.800-38G},
+ url={https://csrc.nist.gov/pubs/sp/800/38/g/upd1/final}
+}
+@techreport{krawczyk1997hmac,
+ author={Hugo Krawczyk and Mihir Bellare and Ran Canetti},
+ title={{HMAC}: Keyed-Hashing for Message Authentication}, institution={Internet Engineering Task Force},
+ number={RFC 2104}, year={1997}, doi={10.17487/RFC2104},
+ url={https://www.rfc-editor.org/info/rfc2104/}
+}
+@inproceedings{ahmed2023recommending,
+ author={Toufique Ahmed and Supriyo Ghosh and Chetan Bansal and Thomas Zimmermann and Xuchao Zhang and Saravan Rajmohan},
+ title={Recommending Root-Cause and Mitigation Steps for Cloud Incidents using Large Language Models},
+ booktitle={Proceedings of the 2023 IEEE/ACM 45th International Conference on Software Engineering},
+ pages={1737--1749}, year={2023}, doi={10.1109/ICSE48619.2023.00149},
+ url={https://www.microsoft.com/en-us/research/publication/recommending-root-cause-and-mitigation-steps-for-cloud-incidents-using-large-language-models/}
+}
+@inproceedings{chen2024automatic,
+ author={Yinfang Chen and Huaibing Xie and Minghua Ma and Yu Kang and Xin Gao and Liu Shi and Yunjie Cao and Xuedong Gao and Hao Fan and Ming Wen and Jun Zeng and Supriyo Ghosh and Xuchao Zhang and Chaoyun Zhang and Qingwei Lin and Saravan Rajmohan and Dongmei Zhang and Tianyin Xu},
+ title={Automatic Root Cause Analysis via Large Language Models for Cloud Incidents},
+ booktitle={Proceedings of the Nineteenth European Conference on Computer Systems},
+ pages={674--688}, year={2024}, doi={10.1145/3627703.3629553},
+ url={https://2024.eurosys.org/accepted-papers.html}
+}
+@inproceedings{wang2024rcagent,
+ author={Zefan Wang and Zichuan Liu and Yingying Zhang and Aoxiao Zhong and Jihong Wang and Fengbin Yin and Lunting Fan and Lingfei Wu and Qingsong Wen},
+ title={{RCAgent}: Cloud Root Cause Analysis by Autonomous Agents with Tool-Augmented Large Language Models},
+ booktitle={Proceedings of the 33rd ACM International Conference on Information and Knowledge Management},
+ year={2024}, doi={10.1145/3627673.3680016},
+ url={https://arxiv.org/abs/2310.16340}
+}
+@inproceedings{xu2025openrca,
+ author={Junjielong Xu and Qinan Zhang and Zhiqing Zhong and Shilin He and Chaoyun Zhang and Qingwei Lin and Dan Pei and Pinjia He and Dongmei Zhang and Qi Zhang},
+ title={{OpenRCA}: Can Large Language Models Locate the Root Cause of Software Failures?},
+ booktitle={The Thirteenth International Conference on Learning Representations}, year={2025},
+ url={https://openreview.net/forum?id=M4qNIzQYpd}
+}
+@misc{wang2026cloudopsbench,
+ author={Yilun Wang and Guangba Yu and Haiyu Huang and Yujie Huang and Zirui Wang and Pengfei Chen and Michael R. Lyu},
+ title={{Cloud-OpsBench}: A Reproducible Benchmark for Agentic Root Cause Analysis in Cloud Systems},
+ year={2026}, note={arXiv preprint, arXiv:2603.00468, version 2},
+ eprint={2603.00468}, archivePrefix={arXiv}, url={https://arxiv.org/abs/2603.00468}
+}
+@inproceedings{gao2023citations,
+ author={Tianyu Gao and Howard Yen and Jiatong Yu and Danqi Chen},
+ title={Enabling Large Language Models to Generate Text with Citations},
+ booktitle={Proceedings of the 2023 Conference on Empirical Methods in Natural Language Processing},
+ pages={6465--6488}, year={2023}, doi={10.18653/v1/2023.emnlp-main.398},
+ url={https://aclanthology.org/2023.emnlp-main.398/}
+}
+@inproceedings{zhang2024finegrained,
+ author={Weijia Zhang and Mohammad Aliannejadi and Yifei Yuan and Jiahuan Pei and Jia-hong Huang and Evangelos Kanoulas},
+ title={Towards Fine-Grained Citation Evaluation in Generated Text: A Comparative Analysis of Faithfulness Metrics},
+ booktitle={Proceedings of the 17th International Natural Language Generation Conference},
+ pages={427--439}, year={2024}, doi={10.18653/v1/2024.inlg-main.35},
+ url={https://aclanthology.org/2024.inlg-main.35/}
+}
+@inproceedings{chu2024timebench,
+ author={Zheng Chu and Jingchang Chen and Qianglong Chen and Weijiang Yu and Haotian Wang and Ming Liu and Bing Qin},
+ title={{TimeBench}: A Comprehensive Evaluation of Temporal Reasoning Abilities in Large Language Models},
+ booktitle={Proceedings of the 62nd Annual Meeting of the Association for Computational Linguistics (Volume 1: Long Papers)},
+ pages={1204--1228}, year={2024}, doi={10.18653/v1/2024.acl-long.66},
+ url={https://aclanthology.org/2024.acl-long.66/}
+}
+@inproceedings{gardner2020contrast,
+ author={Matt Gardner and Yoav Artzi and Victoria Basmov and Jonathan Berant and Ben Bogin and Sihao Chen and Pradeep Dasigi and Dheeru Dua and Yanai Elazar and Ananth Gottumukkala and Nitish Gupta and Hannaneh Hajishirzi and Gabriel Ilharco and Daniel Khashabi and Kevin Lin and Jiangming Liu and Nelson F. Liu and Phoebe Mulcaire and Qiang Ning and Sameer Singh and Noah A. Smith and Sanjay Subramanian and Reut Tsarfaty and Eric Wallace and Ally Zhang and Ben Zhou},
+ title={Evaluating Models' Local Decision Boundaries via Contrast Sets},
+ booktitle={Findings of the Association for Computational Linguistics: EMNLP 2020},
+ pages={1307--1323}, year={2020}, doi={10.18653/v1/2020.findings-emnlp.117},
+ url={https://aclanthology.org/2020.findings-emnlp.117/}
+}

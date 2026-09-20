@@ -27,11 +27,14 @@ output, sensitive identifiers, or credentials.
 From paper/, compile with a normal TeX installation:
 
 ~~~bash
-latexmk -pdf -interaction=nonstopmode -halt-on-error -outdir=/private/tmp/diagpriv-paper-build main.tex
+latexmk -pdf -interaction=nonstopmode -halt-on-error -outdir=build main.tex
 ~~~
 
-The PDF is a local review artifact and should not be committed. The source
-uses the generic article class, not a premature venue template.
+The PDF and auxiliary files are in the ignored `paper/build/` directory and
+should not be committed. The source
+uses the generic article class, not a premature venue template. BibTeX
+references are compiled by `latexmk`; primary-source verification and
+conservative novelty comparisons are in `paper/RELATED_WORK_REVIEW.md`.
 
 ## Frozen result provenance
 
@@ -59,5 +62,5 @@ regenerate the manuscript tables.
 
 The data and generated LaTeX are development observations. They do not
 establish anonymity, statistical equivalence, broad model capability, or
-production effectiveness. See paper/STATUS.md for unresolved literature,
+production effectiveness. See paper/STATUS.md for unresolved venue-specific literature,
 artifact, validation, and human-baseline work.
