@@ -1,0 +1,60 @@
+\section{Experimental Results}
+\label{sec:results}
+All numerical comparisons here are descriptive observations on selected
+synthetic development instances. They do not establish statistical
+significance, population-level effect sizes, or a universal transformation
+ranking. Table~\ref{tab:utility} reports the first two incident families
+with their distinct model and repetition protocols.
+\input{generated/table2a_scalar_exposure}
+\input{generated/table3_utility}
+
+\paragraph{Identity-dependent Incident 001.}
+The frozen GPT-5.6 Luna raw development run obtained 5/5 exact five-label
+RCA. Redaction obtained 4/5, HMAC 5/5, tokenization 5/5, and
+format-preserving pseudonymization 4/5 on the same five development seeds.
+The separate raw-only validation observation was 10/10 exact RCA, but 9/10
+\texttt{overall\_correct}: one response cited a nonexistent evidence ID.
+There is no matched transformed validation comparison. The
+format-preserving development miss localized the defect to request ingress
+instead of the oracle operation executor; it did not change the other four
+causal dimensions and did not trigger an oracle revision. These small
+observations are consistent with the practical value of retaining equality,
+not proof that any one deterministic method is generally optimal.
+
+\paragraph{Shape-dependent Incident 002.}
+The primary three-trial, six-seed Sol comparison planned 18 logical slots
+per condition. It produced 18 valid raw, 9 redaction, 18 HMAC,
+17 tokenization, and 18 format-preserving responses. Nine redaction
+transport failures and one tokenization timeout remain missing model
+responses in that primary analysis, not incorrect RCAs. A separately
+authorized one-attempt recovery of exactly those ten cells yielded ten
+valid responses and forms the 18-valid-per-condition \emph{sensitivity}
+view in Table~\ref{tab:utility}; it does not replace the primary failure
+records. In that sensitivity view, raw had 15/18 correct trigger and
+mechanism labels and 9/18 exact RCA; format-preserving had 10/18 on each
+causal dimension and 4/18 exact; redaction, HMAC, and tokenization had
+2/18, 1/18, and 2/18 respectively for trigger/mechanism, with 0/18,
+1/18, and 0/18 exact. Component accuracy (12/18 raw, 10/18 redaction,
+13/18 HMAC, 13/18 tokenization, 10/18 format-preserving) does not follow
+the same ordering. The pattern is directionally consistent with shape
+being diagnostically useful, yet format-preserving still missed the
+seed-1005 cause in all three logical trials despite its offline invariant
+preservation.
+
+\paragraph{Paired temporal Incident 003 v3.}
+Table~\ref{tab:temporal-utility} separates overall RCA from correct
+mechanism attribution to both roles in the same construction.
+\input{generated/table4_temporal_utility}
+\input{generated/figure3_paired}
+All eight responses in each stage were valid. Raw evidence yielded 7/8 exact
+RCA, with 4/4 target and 3/4 twin mechanism labels correct. Relative-time
+yielded 6/8 exact, 4/4 target and 2/4 twin mechanisms. Temporal ablation
+yielded 4/8 exact: every target remained correct, every twin was assigned
+the target's concurrency mechanism, and no pair was discriminated correctly.
+The paired-mechanism sequence 3/4, 2/4, 0/4
+(Figure~\ref{fig:paired}) is directionally consistent with the
+preregistered development expectation that preserving temporal relations
+helps distinguish the two mechanisms. It does not establish equivalence of
+raw and relative time, a causal effect size for the provider, or performance
+on other incidents. Four pairs and one call per case leave substantial
+model-response variability unmeasured.

@@ -1,0 +1,46 @@
+\section{Introduction}
+Logs, traces, and operational records are useful to an engineer investigating
+an outage, but they may also disclose customer identifiers, account
+relationships, request histories, timestamped behavior, and occasionally
+secrets. Sending the whole record to an external diagnostic model exposes
+more than the engineer's question may require. Replacing every apparent
+identifier with one generic marker is not a neutral fix: the replacement can
+erase the equality, inequality, or cross-source joins that make a causal
+explanation possible. Conversely, a stable pseudonym can retain those joins
+while still leaking frequency and linkability. The operational question is
+therefore not simply whether a field is removed, but which \emph{relations}
+survive in the evidence seen by the model.
+
+DiagPriv frames this as a diagnostic-invariant transformation problem.
+An invariant is a task-relevant relation over visible evidence: repeated
+request identity, a malformed reference shape, or the ordering of execution
+and compensation, for example. The intuition is to give the AI the problem
+without giving it the person. That phrase is motivational, not a guarantee
+that transformed records are anonymous or that the model's reasoning is
+unchanged. The target is narrower: explicitly identify diagnostic structure,
+test whether a transformation retains it, and measure both resulting RCA
+behavior and information exposure.
+
+This draft uses three deterministic synthetic incident families. They were
+chosen to vary the diagnostic dependency rather than to portray a random
+sample of enterprise failures. Incident 001 centers on equality and linkage
+across retry and effect records. Incident 002 requires the shape of an
+external reference. Incident 003 v3 poses two queried operations with matched
+non-temporal evidence but different causal time relations. The third family
+adds a destructive temporal control so that a model cannot use a simple
+terminal-state signature to distinguish its paired mechanisms.
+Table~\ref{tab:families} summarizes the designs.
+\input{generated/table1_families}
+
+The paper makes five bounded contributions. First, it states a task-aware
+privacy formulation using explicit diagnostic invariants, without claiming
+that these are formal sufficient statistics. Second, it describes a benchmark
+and protocol that separate oracle facts from the model-visible
+\texttt{ModelView}. Third, it provides controlled development comparisons
+across linkage-, shape-, and time-dependent families. Fourth, it uses a
+reproducible vector of representation-exposure measurements instead of a
+single privacy score. Fifth, it separates five-label RCA correctness from the
+semantic support supplied by a model's cited evidence IDs. The current
+implementation evaluates fixed, versioned transformations; automatic
+task-aware transformation selection remains a research objective rather than
+an evaluated product.

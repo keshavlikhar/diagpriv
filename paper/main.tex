@@ -1,0 +1,56 @@
+\documentclass[11pt]{article}
+\usepackage[margin=0.9in]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs,graphicx}
+\usepackage{float}
+\usepackage{xcolor}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,positioning,fit,calc}
+\usepackage[hidelinks]{hyperref}
+\usepackage{microtype}
+\setlength{\parskip}{0.25em}
+\setlength{\parindent}{1em}
+\title{DiagPriv: Diagnostic-Invariant Privacy Transformations for LLM-Based Root Cause Analysis}
+\author{Research draft for collaborator review}
+\date{}
+
+\begin{document}
+\maketitle
+\begin{abstract}
+Operational evidence can contain the facts needed to diagnose a failure and
+identifiers or temporal details that need not be disclosed to an external
+model. We study diagnostic-invariant privacy transformation: changing the
+representation sent to a large language model while preserving the
+relationships required for a root-cause-analysis (RCA) task. Three synthetic
+incident families isolate different dependencies: identifier equality and
+cross-source linkage, external-reference shape, and causal temporal order.
+Fixed redaction, HMAC, tokenization, format-preserving pseudonymization,
+relative-time conversion, and temporal ablation provide controlled
+comparisons. A separate versioned exposure vector measures which literal,
+linkage, shape, cardinality, and temporal properties remain visible; it is
+not an anonymity score. Development observations are directionally
+consistent with task-specific structure mattering: the format-sensitive
+family loses trigger/mechanism accuracy under opaque identifiers, and
+paired temporal-mechanism discrimination declines from 3/4 under raw
+evidence to 2/4 under relative time and 0/4 under temporal ablation.
+Evidence-support scoring separately asks whether cited visible records
+actually substantiate a diagnosis. These results are limited to selected
+synthetic development cases, a small number of calls from one model family,
+and no formal privacy guarantee or held-out evaluation.
+\end{abstract}
+
+\input{sections/introduction}
+\input{sections/threat_model}
+\input{sections/formulation}
+\input{sections/framework}
+\input{sections/methodology}
+\input{sections/families}
+\input{sections/results}
+\input{sections/privacy_utility}
+\input{sections/evidence_support}
+\input{sections/limitations}
+\input{sections/related_work}
+\input{sections/conclusion}
+\end{document}

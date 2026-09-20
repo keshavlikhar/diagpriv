@@ -1,0 +1,33 @@
+\section{Related Work}
+\label{sec:related}
+The study intersects several areas that require a dedicated verified
+literature review before submission. Privacy-preserving LLM prompting and
+de-identification ask what can be removed before data enters a model.
+Classical pseudonymization and tokenization distinguish stable linkage from
+literal confidentiality. Format- or structure-preserving methods retain
+syntax that may aid downstream tasks while leaking recognizable patterns.
+Privacy--utility work asks how to compare these properties without assuming
+that one score captures both diagnostic value and adversarial risk.
+Task-aware data minimization offers a related design perspective, but
+DiagPriv's current empirical implementation evaluates fixed conditions, not
+an automatic minimizer.
+
+On the diagnostic side, LLM-based program or incident analysis and
+observability/AIOps research study how operational records support a causal
+explanation. Our distinctive evaluation choice is to separate a
+five-dimensional RCA label, a cited-evidence semantic proof, and the
+model-visible exposure vector. Incident 003 further uses matched
+non-temporal evidence with conflicting temporal mechanisms, making
+discriminating order and overlap the intended task rather than relying on
+recognizable error words. These comparisons should be positioned against
+verified prior benchmark, temporal-reasoning, and evidence-attribution work
+before any novelty claim is finalized.
+
+% TODO(related-work): add verified citation for privacy-preserving LLM prompting/de-identification.
+% TODO(related-work): add verified citation for pseudonymization, tokenization, and format-preserving methods.
+% TODO(related-work): add verified citation for privacy-utility representation metrics and task-aware minimization.
+% TODO(related-work): add verified citation for LLM program/incident diagnosis and observability/AIOps.
+% TODO(related-work): add verified citation for evidence attribution and temporal causal reasoning.
+No external author, title, date, or DOI is asserted here without
+verification. The bibliography file records the pending citation categories
+and intentionally contains no fabricated entries.
