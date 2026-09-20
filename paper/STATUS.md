@@ -9,11 +9,14 @@ are regenerated from frozen development data and the merged exposure artifact.
 
 ## Needs review before submission
 
-- **Literature:** references.bib deliberately has no unverified entries.
-  Verify and add work on LLM de-identification, pseudonymization/tokenization,
-  format-preserving methods, privacy--utility measurement, operational RCA,
-  temporal reasoning, and evidence attribution. Revise the related-work
-  positioning only after that review.
+- **Literature:** an initial primary-source-verified pass is complete in
+  `references.bib` and `RELATED_WORK_REVIEW.md`; the related-work prose now
+  cites clinical de-identification, pre-release prompt transformation,
+  task-sensitive anonymization, RCA, grounding, and temporal evaluation.
+  Venue-specific coverage and citation polish remain. Adaptive anonymization
+  and evidence-grounded RCA are established prior areas, so the manuscript
+  makes no priority claim for either. RCAgent's internally deployed model is
+  an explicit privacy-aware RCA alternative.
 - **Artifacts:** issue #35 must resolve provenance-safe distribution of
   ignored provider JSONLs before claiming full public observation-level
   reproduction.
@@ -33,6 +36,9 @@ exposure separately. The Incident 003 v3 paired-mechanism pattern is
 directionally consistent with the preregistered temporal-dependency
 expectation. The versioned exposure vector documents visible literal,
 linkage, format, cardinality, and temporal properties in selected ModelViews.
+The reviewed literature supports positioning this as a joint, scoped
+measurement design, not as the first task-aware anonymizer, RCA benchmark,
+evidence-grounding metric, or vector privacy analysis.
 
 ## Claims not yet supported
 

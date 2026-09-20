@@ -1,13 +1,21 @@
 \section{Introduction}
 Logs, traces, and operational records are useful to an engineer investigating
-an outage, but they may also disclose customer identifiers, account
+an outage. LLM systems for cloud-incident diagnosis already aggregate or
+query such evidence~\cite{ahmed2023recommending,chen2024automatic,wang2024rcagent,xu2025openrca}.
+Those records may also disclose customer identifiers, account
 relationships, request histories, timestamped behavior, and occasionally
-secrets. Sending the whole record to an external diagnostic model exposes
-more than the engineer's question may require. Replacing every apparent
+secrets. Guidance on personally identifiable information is explicitly
+context-dependent~\cite{mccallister2010pii}; RCAgent treats production-data
+egress as a reason to use an internally deployed model~\cite{wang2024rcagent}.
+Sending the whole record to an external diagnostic model may therefore expose
+more than the engineer's question requires. Replacing every apparent
 identifier with one generic marker is not a neutral fix: the replacement can
 erase the equality, inequality, or cross-source joins that make a causal
 explanation possible. Conversely, a stable pseudonym can retain those joins
-while still leaking frequency and linkability. The operational question is
+while still leaking frequency and linkability. Clinical de-identification and
+prompt-obfuscation studies likewise show that the privacy--utility effect
+depends on the replacement and downstream task~\cite{berg2020impact,bencheikhlarbi2023clinical,lin2025emojiprompt}.
+The operational question here is
 therefore not simply whether a field is removed, but which \emph{relations}
 survive in the evidence seen by the model.
 
@@ -32,7 +40,10 @@ terminal-state signature to distinguish its paired mechanisms.
 Table~\ref{tab:families} summarizes the designs.
 \input{generated/table1_families}
 
-The paper makes five bounded contributions. First, it states a task-aware
+Prior work already evaluates task-aware anonymization and evidence-grounded
+RCA~\cite{loiseau2025taueval,loiseau2026adaptive,wang2026cloudopsbench}.
+Our contribution is a bounded evaluation design rather than a claim to
+originate either idea. First, the paper states a task-aware
 privacy formulation using explicit diagnostic invariants, without claiming
 that these are formal sufficient statistics. Second, it describes a benchmark
 and protocol that separate oracle facts from the model-visible

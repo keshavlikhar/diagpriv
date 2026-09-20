@@ -1,33 +1,88 @@
 \section{Related Work}
 \label{sec:related}
-The study intersects several areas that require a dedicated verified
-literature review before submission. Privacy-preserving LLM prompting and
-de-identification ask what can be removed before data enters a model.
-Classical pseudonymization and tokenization distinguish stable linkage from
-literal confidentiality. Format- or structure-preserving methods retain
-syntax that may aid downstream tasks while leaking recognizable patterns.
-Privacy--utility work asks how to compare these properties without assuming
-that one score captures both diagnostic value and adversarial risk.
-Task-aware data minimization offers a related design perspective, but
-DiagPriv's current empirical implementation evaluates fixed conditions, not
-an automatic minimizer.
 
-On the diagnostic side, LLM-based program or incident analysis and
-observability/AIOps research study how operational records support a causal
-explanation. Our distinctive evaluation choice is to separate a
-five-dimensional RCA label, a cited-evidence semantic proof, and the
-model-visible exposure vector. Incident 003 further uses matched
-non-temporal evidence with conflicting temporal mechanisms, making
-discriminating order and overlap the intended task rather than relying on
-recognizable error words. These comparisons should be positioned against
-verified prior benchmark, temporal-reasoning, and evidence-attribution work
-before any novelty claim is finalized.
+\paragraph{Pre-release de-identification.}
+Clinical-text studies measure how de-identification choices affect downstream
+NLP, including the different utility consequences of pseudonymization and
+more destructive removal~\cite{berg2020impact,bencheikhlarbi2023clinical}.
+RedactOR also uses consistent entity relexicalization for clinical-data
+coherence~\cite{singh2025redactor}. In direct LLM workflows, Pasch and Cha
+compare masking and pseudonymization for personal writing, while EmojiPrompt
+obfuscates prompts before cloud-model inference and measures both task
+performance and simulated inference attacks~\cite{pasch2025balancing,lin2025emojiprompt}.
+CAPID makes PII filtering context-relevant for question answering
+\cite{ponomarenko2026capid}. These are substantive precedents for
+pre-release transformation and utility measurement. Our evaluated task differs:
+causal diagnosis from linked operational records, where a specific equality,
+shape, or temporal relation may be necessary to distinguish mechanisms.
 
-% TODO(related-work): add verified citation for privacy-preserving LLM prompting/de-identification.
-% TODO(related-work): add verified citation for pseudonymization, tokenization, and format-preserving methods.
-% TODO(related-work): add verified citation for privacy-utility representation metrics and task-aware minimization.
-% TODO(related-work): add verified citation for LLM program/incident diagnosis and observability/AIOps.
-% TODO(related-work): add verified citation for evidence attribution and temporal causal reasoning.
-No external author, title, date, or DOI is asserted here without
-verification. The bibliography file records the pending citation categories
-and intentionally contains no fabricated entries.
+\paragraph{Pseudonymization and structure-preserving release.}
+Keyed HMAC is a message-authentication construction~\cite{krawczyk1997hmac};
+using it for stable pseudonyms removes literal identifiers but does not remove
+within-key linkage. NIST's format-preserving encryption recommendation defines
+cryptographic FF1/FF3 modes~\cite{dworkin2016fpe}. DiagPriv's
+\texttt{format-preserving-v1} is instead deterministic, character-class-
+preserving \emph{pseudonymization}, not cryptographic FPE. Retaining length,
+separator placement, character classes, equality, and frequency is a measured
+exposure, not a confidentiality guarantee. The same distinction applies to
+tokenization: a short opaque token can hide literal shape while preserving
+the joins needed for a diagnosis.
+
+\paragraph{Privacy--utility and task-aware minimization.}
+Utility-preserving anonymization is already an active research direction:
+Yang et al. optimize privacy and downstream occupation-classification utility,
+Tau-Eval benchmarks task-sensitive privacy and utility across text tasks, and
+Loiseau et al. adapt anonymization instructions to specified privacy--utility
+objectives~\cite{yang2025robust,loiseau2025taueval,loiseau2026adaptive}.
+Thus neither task-aware anonymization nor multi-metric privacy--utility
+evaluation is claimed here as new. DiagPriv instead makes the required
+\emph{diagnostic relation} an explicit, auditable object and reports the
+model-visible residue as separate literal, linkage, shape, cardinality, and
+temporal measurements. Its current conditions are fixed; unlike an adaptive
+anonymizer, it has no learned or automatic selector. The exposure vector
+characterizes a representation, not re-identification probability or a
+formal privacy guarantee.
+
+\paragraph{Operational RCA and observability.}
+LLM-assisted cloud diagnosis is established: Ahmed et al. evaluate incident
+root-cause and mitigation recommendations; RCACopilot gathers runtime
+diagnostics and predicts a root-cause category; RCAgent performs tool-augmented
+investigation using an internally deployed model
+\cite{ahmed2023recommending,chen2024automatic,wang2024rcagent}.
+OpenRCA supplies enterprise-system failures and heterogeneous telemetry for
+LLM RCA evaluation~\cite{xu2025openrca}. Cloud-OpsBench is especially close
+on process grounding: its replayed operational snapshots and evidence graphs
+separate final-answer correctness from investigation evidence
+\cite{wang2026cloudopsbench}. DiagPriv does not claim to introduce RCA
+benchmarking or evidence-grounded diagnosis. Its controlled synthetic families
+instead compare \emph{the representation released to the same external model}
+while measuring residual exposure and five-label RCA on matched cases. The
+synthetic scale and realism are much narrower than those operational benchmarks.
+RCAgent's local-hosting response to privacy is an important alternative to
+pre-release transformation, not evidence that operational RCA ignores privacy.
+
+\paragraph{Temporal contrast and evidence attribution.}
+TimeBench documents heterogeneous LLM temporal-reasoning ability
+\cite{chu2024timebench}. Contrast-set methodology motivates controlled
+near-neighbor cases whose label changes under a meaningful perturbation
+\cite{gardner2020contrast}. Incident 003's target/twin pair similarly controls
+non-temporal cues while changing the causal temporal relation; it is not a
+general temporal-reasoning benchmark or a proof that one cue alone caused a
+particular model answer. For cited evidence, ALCE separates answer quality
+from citation quality, and fine-grained citation work distinguishes full,
+partial, and absent support~\cite{gao2023citations,zhang2024finegrained}.
+Cloud-OpsBench further evaluates whether an RCA investigation establishes
+required evidence milestones~\cite{wang2026cloudopsbench}. DiagPriv's
+semantic evidence-path rubric is an incident-specific implementation of this
+broader grounding concern, not a claim to originate evidence-support scoring.
+
+\paragraph{Positioning.}
+Across the reviewed work, the closest overlaps are task-sensitive text
+anonymization, prompt obfuscation, privacy-aware local RCA, and
+evidence-grounded operational benchmarks. The present study \emph{combines}
+pre-release transformations of operational evidence, explicit
+diagnostic-invariant audits, matched RCA comparisons across linkage/shape/time
+dependencies, semantic evidence support, and a vector of model-visible
+representation exposure. This is a scoped characterization of this study's
+design, not a priority or uniqueness claim; broader literature and real-system
+replication may further narrow it.
