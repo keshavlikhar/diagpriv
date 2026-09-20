@@ -1,0 +1,79 @@
+{
+  "data_version": "paper-frozen-development-results-v1",
+  "development_only": true,
+  "source_main_sha": "0339ded4266370f260b83c35292d24aff7ab88cd",
+  "privacy_exposure": {
+    "path": "docs/data/privacy_exposure_development_v1.json",
+    "analysis_version": "privacy-exposure-analysis-v1",
+    "sha256": "beffb1fe1d53250670921ef2817c5a111bf2bf41e3bff7ba474940cd58d0ebc2"
+  },
+  "incident_001": {
+    "source_document": "docs/CURRENT_STATUS.md",
+    "model": "gpt-5.6-luna",
+    "protocol": "raw-rca-v2 / rca-taxonomy-v2 / raw-rca-scorer-v2",
+    "development_seed_count": 5,
+    "validation_raw": {
+      "exact": 10,
+      "overall": 9,
+      "valid": 10,
+      "artifact_sha256": "c9d4cfa93c3176590ad820484266843c464e8a58f92994beebf7d10548c6028e"
+    },
+    "development": [
+      {"condition": "raw", "valid": 5, "exact": 5, "artifact_sha256": "dbf72a9a3d3e33e510622e3eab9df11d4e5c138d35fb89c6ed04e1ccdde4ab2b"},
+      {"condition": "redaction-v1", "valid": 5, "exact": 4, "artifact_sha256": "b3a885a65e9369a26e9cdb69b7fcc1244739cee0812d6313040a3f03203b1559"},
+      {"condition": "hmac-v1", "valid": 5, "exact": 5, "artifact_sha256": "063137ee4c29d5f2ef0c6688754a485822b45d4434b4c16cdb0f2476a36508e3"},
+      {"condition": "tokenization-v1", "valid": 5, "exact": 5, "artifact_sha256": "acb9d5fb53b8177c6b5dac954569fda6c0b74f25b7e479f6b393cc0ce33b6695"},
+      {"condition": "format-preserving-v1", "valid": 5, "exact": 4, "artifact_sha256": "3b32fff6fc7604afec2e467f18f850ffafa89c63633e0155b8cfc397fa9e1fa9"}
+    ]
+  },
+  "incident_002": {
+    "source_document": "docs/INCIDENT_002_FINAL_FINDINGS.md",
+    "model": "gpt-5.6-sol",
+    "protocol": "raw-rca-v2 / rca-taxonomy-v2 / raw-rca-scorer-v2",
+    "seeds": [1000, 1001, 1003, 1004, 1005, 1017],
+    "logical_trials_per_seed_condition": 3,
+    "primary": [
+      {"condition": "raw", "valid": 18, "planned": 18, "trigger": 15, "mechanism": 15, "exact": 9, "overall": 9},
+      {"condition": "redaction-v1", "valid": 9, "planned": 18, "trigger": 2, "mechanism": 2, "exact": 0, "overall": 0},
+      {"condition": "hmac-v1", "valid": 18, "planned": 18, "trigger": 1, "mechanism": 1, "exact": 1, "overall": 1},
+      {"condition": "tokenization-v1", "valid": 17, "planned": 18, "trigger": 2, "mechanism": 2, "exact": 0, "overall": 0},
+      {"condition": "format-preserving-v1", "valid": 18, "planned": 18, "trigger": 10, "mechanism": 10, "exact": 4, "overall": 4}
+    ],
+    "recovered_sensitivity": [
+      {"condition": "raw", "valid": 18, "trigger": 15, "mechanism": 15, "exact": 9, "component": 12},
+      {"condition": "redaction-v1", "valid": 18, "trigger": 2, "mechanism": 2, "exact": 0, "component": 10},
+      {"condition": "hmac-v1", "valid": 18, "trigger": 1, "mechanism": 1, "exact": 1, "component": 13},
+      {"condition": "tokenization-v1", "valid": 18, "trigger": 2, "mechanism": 2, "exact": 0, "component": 13},
+      {"condition": "format-preserving-v1", "valid": 18, "trigger": 10, "mechanism": 10, "exact": 4, "component": 10}
+    ],
+    "artifact_sha256": {
+      "trial_1_raw": "b8bdaef010a74bc5256363c818c914e146172160e3745bc7a8e9407e775e5c0f",
+      "trial_1_redaction": "aaaad02bc5bdaa6dd07cbe5785d92d6a38e9475b34bf13c4191a52072e611f33",
+      "trial_1_hmac": "20f91837846ed9bac0d50d09671aee4166033e58d51622aed6905a628edb71ad",
+      "trial_1_tokenization": "f6d0f56f65d44140692a6d5a3eebff6a662897356346d8872b4a804e55d694d3",
+      "trial_1_format_preserving": "03cce974a6ac2ad9f5d7d393ab6b139fcbb6072d44ccb8a080e1a73056661fa0",
+      "trials_2_3_raw": "ad8d8e059efdea20c7a25f325c1bf3f3ae5e65b7c2eb7eef6953f0039528026a",
+      "trials_2_3_redaction": "56f43a72ce4bdf8160cade695bfc83995ef29846ebbe0b10d887b6b87040ee15",
+      "trials_2_3_hmac": "b2fda91b0c958dcc11e405c30c4431a982735070f1667b86b155415f407f1b31",
+      "trials_2_3_tokenization": "441a603bb1e31f373ac4920eaf31e0882d3538f833b683e1c159f2ec7cde11df",
+      "trials_2_3_format_preserving": "cb1b17e8ad57ce4788ddb3d37e5249fde27263d912f16f03664dc506956df318",
+      "transport_recovery": "87902fa3217aaca020cb2cd2df14effc19c8c97a6f823031ed171a6f0ef4747e"
+    }
+  },
+  "incident_003_v3": {
+    "source_documents": [
+      "docs/INCIDENT_003_V3_STAGE1_EVIDENCE_V5_ANALYSIS.md",
+      "docs/INCIDENT_003_V3_STAGE2_RELATIVE_RESULTS.md",
+      "docs/INCIDENT_003_V3_STAGE3_ABLATION_RESULTS.md"
+    ],
+    "model": "gpt-5.6-sol",
+    "protocol": "raw-rca-v3 / rca-taxonomy-v3 / raw-rca-scorer-v3",
+    "constructions": [1319, 1299, 1387, 1222],
+    "query_roles": ["target", "temporal_twin"],
+    "stages": [
+      {"condition": "raw", "valid": 8, "exact": 7, "outcome": 8, "trigger": 8, "action": 8, "mechanism": 7, "component": 8, "target_mechanism": 4, "twin_mechanism": 3, "paired_mechanism": 3, "paired_exact": 3, "evidence_protocol": "evidence-support-v4", "evidence_supported": 0, "secondary_evidence_protocol": "evidence-support-v5", "secondary_evidence_supported": 3, "artifact_sha256": "b5b567e5966047bc075cdfa2287b13a700e83eb870f2366ee0291dac595505a2"},
+      {"condition": "relative-time-v1", "valid": 8, "exact": 6, "outcome": 8, "trigger": 8, "action": 8, "mechanism": 6, "component": 8, "target_mechanism": 4, "twin_mechanism": 2, "paired_mechanism": 2, "paired_exact": 2, "evidence_protocol": "evidence-support-v5", "evidence_supported": 4, "artifact_sha256": "f020511aeb497eab8c4ca5da4487ed87e20c6fe5e8b37a56613eb521297536e4"},
+      {"condition": "temporal-ablation-v1", "valid": 8, "exact": 4, "outcome": 8, "trigger": 8, "action": 8, "mechanism": 4, "component": 8, "target_mechanism": 4, "twin_mechanism": 0, "paired_mechanism": 0, "paired_exact": 0, "evidence_protocol": "evidence-support-v5", "evidence_supported": 0, "artifact_sha256": "40d48f58f95b9bf837fa75a6a13209f6d00c6bbedca8c24d90ddb0927e1bb55a"}
+    ]
+  }
+}

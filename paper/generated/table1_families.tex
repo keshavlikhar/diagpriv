@@ -1,0 +1,17 @@
+\begin{table}[H]
+\centering
+\small
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{llll}
+\toprule
+Family & Observed problem & Key invariant & Mechanism contrast \\
+\midrule
+001 & Duplicate payment effect & Identifier equality and cross-source linkage & Timeout, re-arrival, missing idempotency \\
+002 & Missing provisioning effect & External-reference format and shape & Malformed reference, exact lookup miss \\
+003 v3 & Premature compensation / twin & Deadline order and interval overlap & Overlapping execution versus serialized invalid transition \\
+\bottomrule
+\end{tabular}%
+}
+\caption{Three synthetic incident families and their intended diagnostic dependencies.}
+\label{tab:families}
+\end{table}

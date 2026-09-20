@@ -1,0 +1,51 @@
+\section{Limitations and Threats to Validity}
+\label{sec:limitations}
+The corpus is synthetic and comprises only three designed incident families.
+Their controls, nuisance variation, and anti-shortcut audits improve internal
+interpretability but cannot show that production outages have the same
+distribution, difficulty, or privacy surface. Incident 003 v3 was designed
+after an earlier version proved solvable from non-temporal cues; that history
+is disclosed rather than treating the current benchmark as an untouched
+natural sample. The v3 audit targets known lexical, categorical, positional,
+and conjunction shortcuts, not every possible learned feature.
+
+Most reported privacy comparisons use development cases. Incident 001 has a
+small raw-only validation observation, but no matched validation privacy
+experiment and no final held-out result. Incident 002 has only six distinct
+constructions, even with three logical trials; transport recovery is a
+prespecified sensitivity join rather than a clean replacement for failed
+calls. Incident 003 has four paired constructions and one provider call per
+case. The study uses GPT-5.6 Luna or Sol within one model family, so
+cross-model stability, decoding variance, and human diagnostic difficulty
+remain unresolved. The descriptive counts warrant neither statistical
+significance nor an equivalence claim about raw and relative-time evidence.
+
+The benchmark's five-label taxonomy and component-ownership oracle are
+research choices. Component localization is visibly less stable in parts
+of Incidents 001 and 002. A model can also select a correct category without
+citing a complete proof, or cite supportive facts while selecting the wrong
+mechanism. Evidence-support v5 was developed after inspecting Stage-1
+behavior; Stage-1 v5 is therefore post hoc and cannot be presented as a
+prospectively frozen primary score. V4 remains the historical Stage-1
+criterion. Only Stages 2 and 3 share prospective v5 scoring.
+
+The exposure vector measures visible representation, not practical
+re-identification risk. It does not test auxiliary-data attacks, membership
+inference, candidate-set reconstruction success, compromised HMAC keys,
+provider-side retention, or real-data legal compliance. Deterministic
+HMAC/token methods leave equality and frequency and may enable linkage;
+short ordinal tokens are not globally stable across independent candidate
+sets. Format-preserving pseudonyms leak length and character classes.
+Relative-time offsets remain anchor-reconstructable. Scalar transformations
+leave unannotated timestamp and contextual fields unchanged. Secret
+fail-closed tests cover declared synthetic fields; unannotated secrets
+would escape a policy that failed to classify them.
+
+Finally, the repository does not yet distribute the ignored provider JSONLs
+as a public archival package. Exact hashes and aggregate summaries preserve
+provenance locally, while issue~\#35 addresses safe distribution. The paper
+does not evaluate prompt injection, malicious agents, access-control
+replacement, poisoning, or malicious insiders. Before production use or
+stronger scientific claims, the research needs human baselines, broader
+incident mechanisms and model families, a preregistered final protocol,
+held-out evaluation, and independently reviewed privacy/security governance.

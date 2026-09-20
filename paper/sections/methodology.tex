@@ -1,0 +1,66 @@
+\section{Benchmark and Evaluation Methodology}
+\label{sec:method}
+DiagBench constructs fictional operational records from deterministic
+generators. Each incident separates a complete oracle-bearing object from
+the exclusive model-facing question, structured rows, and logs. Evidence
+elements have stable visible IDs; scorer and invariant code may consult
+oracle references offline, but the prompt cannot. Construction audits check
+that the intended causal relation is visible, nuisance variation is present,
+and prohibited shortcuts do not separate the oracle cases. This makes a
+generator test an implementation/construction check, not evidence that a
+human or model finds the case realistic or difficult.
+
+The experiments use frozen development selections. Incident 001 uses
+seeds 1000--1004 for the privacy comparison with GPT-5.6 Luna; its earlier
+raw-only 2000--2009 validation observation is reported separately.
+Incident 002 uses the first ascending development seed for each of six
+hidden defect classes (1000, 1001, 1003, 1004, 1005, 1017), not seeds chosen
+for model performance. Its GPT-5.6 Sol comparison has three logical trials
+per seed-condition. Incident 003 v3 uses four constructions selected by a
+frozen content-independent rule (1319, 1299, 1387, 1222), each with target
+and temporal-twin queries over the same evidence. The current paper has no
+final held-out evaluation. It does not access new validation cases.
+
+The model-facing prompt fixes a canonical output vocabulary, demands a
+five-field RCA, an explanation, and supporting evidence IDs. Incidents 001
+and 002 use \texttt{raw-rca-v2}, \texttt{rca-taxonomy-v2}, and
+\texttt{raw-rca-scorer-v2}. Incident 003 v3 uses the separately frozen v3
+versions. Provider requests use medium reasoning and omit temperature;
+the originally intended Luna zero-temperature field was rejected by that
+provider configuration, whereas Sol omission preserves the matched
+protocol without implying Sol rejection. Trial identity, prompt-template
+hash, exact rendered model-input hash, transformation provenance, scoring
+versions, and response status are recorded as available. Incorrect
+diagnoses are not silently retried. Infrastructure failures are retained
+as missing model responses, not scored as wrong diagnoses.
+
+We report exact five-dimensional RCA, individual dimensions, and, for
+Incident 003, whether both queried roles in a construction receive their
+correct mechanisms. Evidence support is not inferred from label correctness:
+it is evaluated separately as described in Section~\ref{sec:evidence}.
+Representation exposure is a third separate analysis over the exact released
+\texttt{ModelView}, not over hidden generator state. Paired comparisons reuse
+the same construction under matched conditions; Incident 003's two roles
+share the same evidence but differ in their subject-specific question.
+
+The three Incident 003 provider stages were authorized and executed
+separately under frozen inputs. Their ignored local JSONL artifacts have
+these exact SHA-256 identities (raw, relative-time, ablation):
+\begin{center}
+\scriptsize
+\begin{tabular}{ll}
+\toprule
+Stage & Frozen result SHA-256 \\
+\midrule
+Raw & \texttt{b5b567e5966047bc075cdfa2287b13a700e83eb870f2366ee0291dac595505a2} \\
+Relative time & \texttt{f020511aeb497eab8c4ca5da4487ed87e20c6fe5e8b37a56613eb521297536e4} \\
+Temporal ablation & \texttt{40d48f58f95b9bf837fa75a6a13209f6d00c6bbedca8c24d90ddb0927e1bb55a} \\
+\bottomrule
+\end{tabular}
+\end{center}
+The repository contains deterministic generators, transformations, scorers,
+configs, protocol and aggregate-result documents, and the privacy-exposure
+artifact. The provider JSONLs are intentionally ignored and locally frozen,
+not yet publicly archived. Thus code and aggregate-table regeneration are
+available now, while independent replay of each provider observation awaits
+the provenance-safe distribution work tracked separately in issue~\#35.

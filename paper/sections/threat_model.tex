@@ -1,0 +1,54 @@
+\section{Motivation and Threat Model}
+\label{sec:threat}
+The trusted boundary contains an organization's operational data sources and
+the transformation layer that can consult field annotations. The external
+LLM or coding/RCA agent receives a rendered troubleshooting question and a
+transformed \texttt{ModelView}, not the complete incident object. We initially
+model the provider as honest-but-curious: it performs the requested analysis
+but should not receive avoidable identity or structural information. We do
+not claim protection against a compromised provider or an adversarial
+operator with control of the trusted host.
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[
+  node distance=0.35cm,
+  box/.style={draw,rounded corners,minimum height=1.15cm,text width=2.45cm,
+              align=center,fill=blue!5,font=\small},
+  arrow/.style={-{Latex[length=2mm]},thick}
+]
+\node[box] (source) {Enterprise evidence\\sources};
+\node[box,right=of source] (transform) {Trusted DiagPriv\\transformation layer};
+\node[box,right=of transform] (view) {Model-visible\\transformed evidence};
+\node[box,right=of view] (model) {External LLM /\\RCA agent};
+\draw[arrow] (source) -- (transform);
+\draw[arrow] (transform) -- (view);
+\draw[arrow] (view) -- (model);
+\node[draw,dashed,rounded corners,fit=(source)(transform),inner sep=0.16cm,
+      label={[font=\scriptsize]above:trusted boundary}] {};
+\node[font=\scriptsize,align=center,below=0.36cm of transform]
+      {Raw values and transformation keys remain inside.};
+\end{tikzpicture}
+\caption{The intended data boundary. The current study measures the exact
+released representation; it does not evaluate provider retention or
+rehydration.}
+\label{fig:architecture}
+\end{figure}
+
+The assets in scope include direct identity, operational and linkable
+identifiers, original format, quasi-identifying timestamps, and the
+relationships among these fields. A classified \texttt{secret} or
+\texttt{never\_release} literal is categorically non-releasable: the offline
+analysis fails closed if it occurs verbatim anywhere in the released view.
+No current development field carries that annotation, so this is a policy
+and synthetic-test property, not a measured zero secret-exposure rate.
+Metadata such as record counts and unannotated timestamps can remain visible
+even when annotated identities are changed.
+
+This first-paper threat model does not replace access control or address
+prompt injection, malicious autonomous agents, poisoning, malicious
+insiders, cryptographic provider-side guarantees, or a complete legal or
+regulatory analysis. A mistaken sensitivity annotation is itself a residual
+exposure route. The exposure measurements in Section~\ref{sec:privacy} concern
+what appears in the model-visible representation. They do not estimate an
+adversary's probability of re-identifying a person from auxiliary data.

@@ -1,0 +1,24 @@
+\begin{table}[H]
+\centering
+\small
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{llrrrrrr}
+\toprule
+Family & Condition & Literal & Equal & Unequal & Frequency & Cross-source & Shape \\
+\midrule
+001 & Raw & 476/476 & 559/559 & 3459/3459 & 20/20 & 326/326 & 476/476 \\
+001 & Redaction & 0/476 & 233/559 & 1709/3459 & 0/20 & 0/326 & 0/476 \\
+001 & HMAC & 0/476 & 509/559 & 3459/3459 & 15/20 & 276/326 & 0/476 \\
+001 & Tokenization & 0/476 & 509/559 & 3459/3459 & 15/20 & 276/326 & 0/476 \\
+001 & Format-preserving & 0/476 & 509/559 & 3459/3459 & 15/20 & 276/326 & 476/476 \\
+002 & Raw & 190/190 & 300/300 & 2656/2656 & 6/6 & 248/248 & 190/190 \\
+002 & Redaction & 0/190 & 52/300 & 1680/2656 & 0/6 & 0/248 & 0/190 \\
+002 & HMAC & 0/190 & 300/300 & 2656/2656 & 6/6 & 248/248 & 0/190 \\
+002 & Tokenization & 0/190 & 300/300 & 2656/2656 & 6/6 & 248/248 & 0/190 \\
+002 & Format-preserving & 0/190 & 300/300 & 2656/2656 & 6/6 & 248/248 & 190/190 \\
+\bottomrule
+\end{tabular}%
+}
+\caption{Development representation exposure for annotated identifiers. Counts are retained relationships or shapes over eligible denominators, not a privacy score.}
+\label{tab:scalar-exposure}
+\end{table}

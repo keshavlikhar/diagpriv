@@ -1,0 +1,18 @@
+\section{Conclusion}
+DiagPriv asks whether operational evidence can be transformed to hide
+unnecessary sensitive literals without discarding the relations required
+for LLM root-cause analysis. The present development study does not answer
+that question universally. It shows, in three controlled synthetic families,
+why the relevant relation changes with the task: identity equality for a
+retry/idempotency failure, reference shape for an input-handling failure,
+and temporal order/overlap for a compensation failure. Matched temporal
+twins provide the strongest isolation in the current benchmark, while
+the observed paired discrimination remains a small descriptive result.
+
+The exposure vector makes the privacy side explicit: removing literal values
+can still leave linkage, format, cardinality, exact relative timing, or
+unannotated context visible. RCA labels, evidence support, and exposure are
+therefore reported separately. The next step is not to declare a winning
+baseline, but to validate these dependencies across more incidents, humans,
+models, and a frozen held-out protocol, then test an actual task-aware
+selection policy with a separately specified privacy threat model.

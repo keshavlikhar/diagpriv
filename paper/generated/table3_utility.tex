@@ -1,0 +1,24 @@
+\begin{table}[H]
+\centering
+\small
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{llrrrr}
+\toprule
+Family & Condition & Exact RCA & Trigger & Mechanism & Component \\
+\midrule
+001 & Raw & 5/5 & -- & -- & -- \\
+001 & Redaction & 4/5 & -- & -- & -- \\
+001 & HMAC & 5/5 & -- & -- & -- \\
+001 & Tokenization & 5/5 & -- & -- & -- \\
+001 & Format-preserving & 4/5 & -- & -- & -- \\
+002 & Raw & 9/18 & 15/18 & 15/18 & 12/18 \\
+002 & Redaction & 0/18 & 2/18 & 2/18 & 10/18 \\
+002 & HMAC & 1/18 & 1/18 & 1/18 & 13/18 \\
+002 & Tokenization & 0/18 & 2/18 & 2/18 & 13/18 \\
+002 & Format-preserving & 4/18 & 10/18 & 10/18 & 10/18 \\
+\bottomrule
+\end{tabular}%
+}
+\caption{Frozen development RCA: Incident 001 uses five Luna calls per condition; Incident 002 reports the 18-slot Sol transport-recovered sensitivity view, not the primary as-executed view.}
+\label{tab:utility}
+\end{table}

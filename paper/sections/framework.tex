@@ -1,0 +1,48 @@
+\section{DiagPriv Transformation Framework}
+\label{sec:framework}
+The implementation keeps benchmark construction, transformations, prompt
+rendering, provider invocation, and oracle scoring separate. A generator
+produces an \texttt{Incident} with model-visible records and oracle-only
+labels, privacy annotations, expected evidence, and invariant definitions.
+Transformations begin from \texttt{Incident.model\_view()} and return a new
+\texttt{ModelView}; neither an oracle answer nor the HMAC key is serialized
+into the model request. A versioned condition and hash identify each
+representation. The fixed baselines below isolate different preservation
+choices rather than claiming to be interchangeable security mechanisms.
+
+\paragraph{Redaction and deterministic pseudonyms.}
+\texttt{redaction-v1} replaces annotated values with field-class
+placeholders. It hides raw literal identity but can collapse distinct
+entities and destroy meaningful joins. \texttt{hmac-v1} uses keyed,
+namespace-separated HMAC-SHA-256 identifiers; it preserves deterministic
+equality within declared namespaces, including selected cross-source joins,
+while retaining frequency and linkability. Its operational key is external
+to prompts and artifacts. The privacy-exposure analysis uses a separate
+public synthetic test-only key and makes no operational key-compromise claim.
+\texttt{tokenization-v1} assigns short, deterministic, ephemeral tokens from
+a mapping over the complete view. Its mapping is reproducible for the same
+input population but is neither a persistent production vault nor
+guaranteed globally stable across independently transformed candidate sets.
+Both methods can expose candidate-set or frequency information even when raw
+values disappear.
+
+\subsubsection*{Shape and time}
+\texttt{format-preserving-v1} is deterministic format/constraint-preserving
+pseudonymization: it retains measured length, separator positions, and
+character classes while changing literal values. It is \emph{not}
+cryptographic format-preserving encryption. \texttt{relative-time-v1}
+converts annotated timestamps to incident-local millisecond offsets,
+removing the original absolute representation but keeping equality,
+ordering, gaps, durations, and overlap. Exact offsets could reconstruct
+absolute times given an external anchor. \texttt{temporal-ablation-v1}
+replaces annotated timestamps with non-temporal markers and removes log-order
+leakage; it is a destructive causal control, not an optimal privacy method.
+In Incident 001 and 002 the scalar methods leave \emph{unannotated}
+timestamps unchanged, a limit measured explicitly below.
+
+These conditions are versioned; no transformation was retuned after observing
+the results reported here. The broader DiagPriv ambition is to choose a
+least-exposing condition that preserves the declared essential relations for
+the task. This draft evaluates the premise with fixed baselines. It does not
+present an implemented task-aware planner or an automatic guarantee of
+minimal disclosure.

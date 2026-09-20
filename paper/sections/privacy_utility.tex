@@ -1,0 +1,83 @@
+\section{Privacy--Utility Analysis}
+\label{sec:privacy}
+The measurement surface is exactly the released \texttt{ModelView}:
+question, structured rows, log messages and attributes, evidence IDs,
+source inventory, and ordering. The local evaluator compares each annotated
+raw scalar with what remains visible after transformation; it does not use
+hidden generator metadata as an exposed value. Analysis version
+\texttt{privacy-exposure-analysis-v1} produces a vector rather than a weighted
+privacy score. An empty eligible denominator is reported as
+\texttt{not\_applicable}, not as zero exposure.
+
+The vector separates (i) exact annotated literal retention,
+(ii) preservation of equal pairs and separation of unequal pairs,
+(iii) repeated-entity frequency histograms, (iv) cross-source equal and
+unequal joins, (v) original length/character-class/separator shape,
+(vi) source record counts, sensitive-field presence, and distinct-entity
+counts, (vii) original absolute timestamp retention, (viii) parseable
+relative order and exact inter-event differences, and (ix) classified
+secret fail-closed status. An ordinary short-string literal metric uses a
+six-character embedding cutoff to limit accidental substring matches;
+classified secrets use strict verbatim scanning with no length cutoff.
+These dimensions cannot be averaged into a defensible single privacy number.
+
+Table~\ref{tab:scalar-exposure} is generated directly from the frozen
+development exposure artifact, not transcribed from a model result.
+All four scalar transformations remove every annotated direct literal in
+these selected Incident 001 and 002 views. This is narrower than saying
+every identifying fact is hidden. Redaction also loses all measured
+cross-source equal joins and collapses many distinct values; its surviving
+equal pairs are not faithful linkage because unequal-pair separation falls.
+HMAC, tokenization, and format-preserving pseudonymization retain 276/326
+Incident 001 cross-source equal pairs, not 326/326. Fifty payment-ID joins
+are intentionally lost through independent path namespaces, while essential
+request-ID linkage remains. In Incident 002 those three methods retain
+248/248 measured reference joins. Format-preserving pseudonyms retain
+476/476 and 190/190 original shape patterns; opaque HMAC and tokenization
+retain 0 on that specific shape measure. Thus similar literal-removal
+counts can coexist with quite different linkage or format exposure.
+
+Frequency and cardinality are equally distinct from literal identity.
+Incident 001 eligible frequency histograms are 20/20 raw, 0/20 redacted,
+and 15/20 under each deterministic pseudonym condition; Incident 002 has
+6/6 raw and pseudonymous versus 0/6 redacted. Record counts and annotated
+field presence remain intact in every scalar condition (Incident 001:
+20/20 source counts and 476/476 fields; Incident 002: 30/30 and
+190/190). Furthermore, these methods leave unannotated absolute
+timestamps visible: 139/139 in Incident 001 and 478/478 in Incident 002.
+The transformed view may therefore still convey operational timing and
+membership cues.
+
+The temporal comparison measures different exposure properties and is not
+pooled with the scalar families. The two Incident 003 query roles yield
+identical measured exposure vectors; each underlying construction is
+counted once in the display below.
+\input{generated/table2b_temporal_exposure}
+Raw retains 204/204 original absolute timestamp occurrences and all
+5,004 measured order and exact-gap relations. Relative-time removes
+the original absolute literals (0/204) while preserving all measured
+order and exact millisecond-gap relations. Ablation leaves no parseable
+temporal pair (0/5,004 evaluable), so its order and gap zeros mean
+\emph{unavailable}, not observed reversed chronology. Both temporal
+conditions still expose all 192/192 annotated non-temporal operational
+identifier literals. Relative offsets may reveal absolute times to an
+observer with an external time anchor.
+
+These results characterize the released representation, not adversarial
+success. They do not estimate re-identification probability, membership
+inference, auxiliary-data attack success, provider retention, compliance,
+legal de-identification, differential privacy, or $k$-anonymity. A
+controlled synthetic HMAC fixture shows that identical values under the
+same key and namespace can link across incidents; the corpus does not
+estimate a cross-incident attack success rate. No current development
+annotation is classified as secret, so the secret denominator is
+\texttt{not\_applicable}, not a claim of zero risk. Synthetic tests exercise
+the fail-closed policy.
+
+Utility and exposure must be interpreted side by side. Incident 002's
+opaque pseudonyms retain selected joins but erase the intended structural
+clue; Incident 003's relative-time view drops calendar identity while
+retaining the temporal relations required by the paired oracle. Neither
+case supplies a generally optimal transformation rule. Instead, the
+matched examples illustrate why the diagnostic dependency must be named
+before evaluating what a release should preserve.

@@ -1,0 +1,91 @@
+\section{Incident-Family Design}
+\label{sec:families}
+\paragraph{Incident 001: repeated payment effect.}
+A deadline or timeout precedes re-arrival of the same logical request.
+The operation executor lacks an effective idempotency control and records
+two successful effects. The frozen tuple is
+\texttt{duplicate\_effect},
+\texttt{timeout\_or\_deadline},
+\texttt{retry\_or\_rearrival},
+\texttt{missing\_or\_ineffective\_idempotency},
+\texttt{operation\_executor}.
+The ingress component observes arrivals but does not own the missing
+suppression control; component ownership is a distinct and potentially
+model-sensitive judgement. The minimum diagnostic structure includes
+same-request equality across sources, two distinct effects, successful
+states, and event order. The customer's literal identity is not needed.
+This family tests whether relationship-preserving pseudonyms can retain
+RCA utility after direct identity is changed.
+
+\paragraph{Incident 002: malformed external reference.}
+A provisioning operation with an unexpected external-reference shape
+reaches an exact lookup, misses, and yields no effect because domain-level
+validation or normalization is inadequate. The oracle tuple is:
+\begin{quote}\small\ttfamily
+missing\_effect; malformed\_or\_unexpected\_input;\\
+no\_follow\_on\_action;\\
+validation\_or\_input\_handling\_failure; operation\_executor.
+\end{quote}
+Controls and benign lookup misses make a simple miss or latency clue
+insufficient; the target's structural deviation from a healthy template is
+the intended differentiator. Six generator-side defect classes are represented,
+including separator, width, case-class, and truncation changes. A hidden
+\texttt{leading\_zero\_loss} construction is described to the evaluator only
+as an observable leading-position numeric-run deletion: visible structure
+cannot reveal the literal value of the lost digit. Format-preserving
+pseudonymization retains the structural signature that HMAC and ordinary
+tokens do not. Retention is not sufficient by itself to ensure a correct
+model answer.
+
+\paragraph{Incident 003 v3: temporal causal isolation.}
+The target execution is still active when compensation begins after a
+deadline. Its later successful original effect coexists with the compensated
+workflow state; correct fencing or serialization would prevent this
+\texttt{incorrect\_concurrency\_control} mechanism. The temporal twin has
+the same non-temporal terminal, source, event-kind, linkage, and message
+signatures, but its successful effect is committed before the deadline and
+compensation follows in serialized order. Its mechanism is
+\texttt{incorrect\_state\_transition}: the lifecycle edge is invalid even
+without concurrent actors. A third operation is a safe control. The
+target/twin questions name different operation IDs but present otherwise
+identical evidence. Offline audits show matching non-temporal projections,
+structural isomorphism of normalized ablated views, and conflicting
+mechanism oracles across 200 development constructions. This is stronger
+isolation than contrasting two unrelated transformed incidents; it is
+still a targeted construction audit rather than proof against every
+learned cue.
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[
+  eventbox/.style={draw,rounded corners,fill=blue!5,font=\scriptsize,
+               text width=2.0cm,align=center,minimum height=0.8cm},
+  label/.style={font=\small\bfseries,anchor=east},
+  flow/.style={-{Latex[length=1.7mm]},thick}
+]
+\node[label] at (0,2.2) {Target};
+\node[eventbox] (ta) at (1.4,2.2) {execution active};
+\node[eventbox] (tb) at (3.75,2.2) {deadline};
+\node[eventbox] (tc) at (6.1,2.2) {compensation starts};
+\node[eventbox] (td) at (8.45,2.2) {execution completes};
+\draw[flow] (ta)--(tb);\draw[flow] (tb)--(tc);\draw[flow] (tc)--(td);
+\node[label] at (0,0.9) {Twin};
+\node[eventbox] (wa) at (1.4,0.9) {execution starts};
+\node[eventbox] (wb) at (3.75,0.9) {effect committed};
+\node[eventbox] (wc) at (6.1,0.9) {deadline};
+\node[eventbox] (wd) at (8.45,0.9) {compensation starts};
+\draw[flow] (wa)--(wb);\draw[flow] (wb)--(wc);\draw[flow] (wc)--(wd);
+\node[font=\scriptsize,align=center] at (4.9,-0.15)
+{Temporal ablation: original ordering and overlap are unavailable.};
+\end{tikzpicture}
+\caption{Conceptual Incident 003 mechanism contrast. The target's execution
+overlaps compensation; the twin's effect is committed before the later
+compensation. The diagram is schematic, not a sampled timeline.}
+\label{fig:temporal-isolation}
+\end{figure}
+
+Raw and relative-time representations retain the order and overlap that
+distinguish the queried mechanisms. Temporal ablation replaces timestamps
+with non-parseable markers and removes residual chronological log ordering.
+Both roles still have the same non-temporal evidence; under ablation the
+temporal proof is unavailable rather than merely harder to read.

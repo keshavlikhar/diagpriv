@@ -1,0 +1,48 @@
+\section{Evidence-Support Methodology}
+\label{sec:evidence}
+A correct five-label tuple can be guessed or supported inadequately.
+DiagPriv therefore asks the model to cite visible evidence IDs and evaluates
+those citations independently of exact RCA. Incident 001 and 002 use their
+historical frozen evidence rubrics. Incident 003 v3 makes the distinction
+especially visible: each role has explicit essential facts such as subject
+binding, strict deadline/completion order, positive interval overlap for
+the target, or serialized completion before compensation for the twin.
+Contrast and supportive facts are reported separately rather than allowed
+to substitute for a missing essential fact.
+
+Stage 1's primary \texttt{evidence-support-v4} rubric represented each
+requirement with a particular physical citation path. Its 0/8 support
+result is historically correct under that frozen rule. A provider-free
+forensic audit found that the submitted citations were generally valid,
+subject-relevant, and semantically useful, but several complete log-based
+proofs did not match the exact structured-row path registered in v4.
+That path-specificity motivated a new version, not a silent correction to
+the old score.
+
+\texttt{evidence-support-v5} registers alternative semantic paths across
+structured records and lifecycle logs. A requirement is satisfied only if
+\emph{every} ID in one allowed path was cited and the semantic predicate is
+true on those exact model-visible records. There is no fuzzy prose grading,
+uncited evidence completion, or partial-path credit. Wrong-subject and
+nonexistent citations still fail. For the target, positive execution and
+compensation overlap requires genuine intervals with
+$\max(s_1,s_2)<\min(e_1,e_2)$; equal-boundary contact does not count.
+Opaque ablation timestamps make temporal predicates unavailable rather
+than permitting lexical marker ordering.
+
+V5's 3/8 support figure for the frozen raw Stage-1 responses is a
+\emph{post-hoc secondary} rescore, not Stage 1's primary outcome. The
+relative-time Stage 2 and temporal-ablation Stage 3 protocols froze v5
+\emph{before} their calls; their 4/8 and 0/8 results form the cleaner
+prospective-v5 comparison. Table~\ref{tab:evidence} preserves this
+provenance explicitly.
+\input{generated/table5_evidence}
+RCA correctness and evidence support need not move together. In Stage 2,
+all target RCA mechanisms were correct, yet target citations omitted a
+complete proof of positive overlap. Two incorrect twin diagnoses satisfied
+the frozen citation requirements even while selecting the wrong mechanism.
+In Stage 3 the model retained 4/4 correct target labels but no response
+established the temporal essentials under unavailable-time semantics.
+Therefore the paper reports label accuracy, evidence support, and exposure
+as different outcomes rather than collapsing them into
+\texttt{overall\_correct} alone.
