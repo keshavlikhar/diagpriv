@@ -189,6 +189,15 @@ def _literal_visible(
     )
 
 
+def _secret_visible(
+    value: object, keys: set[tuple[str, str]], strings: tuple[str, ...]
+) -> bool:
+    """Fail closed on verbatim string secrets; keep non-string matching typed."""
+    if _typed(value) in keys:
+        return True
+    return isinstance(value, str) and any(value in visible for visible in strings)
+
+
 def _shape(value: str) -> str:
     return "".join(
         "U" if ch.isupper() else "l" if ch.islower() else "D" if ch.isdigit()
@@ -327,7 +336,7 @@ def analyze_model_views(
         if annotation.classification == "secret" or annotation.policy == "never_release"
     }
     secrets = [item for item in literal if item.path in secret_paths]
-    secret_count = sum(_literal_visible(item.raw, keys, strings) for item in secrets)
+    secret_count = sum(_secret_visible(item.raw, keys, strings) for item in secrets)
     if secret_count:
         raise SecretExposureError("A classified secret is visible in the released ModelView")
     metrics["secret_literal_exposure"] = CountMetric(0, len(secrets))

@@ -159,6 +159,77 @@ def test_secret_literal_exposure_fails_closed_without_echoing_value() -> None:
     assert _fraction(analyze_model_views(raw, safe, annotation), "secret_literal_exposure") == 0
 
 
+@pytest.mark.parametrize("secret", ("~", "AB12", "SYNTHETIC-NONCREDENTIAL-SECRET-123"))
+@pytest.mark.parametrize(
+    ("classification", "policy"),
+    (("secret", "consistent_pseudonym"), ("identifier", "never_release")),
+)
+def test_secret_embedded_in_question_fails_closed_at_any_length(
+    secret: str, classification: str, policy: str
+) -> None:
+    raw = _view([{"evidence_id": "e1", "api_token": secret}])
+    released = _view(
+        [{"evidence_id": "e1", "api_token": "[REDACTED]"}],
+        question=f"Synthetic token={secret} appeared.",
+    )
+    annotation = (SensitiveField("records.api_token", classification, policy, "synthetic"),)
+    with pytest.raises(SecretExposureError) as captured:
+        analyze_model_views(raw, released, annotation)
+    assert str(captured.value) == "A classified secret is visible in the released ModelView"
+    assert secret not in str(captured.value)
+    assert released.troubleshooting_question not in str(captured.value)
+
+
+@pytest.mark.parametrize("location", ("log_message", "log_attribute", "structured_attribute"))
+def test_short_secret_embedded_in_visible_evidence_fails_closed(location: str) -> None:
+    secret = "AB12"
+    raw = _view([{"evidence_id": "e1", "api_token": secret}])
+    rows: list[dict[str, object]] = [{"evidence_id": "e1", "api_token": "[REDACTED]"}]
+    message = "No token shown."
+    attributes: dict[str, object] = {}
+    if location == "log_message":
+        message = f"Synthetic token={secret} appeared."
+    elif location == "log_attribute":
+        attributes["note"] = f"Synthetic token={secret} appeared."
+    else:
+        rows[0]["attributes"] = {"note": f"Synthetic token={secret} appeared."}
+    logs = (LogEntry("l1", "2039-01-01T00:00:00Z", "INFO", "svc", message, attributes),)
+    annotation = (SensitiveField("records.api_token", "secret", "never_release", "synthetic"),)
+    with pytest.raises(SecretExposureError) as captured:
+        analyze_model_views(raw, _view(rows, logs=logs), annotation)
+    assert str(captured.value) == "A classified secret is visible in the released ModelView"
+
+
+def test_short_secret_exact_scalar_fails_and_safe_removal_passes() -> None:
+    secret = "~"
+    raw = _view([{"evidence_id": "e1", "api_token": secret}])
+    annotation = (SensitiveField("records.api_token", "secret", "never_release", "synthetic"),)
+    with pytest.raises(SecretExposureError) as captured:
+        analyze_model_views(raw, raw, annotation)
+    assert secret not in str(captured.value)
+    safe = _view([{"evidence_id": "e1", "api_token": "[REDACTED]"}])
+    assert _fraction(analyze_model_views(raw, safe, annotation), "secret_literal_exposure") == 0
+
+
+def test_non_string_secret_requires_typed_exact_match() -> None:
+    raw = _view([{"evidence_id": "e1", "api_token": 4187}])
+    annotation = (SensitiveField("records.api_token", "secret", "never_release", "synthetic"),)
+    with pytest.raises(SecretExposureError) as captured:
+        analyze_model_views(raw, raw, annotation)
+    assert "4187" not in str(captured.value)
+    as_text = _view([{"evidence_id": "e1", "api_token": "[REDACTED]"}], question="Code 4187")
+    assert _fraction(analyze_model_views(raw, as_text, annotation), "secret_literal_exposure") == 0
+
+
+def test_general_literal_metric_retains_short_string_embedding_cutoff() -> None:
+    raw = _view([{"evidence_id": "e1", "entity_id": "AB12"}])
+    released = _view(
+        [{"evidence_id": "e1", "entity_id": "TOK_000001"}],
+        question="Synthetic token=AB12 appeared.",
+    )
+    assert _fraction(analyze_model_views(raw, released, _annotation()), "protected_literal_exposure") == 0
+
+
 def test_existing_scalar_transformations_are_measured_not_redefined() -> None:
     incident = generate_incident_001(1000)
     raw = incident.model_view()

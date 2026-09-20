@@ -44,7 +44,9 @@ these deterministic selected constructions.
    Exact scalar matching includes every
    field and the question. For string literals of at least six characters,
    verbatim embedding in another visible string also counts. This is literal
-   disclosure, not identity reconstruction from a token or schema.
+   disclosure, not identity reconstruction from a token or schema. The
+   six-character substring cutoff applies only to this ordinary exposure
+   metric, to limit accidental matches for very short values.
 2. **Within-view equality and inequality:** among occurrence pairs in the same
    semantic group, report preservation of raw-equal pairs and separation of
    raw-unequal pairs separately. Both released values must be present for a
@@ -88,15 +90,19 @@ these deterministic selected constructions.
    scalar ratio alone, addresses the Incident 003 causal distinction.
 9. **Secret literal exposure:** fields explicitly classified `secret` or
    assigned `never_release` policy are checked against the entire released
-   view. Any verbatim occurrence fails closed with an exception that contains
-   neither the value nor the transformed view. The current development
+   view. String secrets use exact typed matching and verbatim substring
+   scanning of every visible string, with **no minimum length**; non-string
+   secrets use typed exact matching only, without string coercion. Any match
+   fails closed with an exception that contains neither the value nor the
+   transformed view. The current development
    benchmark has no such annotation, so its secret ratio is
    `not_applicable`; synthetic tests exercise both failure and safe removal.
 
 The exact detector does not estimate inferability from public pseudonym
 algorithms, auxiliary dictionaries, known time anchors, or retained context.
-The short-string embedding cutoff limits accidental substring matches and may
-miss a short literal embedded in a longer free-text field. Counts concern
+The ordinary metric's short-string embedding cutoff limits accidental substring
+matches and may miss a short literal embedded in a longer free-text field;
+the classified-secret fail-closed check does not use that cutoff. Counts concern
 annotated fields except the explicitly broader timestamp scan; unannotated
 identifiers, message text, evidence IDs, inventory, and question context can
 remain exposed and are not covered by a claim of comprehensive de-identification.
