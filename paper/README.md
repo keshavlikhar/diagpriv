@@ -54,7 +54,8 @@ conservative novelty comparisons are in `paper/RELATED_WORK_REVIEW.md`.
   docs/PAPER_RESULTS_TABLES.md.
 
 All provider-result JSONLs remain ignored local files and are not packaged
-in this PR. Issue #35 addresses provenance-safe distribution. No provider
+in this PR. `docs/FROZEN_ARTIFACT_ARCHIVE_RFC.md` proposes a separate private
+archive and offline verifier; no archive has been provisioned or uploaded. No provider
 call, RCA rescore, validation access, or held-out generation is needed to
 regenerate the manuscript tables.
 
