@@ -307,8 +307,10 @@ failures of the benchmark or deterministic reproduction. The manuscript build
 remains to be independently exercised in a TeX-capable clean environment
 during issue #51.
 
-Provider calls: **0**  
-Validation access: **0**  
+Provider calls: **0**
+
+Validation access: **0**
+
 Held-out access: **0**
 
 **CLEAN-ROOM REPRODUCIBILITY REVIEW READY**
