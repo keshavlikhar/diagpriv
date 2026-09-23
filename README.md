@@ -7,9 +7,10 @@ analysis (RCA). Its companion benchmark, DiagBench, contains three fully
 synthetic incident families; no production or customer data is used.
 
 The central hypothesis is that a transformation which preserves explicitly
-declared diagnostic invariants will retain more RCA utility than conventional
-redaction at comparable privacy exposure. Current results are early pilot
-observations, not proof of that hypothesis or evidence of production validity.
+declared diagnostic invariants will retain more RCA utility than a
+representation that destroys those task-relevant relations. Current results
+are controlled synthetic development observations, not proof of that
+hypothesis, a universal method ranking, or evidence of production validity.
 
 ## Current status
 
@@ -33,18 +34,16 @@ general conclusions. No Incident 002 validation or held-out observation exists.
 Do not rerun completed experiments, run a privacy condition on validation, or
 inspect held-out seeds without explicit research approval.
 
-Incident Family 003 studies temporal causality. Its frozen v1 raw Sol development
-run recovered the temporal chain in all eight observations but scored 0/8 exact
-under RCA v2 because every response selected `incorrect_concurrency_control`
-instead of the v1 oracle's `incorrect_state_transition`. Offline adjudication
-classified the disagreement as taxonomy ambiguity. RCA v3 is implemented as a
-separate protocol with an Incident 003 v2 wrapper and fresh development set.
-The frozen fresh raw run achieved 8/8 exact RCA but 0/8 evidence-supported
-diagnoses under the unchanged v3 citation rubric. The frozen matched
-`relative-time-v1` run also achieved 8/8 exact RCA and retained all eight
-raw-correct cases; 1/8 responses was evidence-supported. This supports only a
-narrow eight-case development finding. No destructive Incident 003 privacy,
-validation, or held-out observation exists.
+Incident Family 003 v3 is a matched target/temporal-twin benchmark designed
+after an earlier temporal construction was shown to contain non-temporal
+shortcuts. Four frozen constructions are queried under raw, relative-time, and
+temporal-ablation evidence. Paired mechanism discrimination is 3/4 under raw,
+2/4 under relative time, and 0/4 under ablation. Target mechanisms remain 4/4
+in all three conditions; the degradation occurs on the twins, which collapse
+to the target's concurrency mechanism under ablation. This is a small
+directional development observation, not a provider-level causal estimate or
+evidence of general temporal-reasoning performance. No Incident 003 validation
+or held-out observation exists.
 
 See [CURRENT_STATUS](docs/CURRENT_STATUS.md) for immutable artifact hashes and
 known limitations, and [RESEARCH_PLAN](docs/RESEARCH_PLAN.md) for the roadmap.
@@ -93,7 +92,8 @@ uv run python -m diagbench.generators.incident_002 --seed 1001
 - [Threat model](docs/THREAT_MODEL.md)
 - [Architecture](docs/ARCHITECTURE.md)
 - [Contributing guide](CONTRIBUTING.md)
-- [Fresh-clone reproducibility audit](docs/FRESH_CLONE_REPRODUCIBILITY_AUDIT.md)
+- [Current clean-room reproducibility review](docs/CLEAN_ROOM_REPRODUCIBILITY_REVIEW.md)
+- [Historical fresh-clone reproducibility audit](docs/FRESH_CLONE_REPRODUCIBILITY_AUDIT.md)
 - [Privacy-exposure metrics RFC](docs/PRIVACY_EXPOSURE_METRICS_RFC.md)
 - [Statistical analysis plan RFC](docs/STATISTICAL_ANALYSIS_PLAN_RFC.md)
 - [Human baseline protocol RFC](docs/HUMAN_BASELINE_PROTOCOL_RFC.md)
@@ -121,6 +121,15 @@ uv run python -m diagbench.generators.incident_002 --seed 1001
 - Real provider commands require `--execute`. Absence of that flag is a dry run.
 - Frozen JSONL observations are append-only research records and must not be
   edited or silently rerun.
+
+## Reproducibility level
+
+The current repository provides **Level 1** reproducibility: tracked source,
+configs, deterministic generators/analyses, aggregate result data, generated
+paper assets, hashes, and offline verification tooling. A private exact-byte
+provider-observation archive is designed but is not currently provisioned
+(Level 2 unavailable), and there is no public observation-level provider
+release (Level 3 unavailable).
 
 DiagPriv is not an anonymization guarantee, compliance tool, production privacy
 gateway, MCP service, or enterprise security product.
