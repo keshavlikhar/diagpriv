@@ -1,0 +1,158 @@
+# DiagPriv preprint-readiness checklist
+
+Issue #51. Working branch: `paper/preprint-release`.
+
+Baseline before the integrated revision:
+`6ae3d0a136dab38700e32927eaced9f50c6527ef`.
+
+## Review provenance
+
+Two prerequisite reviews are complete:
+
+- #49 is an **internal adversarial scientific red-team review** performed by
+  the project team/assistant. It is not an independent external review.
+- #50 is a **team-executed clean-room reproducibility review** whose value
+  comes from a genuinely fresh hosted environment. It is not an independent
+  collaborator review.
+
+Any later feedback from external collaborators should be recorded separately.
+
+## Authorship
+
+Confirmed author order:
+
+1. Keshav Likhar — Independent Researcher, Boise, Idaho, USA
+2. Harsh Mandalgi — Independent Researcher, Bengaluru, India
+3. Mohit Chaturvedi — Independent Researcher, Buffalo, New York, USA
+
+Keshav Likhar is the primary project lead and corresponding author. All three
+authors are credited as equal contributors.
+
+Confirmed ORCIDs:
+
+- Keshav Likhar: 0009-0000-1473-8274
+- Harsh Mandalgi: 0009-0000-9956-3636
+- Mohit Chaturvedi: 0009-0001-7496-1504
+
+The author block intentionally does not add personal email addresses until the
+authors confirm the preferred public corresponding-author contact.
+
+## Review triage
+
+| Finding | Source | Severity | Decision | Action |
+| --- | --- | --- | --- | --- |
+| Replace stale issue-#35 artifact wording with actual Level-1/2/3 state | #49 / #50 | Must fix | Accepted | Implemented in Methodology, Limitations, README, paper README, STATUS |
+| Make Incident 003 asymmetry explicit: target 4/4 throughout, twin 3/4 -> 2/4 -> 0/4 | #49 | Must fix | Accepted | Implemented in Results, Limitations, Conclusion |
+| Avoid treating Incident 002 as a shape-only causal intervention | #49 | Must fix | Accepted | Reframed as shape-sensitive and explicitly associational |
+| Make Incident 002 primary coverage visible beside recovered sensitivity utility | #49 | Must fix | Accepted | Utility table now includes Primary valid coverage |
+| Rename Identity-dependent Incident 001 | #49 | Should fix | Accepted | Renamed Linkage-dependent |
+| State that cross-family accuracy levels are not directly comparable | #49 | Should fix | Accepted | Added to Results |
+| Surface Incident 003 adaptive benchmark-development history earlier | #49 | Should fix | Accepted | Added to family design |
+| Keep Incident 002 interpretation centered on trigger/mechanism, not exact RCA alone | #49 | Should fix | Accepted | Existing dimension-level interpretation retained and clarified |
+| Explain why evidence-v5 is a representation repair rather than score optimization | #49 | Should fix | Accepted | Added explicit rationale and surviving failures |
+| Tie first-page privacy wording to representation exposure rather than formal privacy | #49 | Should fix | Accepted | Introduction/abstract wording calibrated |
+| Refresh stale root README Incident 003 status | #50 | Must fix | Accepted | Implemented |
+| Document concrete TeX build prerequisites | #50 | Should fix | Accepted | Implemented in paper README |
+| Surface paper and artifact-verifier commands in root README | #50 | Should fix | Accepted | Implemented |
+| Distinguish current clean-room review from historical fresh-clone audit | #50 | Should fix | Accepted | Implemented |
+
+Optional suggestions from #49, including a per-pair Incident-003 table and
+additional future human/model studies, are deferred unless final visual review
+shows they materially improve the preprint.
+
+## Scientific claim status
+
+The title remains:
+
+> DiagPriv: Diagnostic-Invariant Privacy Transformations for LLM-Based Root Cause Analysis
+
+The final preprint should continue to support only the following scoped
+interpretation:
+
+> DiagPriv studies pre-release transformation of operational troubleshooting
+> evidence while preserving task-specific diagnostic invariants, and evaluates
+> the resulting RCA utility, evidence support, and residual model-visible
+> representation exposure.
+
+Current evidence is synthetic and development-stage. The paper does not claim:
+
+- statistical significance or raw/relative-time equivalence;
+- a universal transformation ranking;
+- formal anonymity, differential privacy, or legal de-identification;
+- zero re-identification risk;
+- production effectiveness;
+- a deployed automatic task-aware selector;
+- public reproduction of exact historical provider observations.
+
+## Reproducibility state
+
+Verified by #50 from a fresh GitHub-hosted Ubuntu runner:
+
+- `uv sync --extra dev`: PASS
+- tracked secret scan: PASS
+- full suite: 861 passed, 2 skipped
+- 7 generated paper assets verified
+- 7 generated paper assets reproduced byte-for-byte
+- frozen-artifact verifier: expected MISSING / exit 2 with no provider rerun
+
+Current level:
+
+- **Level 1 available** — source, configs, deterministic generators and
+  analyses, tracked aggregates, exposure artifact, paper assets, hashes,
+  offline verifier.
+- **Level 2 unavailable** — private exact-byte archive is designed but not
+  provisioned/materialized.
+- **Level 3 unavailable** — no public provider-observation release.
+
+## Release metadata
+
+- [x] Final author order
+- [x] Independent Researcher affiliations
+- [x] ORCIDs
+- [x] Equal-contribution statement
+- [x] Corresponding author identified
+- [x] `CITATION.cff` drafted without invented DOI/arXiv identifiers
+- [ ] Preferred public corresponding-author email confirmed
+- [ ] Repository license selected and added
+- [ ] Decide whether Level 2 private archive is implemented now or explicitly
+      deferred
+- [ ] Add arXiv identifier/DOI only after one actually exists
+
+## Final build and visual inspection
+
+Still required before declaring `PREPRINT READY`:
+
+- [ ] run `uv run python paper/render_tables.py --check`
+- [ ] run full `uv run pytest`
+- [ ] run `git diff --check`
+- [ ] run tracked-file high-confidence secret scan
+- [ ] compile with a clean TeX-capable environment using `latexmk`
+- [ ] confirm all citations and references resolve
+- [ ] record final page count and substantive LaTeX warnings
+- [ ] inspect every page visually
+- [ ] inspect Figures 1--3
+- [ ] inspect Tables 1--5 and the temporal-exposure display
+- [ ] verify first-page author/ORCID rendering
+- [ ] verify abstract, limitations, conclusion, bibliography
+- [ ] confirm the arXiv source bundle builds without ignored/local files
+
+## Frozen-data boundary
+
+This revision must not:
+
+- rerun provider experiments;
+- inspect new validation or held-out cases;
+- modify frozen provider observations;
+- rewrite frozen hashes;
+- change generator/scorer/transformation semantics used by reported results.
+
+All numeric changes in generated paper assets must come from tracked frozen
+paper data through `paper/render_tables.py`, never manual editing.
+
+## Current decision
+
+**PREPRINT READY AFTER MINOR FIXES**
+
+No scientific blocker was found by #49 or #50. Remaining blockers are release
+hygiene and verification: license choice, public contact preference, archive
+decision, clean TeX build, and final visual inspection.
