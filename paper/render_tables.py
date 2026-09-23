@@ -145,20 +145,26 @@ def generated_outputs() -> dict[str, bytes]:
     i001 = data["incident_001"]
     i002 = data["incident_002"]
     utility_rows = [
-        ("001", LABELS[row["condition"]], f'{row["exact"]}/{row["valid"]}', "--", "--", "--")
+        (
+            "001", LABELS[row["condition"]], f'{row["valid"]}/{row["valid"]}',
+            f'{row["exact"]}/{row["valid"]}', "--", "--", "--",
+        )
         for row in i001["development"]
     ]
+    primary_i002 = {row["condition"]: row for row in i002["primary"]}
     utility_rows.extend((
-        "002", LABELS[row["condition"]], f'{row["exact"]}/{row["valid"]}',
+        "002", LABELS[row["condition"]],
+        f'{primary_i002[row["condition"]]["valid"]}/{primary_i002[row["condition"]]["planned"]}',
+        f'{row["exact"]}/{row["valid"]}',
         f'{row["trigger"]}/{row["valid"]}',
         f'{row["mechanism"]}/{row["valid"]}',
         f'{row["component"]}/{row["valid"]}',
     ) for row in i002["recovered_sensitivity"])
     files["table3_utility.tex"] = _table(
         label="tab:utility",
-        caption="Frozen development RCA: Incident 001 uses five Luna calls per condition; Incident 002 reports the 18-slot Sol transport-recovered sensitivity view, not the primary as-executed view.",
-        columns="llrrrr",
-        header=("Family", "Condition", "Exact RCA", "Trigger", "Mechanism", "Component"),
+        caption="Frozen development RCA. Primary valid shows as-executed coverage; for Incident 002 the RCA columns report the separately labeled 18-valid-per-condition transport-recovered sensitivity view. Incident 001 has no recovery substitution.",
+        columns="llrrrrr",
+        header=("Family", "Condition", "Primary valid", "Exact RCA", "Trigger", "Mechanism", "Component"),
         rows=utility_rows, wide=True,
     )
 

@@ -1,0 +1,30 @@
+cff-version: 1.2.0
+message: "If you use DiagPriv or its research artifacts, please cite the paper and repository using this metadata."
+title: "DiagPriv"
+type: software
+authors:
+  - family-names: "Likhar"
+    given-names: "Keshav"
+    email: "keshavlikhar007@gmail.com"
+    orcid: "https://orcid.org/0009-0000-1473-8274"
+  - family-names: "Mandalgi"
+    given-names: "Harsh"
+    orcid: "https://orcid.org/0009-0000-9956-3636"
+  - family-names: "Chaturvedi"
+    given-names: "Mohit"
+    orcid: "https://orcid.org/0009-0001-7496-1504"
+repository-code: "https://github.com/keshavlikhar/diagpriv"
+preferred-citation:
+  type: article
+  title: "DiagPriv: Diagnostic-Invariant Privacy Transformations for LLM-Based Root Cause Analysis"
+  authors:
+    - family-names: "Likhar"
+      given-names: "Keshav"
+      email: "keshavlikhar007@gmail.com"
+      orcid: "https://orcid.org/0009-0000-1473-8274"
+    - family-names: "Mandalgi"
+      given-names: "Harsh"
+      orcid: "https://orcid.org/0009-0000-9956-3636"
+    - family-names: "Chaturvedi"
+      given-names: "Mohit"
+      orcid: "https://orcid.org/0009-0001-7496-1504"

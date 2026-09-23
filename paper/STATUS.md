@@ -7,7 +7,15 @@ conclusion. Tables 1--5, an additional family-specific temporal-exposure
 table, and Figures 1--3 have source files. Tables and the paired-count figure
 are regenerated from frozen development data and the merged exposure artifact.
 
-## Needs review before submission
+## Preprint readiness
+
+The internal adversarial scientific review (#49) and team-executed clean-room
+reproducibility review (#50) are complete. Neither is represented as an
+independent external collaborator review. The remaining preprint work is the
+final integrated revision, clean TeX-capable build/visual inspection, release
+metadata, and repository-license decision.
+
+## Follow-up work and release boundaries
 
 - **Literature:** an initial primary-source-verified pass is complete in
   `references.bib` and `RELATED_WORK_REVIEW.md`; the related-work prose now
@@ -17,14 +25,16 @@ are regenerated from frozen development data and the merged exposure artifact.
   and evidence-grounded RCA are established prior areas, so the manuscript
   makes no priority claim for either. RCAgent's internally deployed model is
   an explicit privacy-aware RCA alternative.
-- **Artifacts:** `docs/FROZEN_ARTIFACT_ARCHIVE_RFC.md` and the tracked
-  manifest design a provenance-safe private archive and provider-free verifier,
-  but no JSONL has been distributed. Full public observation-level
-  reproduction is not yet available and requires separate review.
-- **External validity:** obtain human difficulty/annotation baselines,
-  broader incident families and model families, and a preregistered final
-  held-out evaluation. Incident 001's raw-only validation is not a matched
-  privacy comparison.
+- **Artifacts:** the tracked repository provides Level-1 reproducibility.
+  `docs/FROZEN_ARTIFACT_ARCHIVE_RFC.md`, the manifest, and provider-free
+  verifier design Level-2 exact-byte verification, but no private archive is
+  provisioned and no JSONL has been distributed. Level 3 public
+  observation-level reproduction is not available.
+- **External validity:** human difficulty/annotation baselines, broader
+  incident/model families, and a preregistered final held-out evaluation are
+  strengthening work for a later archival/conference version rather than
+  prerequisites for an honestly scoped development-stage preprint. Incident
+  001's raw-only validation is not a matched privacy comparison.
 - **Threat model:** assess real annotation coverage, auxiliary-data attacks,
   operational key management, known-time anchors, provider terms, and
   real-data governance in separate work.

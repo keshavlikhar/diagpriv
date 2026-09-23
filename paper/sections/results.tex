@@ -4,11 +4,14 @@ All numerical comparisons here are descriptive observations on selected
 synthetic development instances. They do not establish statistical
 significance, population-level effect sizes, or a universal transformation
 ranking. Table~\ref{tab:utility} reports the first two incident families
-with their distinct model and repetition protocols.
+with their distinct model and repetition protocols. Absolute accuracy levels
+across families are not directly comparable as a single benchmark ranking:
+the families use different designed dependencies, models, and repetition
+structures.
 \input{generated/table2a_scalar_exposure}
 \input{generated/table3_utility}
 
-\paragraph{Identity-dependent Incident 001.}
+\paragraph{Linkage-dependent Incident 001.}
 The frozen GPT-5.6 Luna raw development run obtained 5/5 exact five-label
 RCA. Redaction obtained 4/5, HMAC 5/5, tokenization 5/5, and
 format-preserving pseudonymization 4/5 on the same five development seeds.
@@ -21,7 +24,7 @@ causal dimensions and did not trigger an oracle revision. These small
 observations are consistent with the practical value of retaining equality,
 not proof that any one deterministic method is generally optimal.
 
-\paragraph{Shape-dependent Incident 002.}
+\paragraph{Shape-sensitive Incident 002.}
 The primary three-trial, six-seed Sol comparison planned 18 logical slots
 per condition. It produced 18 valid raw, 9 redaction, 18 HMAC,
 17 tokenization, and 18 format-preserving responses. Nine redaction
@@ -36,10 +39,13 @@ causal dimension and 4/18 exact; redaction, HMAC, and tokenization had
 2/18, 1/18, and 2/18 respectively for trigger/mechanism, with 0/18,
 1/18, and 0/18 exact. Component accuracy (12/18 raw, 10/18 redaction,
 13/18 HMAC, 13/18 tokenization, 10/18 format-preserving) does not follow
-the same ordering. The pattern is directionally consistent with shape
-being diagnostically useful, yet format-preserving still missed the
-seed-1005 cause in all three logical trials despite its offline invariant
-preservation.
+the same ordering. The pattern is directionally consistent with the family's intended
+shape-sensitive diagnostic dependency, yet the transformation comparison is
+not a shape-only causal intervention: length, character classes, separators,
+and other surface properties co-vary across the opaque and format-preserving
+representations. Format-preserving also missed the seed-1005 cause in all
+three logical trials despite its offline invariant preservation, so preserving
+the declared structural signature is not shown to be sufficient.
 
 \paragraph{Paired temporal Incident 003 v3.}
 Table~\ref{tab:temporal-utility} separates overall RCA from correct
@@ -52,9 +58,14 @@ yielded 6/8 exact, 4/4 target and 2/4 twin mechanisms. Temporal ablation
 yielded 4/8 exact: every target remained correct, every twin was assigned
 the target's concurrency mechanism, and no pair was discriminated correctly.
 The paired-mechanism sequence 3/4, 2/4, 0/4
-(Figure~\ref{fig:paired}) is directionally consistent with the
-preregistered development expectation that preserving temporal relations
-helps distinguish the two mechanisms. It does not establish equivalence of
-raw and relative time, a causal effect size for the provider, or performance
-on other incidents. Four pairs and one call per case leave substantial
-model-response variability unmeasured.
+(Figure~\ref{fig:paired}) comes entirely from the twin side: target mechanisms
+remain 4/4 in raw, relative-time, and ablation, whereas twin mechanisms fall
+from 3/4 to 2/4 to 0/4. Under ablation all four twins receive the target's
+concurrency mechanism. This is directionally consistent with the
+preregistered development expectation that preserved temporal relations help
+distinguish the twin from a concurrency interpretation, but it also exposes a
+possible model/category prior toward concurrency when the distinguishing
+temporal proof is unavailable. The observation does not establish equivalence
+of raw and relative time, a provider-level causal effect of removing time, or
+performance on other incidents. Four pairs and one call per case leave
+substantial model-response variability unmeasured.

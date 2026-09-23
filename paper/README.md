@@ -24,7 +24,9 @@ difference. The paper data file records exact source-document paths and
 frozen result hashes for the utility tables. It contains no provider
 output, sensitive identifiers, or credentials.
 
-From paper/, compile with a normal TeX installation:
+From `paper/`, compile with `latexmk` and a TeX distribution that provides
+the packages imported by `main.tex` (including geometry, lmodern, amsmath,
+amssymb, booktabs, graphicx, float, xcolor, TikZ, hyperref, and microtype):
 
 ~~~bash
 latexmk -pdf -interaction=nonstopmode -halt-on-error -outdir=build main.tex
@@ -53,11 +55,14 @@ conservative novelty comparisons are in `paper/RELATED_WORK_REVIEW.md`.
   docs/PRIVACY_EXPOSURE_ANALYSIS.md; compact cross-check:
   docs/PAPER_RESULTS_TABLES.md.
 
-All provider-result JSONLs remain ignored local files and are not packaged
-in this PR. `docs/FROZEN_ARTIFACT_ARCHIVE_RFC.md` proposes a separate private
-archive and offline verifier; no archive has been provisioned or uploaded. No provider
-call, RCA rescore, validation access, or held-out generation is needed to
-regenerate the manuscript tables.
+All provider-result JSONLs remain ignored local files and are not packaged in
+the repository. `docs/FROZEN_ARTIFACT_ARCHIVE_RFC.md`, the tracked manifest,
+and the offline verifier define a provenance-safe private-archive design, but
+no archive has been provisioned or uploaded. The tracked repository therefore
+provides Level-1 reproducibility only; exact private observation distribution
+(Level 2) and public observation-level release (Level 3) are unavailable. No
+provider call, RCA rescore, validation access, or held-out generation is needed
+to regenerate the manuscript tables.
 
 ## Review boundary
 

@@ -15,9 +15,14 @@ experiment and no final held-out result. Incident 002 has only six distinct
 constructions, even with three logical trials; transport recovery is a
 prespecified sensitivity join rather than a clean replacement for failed
 calls. Incident 003 has four paired constructions and one provider call per
-case. The study uses GPT-5.6 Luna or Sol within one model family, so
-cross-model stability, decoding variance, and human diagnostic difficulty
-remain unresolved. The descriptive counts warrant neither statistical
+case. Across all three Incident 003 conditions the four target cases retained
+the concurrency label; the observed degradation occurred on the temporal
+twins, which fell from 3/4 to 2/4 to 0/4 correct mechanisms and all collapsed
+to concurrency under ablation. This is consistent with loss of the
+distinguishing temporal proof, but a concurrency category prior and stochastic
+model behavior remain unresolved. The study uses GPT-5.6 Luna or Sol within
+one model family, so cross-model stability, decoding variance, and human
+diagnostic difficulty remain unresolved. The descriptive counts warrant neither statistical
 significance nor an equivalence claim about raw and relative-time evidence.
 
 The benchmark's five-label taxonomy and component-ownership oracle are
@@ -41,9 +46,11 @@ leave unannotated timestamp and contextual fields unchanged. Secret
 fail-closed tests cover declared synthetic fields; unannotated secrets
 would escape a policy that failed to classify them.
 
-Finally, the repository does not yet distribute the ignored provider JSONLs
-as a public archival package. Exact hashes and aggregate summaries preserve
-provenance locally, while issue~\#35 addresses safe distribution. The paper
+Finally, the repository does not distribute the ignored provider JSONLs.
+Tracked source, deterministic analyses, aggregate summaries, hashes, and the
+offline verifier provide Level-1 reproducibility. A private exact-observation
+archive has been designed but is not provisioned or materialized for
+collaborators, and no public observation-level release exists. The paper
 does not evaluate prompt injection, malicious agents, access-control
 replacement, poisoning, or malicious insiders. Before production use or
 stronger scientific claims, the research needs human baselines, broader
