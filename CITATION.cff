@@ -5,6 +5,7 @@ type: software
 authors:
   - family-names: "Likhar"
     given-names: "Keshav"
+    email: "keshavlikhar007@gmail.com"
     orcid: "https://orcid.org/0009-0000-1473-8274"
   - family-names: "Mandalgi"
     given-names: "Harsh"
@@ -19,6 +20,7 @@ preferred-citation:
   authors:
     - family-names: "Likhar"
       given-names: "Keshav"
+      email: "keshavlikhar007@gmail.com"
       orcid: "https://orcid.org/0009-0000-1473-8274"
     - family-names: "Mandalgi"
       given-names: "Harsh"
