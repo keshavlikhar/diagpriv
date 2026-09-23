@@ -34,8 +34,7 @@ Confirmed ORCIDs:
 - Harsh Mandalgi: 0009-0000-9956-3636
 - Mohit Chaturvedi: 0009-0001-7496-1504
 
-The author block intentionally does not add personal email addresses until the
-authors confirm the preferred public corresponding-author contact.
+The public corresponding-author contact is confirmed as `keshavlikhar007@gmail.com`. The manuscript exposes only the corresponding-author email; coauthor emails are not required for the preprint source.
 
 ## Review triage
 
@@ -112,10 +111,9 @@ Current level:
 - [x] Equal-contribution statement
 - [x] Corresponding author identified
 - [x] `CITATION.cff` drafted without invented DOI/arXiv identifiers
-- [ ] Preferred public corresponding-author email confirmed
-- [ ] Repository license selected and added
-- [ ] Decide whether Level 2 private archive is implemented now or explicitly
-      deferred
+- [x] Preferred public corresponding-author email confirmed
+- [x] Apache-2.0 selected and added for repository software code; manuscript/text licensing remains separate
+- [x] Level 2 private archive explicitly deferred for the initial preprint
 - [ ] Add arXiv identifier/DOI only after one actually exists
 
 ## Final build and visual inspection
@@ -153,6 +151,11 @@ paper data through `paper/render_tables.py`, never manual editing.
 
 **PREPRINT READY AFTER MINOR FIXES**
 
-No scientific blocker was found by #49 or #50. Remaining blockers are release
-hygiene and verification: license choice, public contact preference, archive
-decision, clean TeX build, and final visual inspection.
+No scientific blocker was found by #49 or #50. The contact, code-license, and Level-2 archive decisions are resolved. Remaining blockers are the clean TeX-capable build, arXiv-source packaging check, and final visual inspection.
+
+## Release decisions confirmed after review
+
+- Public corresponding author: Keshav Likhar, `keshavlikhar007@gmail.com`.
+- Software code license: Apache License 2.0.
+- Manuscript/preprint licensing is intentionally separate from the software license and will follow the selected preprint host/submission choice.
+- Level-2 private exact-observation archive: **deferred for the initial preprint**. The paper will continue to state that exact provider observations are not distributed.
