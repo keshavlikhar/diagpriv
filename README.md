@@ -56,7 +56,26 @@ Python 3.12 or newer and [uv](https://docs.astral.sh/uv/) are recommended.
 uv sync --extra dev
 uv run pytest
 git diff --check
+uv run python paper/render_tables.py --check
 ```
+
+The manuscript source is under `paper/`. With a TeX distribution that
+provides `latexmk` and the packages used by `paper/main.tex`, build from
+`paper/` with:
+
+```bash
+latexmk -pdf -interaction=nonstopmode -halt-on-error -outdir=build main.tex
+```
+
+The frozen-artifact verifier is provider-free:
+
+```bash
+uv run python -m diagpriv.artifacts verify --all
+```
+
+In an ordinary clean clone the exact provider-result JSONLs are intentionally
+absent, so exit code 2 with `MISSING` entries is expected. The verifier does
+not download or rerun provider observations.
 
 Tests use an offline fake provider. They do not authorize real API calls. The
 canonical development fixture can be regenerated with:
@@ -130,6 +149,13 @@ paper assets, hashes, and offline verification tooling. A private exact-byte
 provider-observation archive is designed but is not currently provisioned
 (Level 2 unavailable), and there is no public observation-level provider
 release (Level 3 unavailable).
+
+## Licensing
+
+Software code in this repository is licensed under the Apache License 2.0 as
+described in `LICENSE` and `LICENSING.md`. Manuscript text, figures, and
+research narrative are not automatically covered by the software license; the
+preprint distribution license is handled separately.
 
 DiagPriv is not an anonymization guarantee, compliance tool, production privacy
 gateway, MCP service, or enterprise security product.
