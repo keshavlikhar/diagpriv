@@ -118,21 +118,22 @@ Current level:
 
 ## Final build and visual inspection
 
-Still required before declaring `PREPRINT READY`:
+Completed final verification:
 
-- [ ] run `uv run python paper/render_tables.py --check`
-- [ ] run full `uv run pytest`
-- [ ] run `git diff --check`
-- [ ] run tracked-file high-confidence secret scan
-- [ ] compile with a clean TeX-capable environment using `latexmk`
-- [ ] confirm all citations and references resolve
-- [ ] record final page count and substantive LaTeX warnings
-- [ ] inspect every page visually
-- [ ] inspect Figures 1--3
-- [ ] inspect Tables 1--5 and the temporal-exposure display
-- [ ] verify first-page author/ORCID rendering
-- [ ] verify abstract, limitations, conclusion, bibliography
-- [ ] confirm the arXiv source bundle builds without ignored/local files
+- [x] `uv run python paper/render_tables.py --check` — PASS in clean hosted audit
+- [x] full `uv run pytest` — PASS, 861 passed / 2 skipped
+- [x] `git diff --check` — PASS
+- [x] tracked-file high-confidence secret scan — PASS
+- [x] clean TeX-capable `latexmk` build — PASS on Ubuntu 24.04
+- [x] citations and references resolved — no undefined citation/reference warnings
+- [x] final page count recorded — 16 pages
+- [x] substantive LaTeX warnings checked — none observed
+- [x] every page visually inspected
+- [x] Figures 1--3 visually inspected
+- [x] Tables 1--5 and the temporal-exposure display visually inspected
+- [x] first-page author/ORCID/corresponding-author rendering verified
+- [x] abstract, limitations, conclusion, author-contribution section, and bibliography visually verified
+- [x] arXiv-style source bundle built successfully from the packaged source without ignored/local files
 
 ## Frozen-data boundary
 
@@ -149,9 +150,9 @@ paper data through `paper/render_tables.py`, never manual editing.
 
 ## Current decision
 
-**PREPRINT READY AFTER MINOR FIXES**
+**PREPRINT READY**
 
-No scientific blocker was found by #49 or #50. The contact, code-license, and Level-2 archive decisions are resolved. Remaining blockers are the clean TeX-capable build, arXiv-source packaging check, and final visual inspection.
+No scientific blocker was found by #49 or #50. Release metadata decisions are resolved, current CI is green, deterministic paper assets verify, the manuscript and arXiv-style source bundle both compile cleanly, and all 16 rendered pages were visually inspected. No provider calls, validation access, held-out access, or frozen-observation changes were required.
 
 ## Release decisions confirmed after review
 
@@ -159,3 +160,14 @@ No scientific blocker was found by #49 or #50. The contact, code-license, and Le
 - Software code license: Apache License 2.0.
 - Manuscript/preprint licensing is intentionally separate from the software license and will follow the selected preprint host/submission choice.
 - Level-2 private exact-observation archive: **deferred for the initial preprint**. The paper will continue to state that exact provider observations are not distributed.
+
+
+## Final verification record
+
+- Clean software CI: GitHub Actions run 35802912441 — PASS.
+- Clean preprint build audit: GitHub Actions run 35802912385 — PASS.
+- Manuscript output: 16 pages, US Letter, PDF 1.5.
+- Exact generated-paper-asset check: PASS.
+- arXiv-style source-only bundle build: PASS.
+- Visual inspection: all 16 pages, Figures 1--3, Tables 1--5, temporal-exposure display, title/author block, abstract, limitations, conclusion, author contributions, and bibliography.
+- Substantive LaTeX warnings: none observed.
