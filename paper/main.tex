@@ -13,7 +13,19 @@
 \setlength{\parskip}{0.25em}
 \setlength{\parindent}{1em}
 \title{DiagPriv: Diagnostic-Invariant Privacy Transformations for LLM-Based Root Cause Analysis}
-\author{Research draft for collaborator review}
+\author{
+Keshav Likhar\thanks{Corresponding author.}\thanks{All authors contributed equally to this work.}\\
+\small Independent Researcher, Boise, Idaho, USA\\
+\small ORCID: \href{https://orcid.org/0009-0000-1473-8274}{0009-0000-1473-8274}
+\and
+Harsh Mandalgi\\
+\small Independent Researcher, Bengaluru, India\\
+\small ORCID: \href{https://orcid.org/0009-0000-9956-3636}{0009-0000-9956-3636}
+\and
+Mohit Chaturvedi\\
+\small Independent Researcher, Buffalo, New York, USA\\
+\small ORCID: \href{https://orcid.org/0009-0001-7496-1504}{0009-0001-7496-1504}
+}
 \date{}
 
 \begin{document}
@@ -21,10 +33,10 @@
 \begin{abstract}
 Operational evidence can contain the facts needed to diagnose a failure and
 identifiers or temporal details that need not be disclosed to an external
-model. We study diagnostic-invariant privacy transformation: changing the
+model. We study diagnostic-invariant privacy-oriented transformation: changing the
 representation sent to a large language model while preserving the
 relationships required for a root-cause-analysis (RCA) task. Three synthetic
-incident families isolate different dependencies: identifier equality and
+incident families are designed around different dependencies: identifier equality and
 cross-source linkage, external-reference shape, and causal temporal order.
 Fixed redaction, HMAC, tokenization, format-preserving pseudonymization,
 relative-time conversion, and temporal ablation provide controlled
@@ -53,6 +65,13 @@ and no formal privacy guarantee or held-out evaluation.
 \input{sections/limitations}
 \input{sections/related_work}
 \input{sections/conclusion}
+
+\section*{Author Contributions}
+Keshav Likhar, Harsh Mandalgi, and Mohit Chaturvedi contributed equally to
+the conceptualization, methodology, investigation, validation, analysis,
+and writing of this work. All authors reviewed and approved the final
+manuscript.
+
 \bibliographystyle{plain}
 \bibliography{references}
 \end{document}
