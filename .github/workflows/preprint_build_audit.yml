@@ -1,0 +1,90 @@
+name: Preprint build audit
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/preprint_build_audit.yml"
+      - "paper/**"
+      - "CITATION.cff"
+      - "LICENSE"
+      - "LICENSING.md"
+      - "README.md"
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Clean TeX and arXiv bundle audit
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Install TeX tooling
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            latexmk \
+            lmodern \
+            texlive-latex-base \
+            texlive-latex-recommended \
+            texlive-latex-extra \
+            texlive-fonts-recommended \
+            texlive-pictures \
+            poppler-utils \
+            zip
+
+      - name: Build manuscript
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd paper
+          latexmk -pdf -interaction=nonstopmode -halt-on-error -outdir=build main.tex
+          pdfinfo build/main.pdf | tee build/pdfinfo.txt
+          if grep -E 'LaTeX Warning: (Citation|Reference).*undefined|There were undefined references|There were undefined citations' build/main.log; then
+            echo "Undefined citation/reference warning found" >&2
+            exit 1
+          fi
+          if grep -E '(^| )! LaTeX Error:|Emergency stop|Fatal error' build/main.log; then
+            echo "LaTeX error found" >&2
+            exit 1
+          fi
+
+      - name: Prepare arXiv-style source bundle
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf /tmp/diagpriv-arxiv
+          mkdir -p /tmp/diagpriv-arxiv/sections /tmp/diagpriv-arxiv/generated
+          cp paper/main.tex /tmp/diagpriv-arxiv/
+          cp paper/references.bib /tmp/diagpriv-arxiv/
+          cp paper/sections/*.tex /tmp/diagpriv-arxiv/sections/
+          cp paper/generated/*.tex /tmp/diagpriv-arxiv/generated/
+          (
+            cd /tmp/diagpriv-arxiv
+            latexmk -pdf -interaction=nonstopmode -halt-on-error -outdir=build main.tex
+            pdfinfo build/main.pdf | tee build/pdfinfo.txt
+            if grep -E 'LaTeX Warning: (Citation|Reference).*undefined|There were undefined references|There were undefined citations' build/main.log; then
+              echo "Undefined citation/reference warning found in arXiv bundle" >&2
+              exit 1
+            fi
+            rm -rf build
+            zip -r /tmp/diagpriv-arxiv-source.zip .
+          )
+
+      - name: Collect preprint audit artifact
+        run: |
+          mkdir -p /tmp/preprint-audit
+          cp paper/build/main.pdf /tmp/preprint-audit/DiagPriv-preprint.pdf
+          cp paper/build/pdfinfo.txt /tmp/preprint-audit/pdfinfo.txt
+          cp paper/build/main.log /tmp/preprint-audit/main.log
+          cp /tmp/diagpriv-arxiv-source.zip /tmp/preprint-audit/
+
+      - name: Upload preprint audit
+        uses: actions/upload-artifact@v4
+        with:
+          name: diagpriv-preprint-audit
+          path: /tmp/preprint-audit/
+          if-no-files-found: error
