@@ -61,9 +61,9 @@ shows they materially improve the preprint.
 
 ## Scientific claim status
 
-The title remains:
+The publication title is finalized as:
 
-> DiagPriv: Diagnostic-Invariant Privacy Transformations for LLM-Based Root Cause Analysis
+> DiagPriv: Preserving Diagnostic Structure While Reducing Sensitive Data Exposure in LLM Root-Cause Analysis
 
 The final preprint should continue to support only the following scoped
 interpretation:
@@ -171,3 +171,20 @@ No scientific blocker was found by #49 or #50. Release metadata decisions are re
 - arXiv-style source-only bundle build: PASS.
 - Visual inspection: all 16 pages, Figures 1--3, Tables 1--5, temporal-exposure display, title/author block, abstract, limitations, conclusion, author contributions, and bibliography.
 - Substantive LaTeX warnings: none observed.
+
+
+## Zenodo-first publication decision
+
+Because arXiv endorsement is not currently available, the initial public
+preprint will be deposited on Zenodo. This does not change the scientific
+content or frozen experimental record. The paper may later be mirrored on
+arXiv once endorsement is available, with the two records cross-linked.
+
+The public-facing title was revised before first publication to make the
+paper's contribution immediately understandable while retaining the DiagPriv
+project name:
+
+> DiagPriv: Preserving Diagnostic Structure While Reducing Sensitive Data Exposure in LLM Root-Cause Analysis
+
+"DiagPriv" remains the project/benchmark name; the subtitle carries the
+plain-language meaning for readers who do not already know the name.
