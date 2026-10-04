@@ -16,6 +16,7 @@ authors:
 repository-code: "https://github.com/keshavlikhar/diagpriv"
 preferred-citation:
   type: article
+  doi: "10.5281/zenodo.23142445"
   title: "DiagPriv: Preserving Diagnostic Structure While Reducing Sensitive Data Exposure in LLM Root-Cause Analysis"
   authors:
     - family-names: "Likhar"
