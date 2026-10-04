@@ -1,6 +1,9 @@
 # DiagPriv
 
-DiagPriv is an academic research project studying whether privacy
+**Paper:** *DiagPriv: Preserving Diagnostic Structure While Reducing Sensitive Data Exposure in LLM Root-Cause Analysis*
+
+The name **DiagPriv** combines diagnosis and privacy. DiagPriv is an academic
+research project studying whether privacy
 transformations can remove sensitive identity from operational troubleshooting
 evidence while retaining the relationships an LLM needs for root-cause
 analysis (RCA). Its companion benchmark, DiagBench, contains three fully

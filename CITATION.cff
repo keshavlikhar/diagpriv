@@ -16,7 +16,7 @@ authors:
 repository-code: "https://github.com/keshavlikhar/diagpriv"
 preferred-citation:
   type: article
-  title: "DiagPriv: Diagnostic-Invariant Privacy Transformations for LLM-Based Root Cause Analysis"
+  title: "DiagPriv: Preserving Diagnostic Structure While Reducing Sensitive Data Exposure in LLM Root-Cause Analysis"
   authors:
     - family-names: "Likhar"
       given-names: "Keshav"
