@@ -2,7 +2,7 @@
 
 **Paper:** *DiagPriv: Preserving Diagnostic Structure While Reducing Sensitive Data Exposure in LLM Root-Cause Analysis*
 
-**Zenodo preprint:** https://zenodo.org/records/23142445  
+**Zenodo preprint:** https://zenodo.org/records/23142445
 **DOI:** https://doi.org/10.5281/zenodo.23142445
 
 The name **DiagPriv** combines diagnosis and privacy. DiagPriv is an academic
