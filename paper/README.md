@@ -1,7 +1,6 @@
 # DiagPriv manuscript source
 
-Working title: *DiagPriv: Diagnostic-Invariant Privacy Transformations for
-LLM-Based Root Cause Analysis*. This is a development-stage research draft,
+Preprint title: *DiagPriv: Preserving Diagnostic Structure While Reducing Sensitive Data Exposure in LLM Root-Cause Analysis*. This is a development-stage research draft,
 not a submission-ready or held-out evaluation claim.
 
 ## Reproduce tables and build
