@@ -9,13 +9,19 @@ conclusion. Tables 1--5, an additional family-specific temporal-exposure
 table, and Figures 1--3 have source files. Tables and the paired-count figure
 are regenerated from frozen development data and the merged exposure artifact.
 
-## Preprint readiness
+## Preprint publication
+
+The development-stage preprint was published on Zenodo on October 4, 2026:
+
+- Record: https://zenodo.org/records/23142445
+- Version DOI: 10.5281/zenodo.23142445
+- All-versions DOI: 10.5281/zenodo.23142444
+- Version: v1
+- License: CC BY 4.0
 
 The internal adversarial scientific review (#49) and team-executed clean-room
-reproducibility review (#50) are complete. Neither is represented as an
-independent external collaborator review. The remaining preprint work is the
-final integrated revision, clean TeX-capable build/visual inspection, release
-metadata, and repository-license decision.
+reproducibility review (#50) were completed before publication. Neither is
+represented as an independent external collaborator review.
 
 ## Follow-up work and release boundaries
 
