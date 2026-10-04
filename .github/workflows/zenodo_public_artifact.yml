@@ -52,8 +52,10 @@ jobs:
           rm -rf "$ROOT"
           mkdir -p "$ROOT/paper"
 
-          cp README.md LICENSE LICENSING.md CITATION.cff CONTRIBUTING.md pyproject.toml uv.lock "$ROOT/"
+          cp README.md LICENSE LICENSING.md CITATION.cff CONTRIBUTING.md pyproject.toml uv.lock .gitignore "$ROOT/"
           cp -a diagbench diagpriv experiments tests artifacts docs "$ROOT/"
+          mkdir -p "$ROOT/results"
+          cp results/.gitkeep "$ROOT/results/"
           cp paper/README.md paper/render_tables.py "$ROOT/paper/"
           cp -a paper/data paper/generated "$ROOT/paper/"
 
@@ -132,6 +134,8 @@ jobs:
         run: |
           set -euo pipefail
           cd /tmp/DiagPriv_Public_Reproducibility_v1.0
+          git init -q
+          git add -A
           uv sync --extra dev
           uv run pytest
           uv run python paper/render_tables.py --check
@@ -143,6 +147,7 @@ jobs:
             echo "Expected provider artifact verifier exit 2 (MISSING), got $rc" >&2
             exit 1
           fi
+          rm -rf .git
 
       - name: Create archive
         shell: bash
