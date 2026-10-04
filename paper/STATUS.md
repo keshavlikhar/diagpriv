@@ -1,4 +1,6 @@
-# First DiagPriv manuscript draft status
+# DiagPriv preprint status
+
+Publication title: *DiagPriv: Preserving Diagnostic Structure While Reducing Sensitive Data Exposure in LLM Root-Cause Analysis*.
 
 All required narrative sections are drafted: abstract, introduction, threat
 model, formulation, transformation framework, methodology, family designs,
