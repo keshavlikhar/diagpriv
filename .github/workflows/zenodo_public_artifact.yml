@@ -1,0 +1,162 @@
+name: Build Zenodo public artifact
+
+on:
+  push:
+    branches:
+      - zenodo-public-artifact
+    paths:
+      - ".github/workflows/zenodo_public_artifact.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v10.1.0
+        with:
+          version: "0.12.17"
+          enable-cache: false
+
+      - name: Verify tracked repository hygiene
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --check
+          python .github/scripts/check_tracked_secrets.py
+          if find . -type f \( -name '.env' -o -name '*.pem' -o -name '*.key' -o -name '*.p12' -o -name '*.pfx' \) -print -quit | grep -q .; then
+            echo "Disallowed secret-bearing filename found" >&2
+            exit 1
+          fi
+          if find results -type f ! -name '.gitkeep' -print -quit | grep -q .; then
+            echo "Unexpected result artifact found" >&2
+            exit 1
+          fi
+
+      - name: Build public Level-1 package
+        shell: bash
+        run: |
+          set -euo pipefail
+          ROOT=/tmp/DiagPriv_Public_Reproducibility_v1.0
+          rm -rf "$ROOT"
+          mkdir -p "$ROOT/paper"
+
+          cp README.md LICENSE LICENSING.md CITATION.cff CONTRIBUTING.md pyproject.toml uv.lock "$ROOT/"
+          cp -a diagbench diagpriv experiments tests artifacts docs "$ROOT/"
+          cp paper/README.md paper/render_tables.py "$ROOT/paper/"
+          cp -a paper/data paper/generated "$ROOT/paper/"
+
+          cat > "$ROOT/PUBLIC_ARTIFACT_README.md" <<'EOF'
+          # DiagPriv public reproducibility artifact v1.0
+
+          This archive is the public Level-1 reproducibility snapshot accompanying
+          the DiagPriv preprint.
+
+          Included:
+          - benchmark generators and synthetic fixtures;
+          - privacy transformations and invariant audits;
+          - evaluation/scoring/reporting software;
+          - experiment configurations;
+          - tests;
+          - tracked aggregate/provenance data;
+          - privacy-exposure analysis data;
+          - deterministic paper-table renderer and generated table/figure assets;
+          - artifact manifest and provider-free verifier;
+          - research protocol and methodology documentation.
+
+          Intentionally excluded:
+          - provider-result JSONLs and raw model responses;
+          - API keys, HMAC secrets, .env files, certificates, signed URLs, or credentials;
+          - private Level-2 artifact archive material;
+          - validation/held-out material not already represented by tracked aggregate statements;
+          - GitHub workflow/admin files and internal preprint-review/checklist documents;
+          - manuscript PDF/source, which are separate files in the Zenodo preprint record.
+
+          Reproducibility boundary:
+          This archive supports Level-1 reproduction of software checks,
+          deterministic synthetic generation, privacy transformations, exposure
+          analysis, aggregate tables, and frozen artifact identities. It does not
+          provide exact historical provider observations and cannot reproduce
+          provider responses without those omitted records.
+
+          Setup:
+              uv sync --extra dev
+              uv run pytest
+              uv run python paper/render_tables.py --check
+
+          Artifact verifier:
+              uv run python -m diagpriv.artifacts verify --all
+
+          In this public archive, the verifier is expected to report MISSING for
+          provider observations and exit with code 2. It must not download or rerun
+          provider calls.
+
+          Software code is Apache-2.0 as described by LICENSE and LICENSING.md.
+          Manuscript/preprint licensing is handled separately.
+          EOF
+
+          printf '%s\n' "source_commit=aca94ef1111d635e513d73eadc866580e01f40f8" > "$ROOT/ARTIFACT_PROVENANCE.txt"
+          printf '%s\n' "built_from_branch=main" >> "$ROOT/ARTIFACT_PROVENANCE.txt"
+          printf '%s\n' "artifact_version=1.0" >> "$ROOT/ARTIFACT_PROVENANCE.txt"
+
+          find "$ROOT" -type f | sort | sed "s#^$ROOT/##" > "$ROOT/FILE_MANIFEST.txt"
+
+      - name: Verify package exclusions
+        shell: bash
+        run: |
+          set -euo pipefail
+          ROOT=/tmp/DiagPriv_Public_Reproducibility_v1.0
+          if find "$ROOT" -type f \( -name '.env' -o -name '*.pem' -o -name '*.key' -o -name '*.p12' -o -name '*.pfx' -o -name '*.jsonl' \) -print -quit | grep -q .; then
+            echo "Disallowed file found in public package" >&2
+            find "$ROOT" -type f \( -name '.env' -o -name '*.pem' -o -name '*.key' -o -name '*.p12' -o -name '*.pfx' -o -name '*.jsonl' \) -print
+            exit 1
+          fi
+          if find "$ROOT" -type f | grep -E '/(INTERNAL_SCIENTIFIC_RED_TEAM_REVIEW|PREPRINT_CHECKLIST|ZENODO_PREPRINT_METADATA)\.md$'; then
+            echo "Internal release-review document leaked into public package" >&2
+            exit 1
+          fi
+
+      - name: Verify package from its own files
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd /tmp/DiagPriv_Public_Reproducibility_v1.0
+          uv sync --extra dev
+          uv run pytest
+          uv run python paper/render_tables.py --check
+          set +e
+          uv run python -m diagpriv.artifacts verify --all
+          rc=$?
+          set -e
+          if [[ "$rc" -ne 2 ]]; then
+            echo "Expected provider artifact verifier exit 2 (MISSING), got $rc" >&2
+            exit 1
+          fi
+
+      - name: Create archive
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd /tmp
+          zip -qr DiagPriv_Public_Reproducibility_v1.0.zip DiagPriv_Public_Reproducibility_v1.0
+          sha256sum DiagPriv_Public_Reproducibility_v1.0.zip | tee DiagPriv_Public_Reproducibility_v1.0.sha256
+
+      - name: Upload verified public artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: diagpriv-public-reproducibility-v1
+          path: |
+            /tmp/DiagPriv_Public_Reproducibility_v1.0.zip
+            /tmp/DiagPriv_Public_Reproducibility_v1.0.sha256
+          if-no-files-found: error
