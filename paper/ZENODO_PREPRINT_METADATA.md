@@ -2,8 +2,8 @@
 
 This file records the published metadata for the first public DiagPriv preprint.
 
-**Zenodo record:** https://zenodo.org/records/23142445  
-**Version DOI:** 10.5281/zenodo.23142445  
+**Zenodo record:** https://zenodo.org/records/23142445
+**Version DOI:** 10.5281/zenodo.23142445
 **All-versions DOI:** 10.5281/zenodo.23142444
 
 ## Basic information
