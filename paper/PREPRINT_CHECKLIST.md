@@ -114,7 +114,8 @@ Current level:
 - [x] Preferred public corresponding-author email confirmed
 - [x] Apache-2.0 selected and added for repository software code; manuscript/text licensing remains separate
 - [x] Level 2 private archive explicitly deferred for the initial preprint
-- [ ] Add arXiv identifier/DOI only after one actually exists
+- [x] Add Zenodo DOI after publication
+- [ ] Add arXiv identifier only after one actually exists
 
 ## Final build and visual inspection
 
@@ -188,3 +189,18 @@ project name:
 
 "DiagPriv" remains the project/benchmark name; the subtitle carries the
 plain-language meaning for readers who do not already know the name.
+
+
+## Published preprint
+
+The first public preprint was published on Zenodo on October 4, 2026.
+
+- Record: https://zenodo.org/records/23142445
+- Version DOI: 10.5281/zenodo.23142445
+- All-versions DOI: 10.5281/zenodo.23142444
+- Version: v1
+- Resource type: Preprint
+- Access: Open
+- License: CC BY 4.0
+- Public files: manuscript PDF, LaTeX source archive, and verified Level-1 reproducibility archive
+- GitHub repository remains private at initial publication; the public Level-1 artifact is distributed through Zenodo.

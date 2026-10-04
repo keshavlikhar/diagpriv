@@ -1,7 +1,10 @@
 # Zenodo preprint metadata
 
-This file records the intended metadata for the first public DiagPriv preprint.
-It is a submission aid, not proof that a DOI has already been registered.
+This file records the published metadata for the first public DiagPriv preprint.
+
+**Zenodo record:** https://zenodo.org/records/23142445
+**Version DOI:** 10.5281/zenodo.23142445
+**All-versions DOI:** 10.5281/zenodo.23142444
 
 ## Basic information
 
@@ -9,13 +12,13 @@ It is a submission aid, not proof that a DOI has already been registered.
 
 **Title:** DiagPriv: Preserving Diagnostic Structure While Reducing Sensitive Data Exposure in LLM Root-Cause Analysis
 
-**Publication date:** Use the actual date the Zenodo record is first published.
+**Publication date:** October 4, 2026
 
 **Language:** English
 
 **Access:** Public
 
-**Recommended license:** Creative Commons Attribution 4.0 International (CC BY 4.0)
+**License:** Creative Commons Attribution 4.0 International (CC BY 4.0)
 
 The manuscript/preprint license is separate from the repository's Apache-2.0
 software license.
@@ -59,10 +62,11 @@ Operational evidence can contain the facts needed to diagnose a failure and iden
 
 ## Version
 
-Suggested first public version: **1.0**
+Published version: **v1**
 
-Do not invent an arXiv identifier or DOI. Zenodo can register a DOI when the
-record is published, or a DOI can be reserved in the draft before publication.
+Version DOI: **10.5281/zenodo.23142445**
+
+All-versions DOI: **10.5281/zenodo.23142444**
 
 ## Related identifiers
 
@@ -74,27 +78,19 @@ At initial Zenodo publication:
 After a future arXiv submission, add the arXiv identifier as a related
 identifier and cross-link the two records.
 
-## Files to upload
-
-Recommended preprint record files:
+## Published files
 
 - `DiagPriv_Preprint_Zenodo.pdf` — canonical reader-facing preprint
 - `DiagPriv_Zenodo_Source.zip` — self-contained LaTeX source used to build the PDF
+- `DiagPriv_Public_Reproducibility_v1.0.zip` — verified public Level-1 reproducibility artifact
 
 Do **not** include ignored provider-result JSONLs, credentials, private archive
 material, local build caches, or held-out/validation material beyond the
 already tracked aggregate statements in the manuscript.
 
-## Pre-publication check
+## Publication record
 
-Before clicking Publish:
-
-- preview the Zenodo landing page;
-- verify title and author order;
-- verify all three ORCIDs;
-- verify the PDF title page and corresponding email;
-- verify the selected license;
-- confirm files are public;
-- reserve a DOI first if the authors want the DOI printed inside a later PDF
-  revision;
-- do not claim arXiv publication until an arXiv record actually exists.
+Published on Zenodo as an open preprint under CC BY 4.0. The GitHub repository
+remained private at initial publication; the Level-1 reproducibility snapshot
+was therefore included directly in the public Zenodo record. No arXiv
+identifier should be added until an arXiv record actually exists.
