@@ -1,0 +1,70 @@
+name: Zenodo preprint build
+
+on:
+  push:
+    branches:
+      - paper/zenodo-preprint
+    paths:
+      - ".github/workflows/zenodo_preprint_build.yml"
+      - "paper/**"
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Install TeX tooling
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            latexmk lmodern texlive-latex-base texlive-latex-recommended \
+            texlive-latex-extra texlive-fonts-recommended texlive-pictures \
+            poppler-utils zip
+
+      - name: Build manuscript
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd paper
+          latexmk -pdf -interaction=nonstopmode -halt-on-error -outdir=build main.tex
+          pdfinfo build/main.pdf | tee build/pdfinfo.txt
+          if grep -E 'LaTeX Warning: (Citation|Reference).*undefined|There were undefined references|There were undefined citations' build/main.log; then
+            echo "Undefined citation/reference warning found" >&2
+            exit 1
+          fi
+
+      - name: Build source package
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf /tmp/diagpriv-zenodo-source
+          mkdir -p /tmp/diagpriv-zenodo-source/sections /tmp/diagpriv-zenodo-source/generated
+          cp paper/main.tex /tmp/diagpriv-zenodo-source/
+          cp paper/references.bib /tmp/diagpriv-zenodo-source/
+          cp paper/sections/*.tex /tmp/diagpriv-zenodo-source/sections/
+          cp paper/generated/*.tex /tmp/diagpriv-zenodo-source/generated/
+          (
+            cd /tmp/diagpriv-zenodo-source
+            latexmk -pdf -interaction=nonstopmode -halt-on-error -outdir=build main.tex
+            rm -rf build
+            zip -r /tmp/DiagPriv_Zenodo_Source.zip .
+          )
+
+      - name: Collect files
+        run: |
+          mkdir -p /tmp/zenodo
+          cp paper/build/main.pdf /tmp/zenodo/DiagPriv_Preprint_Zenodo.pdf
+          cp /tmp/DiagPriv_Zenodo_Source.zip /tmp/zenodo/
+          cp paper/ZENODO_PREPRINT_METADATA.md /tmp/zenodo/
+
+      - name: Upload Zenodo package
+        uses: actions/upload-artifact@v4
+        with:
+          name: diagpriv-zenodo-preprint
+          path: /tmp/zenodo/
+          if-no-files-found: error
