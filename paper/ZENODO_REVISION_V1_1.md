@@ -2,9 +2,9 @@
 
 This file defines the prepared successor to published Zenodo record
 `23142445` (version DOI `10.5281/zenodo.23142445`; all-versions DOI
-`10.5281/zenodo.23142444`). Zenodo does not permit replacement of files in a
-published record. Publish this revision as a new version under the same
-all-versions concept.
+`10.5281/zenodo.23142444`). Zenodo recommends a new version for significant
+file changes. Publish this revision under the same all-versions concept so the
+original v1 files remain identifiable.
 
 ## Scope
 
