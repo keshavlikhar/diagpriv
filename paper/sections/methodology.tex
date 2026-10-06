@@ -1,51 +1,26 @@
 \section{Benchmark and Evaluation Methodology}
 \label{sec:method}
-DiagBench constructs fictional operational records from deterministic
-generators. Each incident separates a complete oracle-bearing object from
-the exclusive model-facing question, structured rows, and logs. Evidence
-elements have stable visible IDs; scorer and invariant code may consult
-oracle references offline, but the prompt cannot. Construction audits check
-that the intended causal relation is visible, nuisance variation is present,
-and prohibited shortcuts do not separate the oracle cases. This makes a
-generator test an implementation/construction check, not evidence that a
-human or model finds the case realistic or difficult.
+DiagBench uses deterministic generators to make fictional records. Each
+incident separates oracle data from the question, rows, and logs in the
+ModelView. Visible evidence IDs are stable. Construction audits test the
+intended relation and known shortcuts. They do not prove realism or
+difficulty.
 
-The experiments use frozen development selections. Incident 001 uses
-seeds 1000--1004 for the privacy comparison with GPT-5.6 Luna; its earlier
-raw-only 2000--2009 validation observation is reported separately.
-Incident 002 uses the first ascending development seed for each of six
-hidden defect classes (1000, 1001, 1003, 1004, 1005, 1017), not seeds chosen
-for model performance. Its GPT-5.6 Sol comparison has three logical trials
-per seed-condition. Incident 003 v3 uses four constructions selected by a
-frozen content-independent rule (1319, 1299, 1387, 1222), each with target
-and temporal-twin queries over the same evidence. The current paper has no
-final held-out evaluation. It does not access new validation cases.
+The experiments use frozen development sets. Incident 001 uses seeds
+1000--1004. Incident 002 uses seeds 1000, 1001, 1003, 1004, 1005, and 1017,
+with three logical trials. Incident 003 v3 uses constructions 1319, 1299,
+1387, and 1222. Each has target and temporal-twin queries over the same
+evidence. The paper has no final held-out evaluation.
 
-The model-facing prompt fixes a canonical output vocabulary, demands a
-five-field RCA, an explanation, and supporting evidence IDs. Incidents 001
-and 002 use \texttt{raw-rca-v2}, \texttt{rca-taxonomy-v2}, and
-\texttt{raw-rca-scorer-v2}. Incident 003 v3 uses the separately frozen v3
-versions. Provider requests use medium reasoning and omit temperature;
-the originally intended Luna zero-temperature field was rejected by that
-provider configuration, whereas Sol omission preserves the matched
-protocol without implying Sol rejection. Trial identity, prompt-template
-hash, exact rendered model-input hash, transformation provenance, scoring
-versions, and response status are recorded as available. Incorrect
-diagnoses are not silently retried. Infrastructure failures are retained
-as missing model responses, not scored as wrong diagnoses.
+The prompt requires five RCA labels, an explanation, and evidence IDs.
+Incidents 001 and 002 use frozen v2 prompt, taxonomy, and scorer versions.
+Incident 003 uses v3. Provider calls use medium reasoning and omit
+temperature. The records include hashes and version data. Incorrect answers
+are not retried. Transport failures are missing responses, not wrong RCAs.
 
-We report exact five-dimensional RCA, individual dimensions, and, for
-Incident 003, whether both queried roles in a construction receive their
-correct mechanisms. Evidence support is not inferred from label correctness:
-it is evaluated separately as described in Section~\ref{sec:evidence}.
-Representation exposure is a third separate analysis over the exact released
-\texttt{ModelView}, not over hidden generator state. Paired comparisons reuse
-the same construction under matched conditions; Incident 003's two roles
-share the same evidence but differ in their subject-specific question.
-
-The three Incident 003 provider stages were authorized and executed
-separately under frozen inputs. Their ignored local JSONL artifacts have
-these exact SHA-256 identities (raw, relative-time, ablation):
+We report exact RCA, each label, paired mechanisms for Incident 003, evidence
+support, and representation exposure. These are separate outcomes. The three
+Incident 003 result files have these frozen SHA-256 values:
 \begin{center}
 \scriptsize
 \begin{tabular}{ll}
@@ -58,13 +33,6 @@ Temporal ablation & \texttt{40d48f58f95b9bf837fa75a6a13209f6d00c6bbedca8c24d90dd
 \bottomrule
 \end{tabular}
 \end{center}
-The repository contains deterministic generators, transformations, scorers,
-configs, protocol and aggregate-result documents, and the privacy-exposure
-artifact. This tracked material provides Level-1 reproducibility for software,
-deterministic analyses, aggregate tables, and frozen artifact identities.
-The separate frozen-artifact manifest and offline verifier define a
-provenance-safe design for authorized exact-byte verification, but no private
-provider-observation archive is currently provisioned and no public
-observation-level release exists. The provider JSONLs therefore remain
-ignored local records: aggregate-table regeneration is available now, while
-independent inspection of the exact historical provider responses is not.
+The repository provides source, deterministic analyses, aggregate tables,
+and frozen hashes. Provider JSONL files are not public. Thus, readers can
+rebuild aggregates but cannot inspect the exact historical responses.

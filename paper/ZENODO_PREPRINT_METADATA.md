@@ -2,6 +2,10 @@
 
 This file records the published metadata for the first public DiagPriv preprint.
 
+This is the immutable v1 record. The prepared editorial successor is
+documented in `paper/ZENODO_REVISION_V1_1.md`. Zenodo requires a new record
+version for file changes after publication.
+
 **Zenodo record:** https://zenodo.org/records/23142445
 **Version DOI:** 10.5281/zenodo.23142445
 **All-versions DOI:** 10.5281/zenodo.23142444

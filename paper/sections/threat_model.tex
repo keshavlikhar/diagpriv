@@ -1,13 +1,10 @@
 \section{Motivation and Threat Model}
 \label{sec:threat}
-The trusted boundary contains an organization's operational data sources and
-the transformation layer that can consult field annotations. The external
-LLM or coding/RCA agent receives a rendered troubleshooting question and a
-transformed \texttt{ModelView}, not the complete incident object. We initially
-model the provider as honest-but-curious: it performs the requested analysis
-but should not receive avoidable identity or structural information. We do
-not claim protection against a compromised provider or an adversarial
-operator with control of the trusted host.
+The trusted system contains the data sources and the transformation layer.
+The external model receives only a question and a transformed ModelView.
+The provider is honest-but-curious: it performs the task, but it should not
+receive unnecessary data. This model does not cover a compromised provider or
+an attacker who controls the trusted host.
 
 \begin{figure}[H]
 \centering
@@ -29,26 +26,17 @@ operator with control of the trusted host.
 \node[font=\scriptsize,align=center,below=0.36cm of transform]
       {Raw values and transformation keys remain inside.};
 \end{tikzpicture}
-\caption{The intended data boundary. The current study measures the exact
-released representation; it does not evaluate provider retention or
-rehydration.}
+\caption{The intended data boundary. The study measures the released
+representation. It does not measure provider retention.}
 \label{fig:architecture}
 \end{figure}
 
-The assets in scope include direct identity, operational and linkable
-identifiers, original format, quasi-identifying timestamps, and the
-relationships among these fields. A classified \texttt{secret} or
-\texttt{never\_release} literal is categorically non-releasable: the offline
-analysis fails closed if it occurs verbatim anywhere in the released view.
-No current development field carries that annotation, so this is a policy
-and synthetic-test property, not a measured zero secret-exposure rate.
-Metadata such as record counts and unannotated timestamps can remain visible
-even when annotated identities are changed.
+Protected assets include identity, linkable IDs, original format, timestamps,
+and field relations. A declared \texttt{secret} or \texttt{never\_release}
+literal must not occur in the released view. Synthetic tests enforce this
+rule. No current development field has that label. Record counts and
+unannotated timestamps can still remain visible.
 
-This first-paper threat model does not replace access control or address
-prompt injection, malicious autonomous agents, poisoning, malicious
-insiders, cryptographic provider-side guarantees, or a complete legal or
-regulatory analysis. A mistaken sensitivity annotation is itself a residual
-exposure route. The exposure measurements in Section~\ref{sec:privacy} concern
-what appears in the model-visible representation. They do not estimate an
-adversary's probability of re-identifying a person from auxiliary data.
+This threat model does not replace access control. It does not measure
+re-identification, provider retention, prompt injection, malicious agents, or
+legal compliance.

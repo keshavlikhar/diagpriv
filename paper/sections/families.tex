@@ -1,59 +1,28 @@
 \section{Incident-Family Design}
 \label{sec:families}
-\paragraph{Incident 001: repeated payment effect.}
-A deadline or timeout precedes re-arrival of the same logical request.
-The operation executor lacks an effective idempotency control and records
-two successful effects. The frozen tuple is
-\texttt{duplicate\_effect},
-\texttt{timeout\_or\_deadline},
-\texttt{retry\_or\_rearrival},
-\texttt{missing\_or\_ineffective\_idempotency},
-\texttt{operation\_executor}.
-The ingress component observes arrivals but does not own the missing
-suppression control; component ownership is a distinct and potentially
-model-sensitive judgement. The minimum diagnostic structure includes
-same-request equality across sources, two distinct effects, successful
-states, and event order. The customer's literal identity is not needed.
-This family tests whether relationship-preserving pseudonyms can retain
-RCA utility after direct identity is changed.
+\paragraph{Incident 001: duplicate payment.}
+A timeout precedes re-arrival of one logical request. The executor lacks an
+effective idempotency control and records two successful effects. The cause is
+missing or ineffective idempotency in the operation executor. Required
+structure includes same-request linkage, two distinct effects, success states,
+and event order. The literal customer identity is not required.
 
-\paragraph{Incident 002: shape-sensitive malformed external reference.}
-A provisioning operation with an unexpected external-reference shape
-reaches an exact lookup, misses, and yields no effect because domain-level
-validation or normalization is inadequate. The oracle tuple is:
-\begin{quote}\small\ttfamily
-missing\_effect; malformed\_or\_unexpected\_input;\\
-no\_follow\_on\_action;\\
-validation\_or\_input\_handling\_failure; operation\_executor.
-\end{quote}
-Controls and benign lookup misses make a simple miss or latency clue
-insufficient; the target's structural deviation from a healthy template is
-the intended differentiator. Six generator-side defect classes are represented,
-including separator, width, case-class, and truncation changes. A hidden
-\texttt{leading\_zero\_loss} construction is described to the evaluator only
-as an observable leading-position numeric-run deletion: visible structure
-cannot reveal the literal value of the lost digit. Format-preserving
-pseudonymization retains the structural signature that HMAC and ordinary
-tokens do not. Retention is not sufficient by itself to ensure a correct
-model answer.
+\paragraph{Incident 002: malformed external reference.}
+A provisioning request has an unexpected reference shape. An exact lookup
+misses, and no effect occurs because validation or normalization is
+inadequate. Controls make lookup miss and latency alone insufficient. The
+target's deviation from a healthy shape is the intended clue. A hidden
+\texttt{leading\_zero\_loss} cause is visible only as deletion at the leading
+position of a numeric run. The visible data does not reveal the missing digit.
 
 \paragraph{Incident 003 v3: temporal causal isolation.}
-The target execution is still active when compensation begins after a
-deadline. Its later successful original effect coexists with the compensated
-workflow state; correct fencing or serialization would prevent this
-\texttt{incorrect\_concurrency\_control} mechanism. The temporal twin has
-the same non-temporal terminal, source, event-kind, linkage, and message
-signatures, but its successful effect is committed before the deadline and
-compensation follows in serialized order. Its mechanism is
-\texttt{incorrect\_state\_transition}: the lifecycle edge is invalid even
-without concurrent actors. A third operation is a safe control. The
-target/twin questions name different operation IDs but present otherwise
-identical evidence. Offline audits show matching non-temporal projections,
-structural isomorphism of normalized ablated views, and conflicting
-mechanism oracles across 200 development constructions. This is stronger
-isolation than contrasting two unrelated transformed incidents; it is
-still a targeted construction audit rather than proof against every
-learned cue.
+The target execution overlaps compensation after a deadline. Correct
+serialization would prevent the outcome, so the mechanism is incorrect
+concurrency control. The temporal twin has the same
+non-temporal signatures. Its effect completes before the deadline, and later
+compensation is an invalid serialized transition. Its mechanism is
+incorrect state transition. Offline audits found matching
+non-temporal projections across 200 development constructions.
 
 \begin{figure}[H]
 \centering
@@ -76,16 +45,8 @@ learned cue.
 \node[eventbox] (wd) at (8.45,0.9) {compensation starts};
 \draw[flow] (wa)--(wb);\draw[flow] (wb)--(wc);\draw[flow] (wc)--(wd);
 \node[font=\scriptsize,align=center] at (4.9,-0.15)
-{Temporal ablation: original ordering and overlap are unavailable.};
+{Temporal ablation makes this order and overlap unavailable.};
 \end{tikzpicture}
-\caption{Conceptual Incident 003 mechanism contrast. The target's execution
-overlaps compensation; the twin's effect is committed before the later
-compensation. The diagram is schematic, not a sampled timeline.}
+\caption{Incident 003 mechanism contrast. The diagram is schematic.}
 \label{fig:temporal-isolation}
 \end{figure}
-
-Raw and relative-time representations retain the order and overlap that
-distinguish the queried mechanisms. Temporal ablation replaces timestamps
-with non-parseable markers and removes residual chronological log ordering.
-Both roles still have the same non-temporal evidence; under ablation the
-temporal proof is unavailable rather than merely harder to read.

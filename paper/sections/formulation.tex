@@ -1,49 +1,25 @@
 \section{Problem Formulation and Diagnostic Invariants}
 \label{sec:formulation}
 Let $D$ denote raw operational evidence, $Q$ the troubleshooting question,
-and $A$ a trusted field-annotation policy. A transformation condition $T_c$
-produces $D'_c=T_c(D;A)$ for release. A future task-aware selector could choose
-$c$ from $(D,Q,A)$, but no such selector is evaluated here. The frozen prompt
-renders only $(Q,D'_c)$ for the external model. The model returns a
-five-dimensional RCA tuple
+and $A$ the field policy. A condition $T_c$ produces released evidence
+$D'_c=T_c(D;A)$. The model receives only $(Q,D'_c)$ and returns
 \[
 R=(o,t,a,m,k),
 \]
-where $o$ is observed outcome, $t$ the precipitating trigger, $a$ the
-subsequent action, $m$ the failure mechanism, and $k$ the component owning
-that mechanism. Exact RCA requires every field to equal the frozen oracle.
-Evidence support is a separate judgement about cited visible records.
+where the fields are outcome, trigger, action, mechanism, and owning
+component. Exact RCA requires all five fields to match the frozen oracle.
 
-For task $Q$, let $I_Q=\{i_1,\ldots,i_n\}$ be declared diagnostic relations
-over the evidence. Examples are \texttt{request\_id} equality across a
-structured row and a log, distinctness of two payment effects, the
-fixed-width class of an external reference, and strict
-\texttt{completion < compensation} ordering. An offline audit asks whether
-each relation is genuinely preserved in $D'_c$, broken, preserved only through
-degenerate collapse, or intentionally discarded because literal identity
-is nonessential. These statuses are not a proof that a model will use the
-relation correctly. A shape-preserving condition, for example, can preserve
-every declared Incident 002 structural invariant while the model still
-misclassifies a development case.
+For task $Q$, $I_Q=\{i_1,\ldots,i_n\}$ is the set of declared diagnostic
+relations. An audit marks each relation as genuinely preserved, broken,
+preserved by degenerate collapse, or intentionally not preserved. This audit
+does not prove that a model will use the relation correctly.
 
-The conceptual objective is to retain the relations needed for the
-diagnosis while reducing unnecessary release:
+The objective is to keep required relations and reduce unnecessary release:
 \[
 \text{seek }T_c\text{ such that }i_j(D,Q)\text{ remains assessable in }D'_c
-\quad\text{for essential }i_j,
+\quad\text{for essential }i_j.
 \]
-subject to explicit non-release rules. This is a research objective rather
-than an optimized scalar function. Utility is reported as the vector of exact
-RCA, individual dimension accuracy, paired mechanism discrimination, and
-evidence support. Privacy is reported as a separate exposure vector.
-Neither equality of model answers nor an invariant audit implies a formal
-sufficient statistic, exact reasoning invariance, or a privacy guarantee.
-
-Incident-specific classifications distinguish \emph{essential} relations
-needed to identify the cause, \emph{supportive} relations that strengthen a
-case without defining it, and \emph{discardable} facts such as a fictional
-customer's literal name. For Incident 001 the literal customer identity can
-be discarded while same-request equality remains essential. Incident 002
-requires reference structure but not the reference's literal characters.
-Incident 003 requires the relative order and overlap of execution,
-deadline, and compensation, not the original calendar date.
+Utility and exposure are separate vectors, not one score. Incident 001 needs
+request equality but not a customer name. Incident 002 needs reference shape
+but not its literal characters. Incident 003 needs relative order and overlap
+but not the calendar date.

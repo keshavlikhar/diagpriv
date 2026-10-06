@@ -3,6 +3,24 @@
 Preprint title: *DiagPriv: Preserving Diagnostic Structure While Reducing Sensitive Data Exposure in LLM Root-Cause Analysis*. This is a development-stage research draft,
 not a submission-ready or held-out evaluation claim.
 
+## Editorial revision v1.1
+
+The v1.1 source keeps the frozen methods, data, tables, and conclusions. It
+uses controlled English based on ASD-STE100 principles, adds a plain-language
+glossary, and adds a qualitative transformation-profile figure. This is an
+editorial application of the standard, not a certified ASD-STE100 audit.
+
+Measured against the published v1 PDF, the revision changes:
+
+- rendered length: 16 pages to 11 pages;
+- extracted word count: 7,137 to 4,121 (42.3% lower);
+- LaTeX manuscript word count: 5,888 to 2,882 (51.1% lower);
+- prose sentences at or below 25 words: 97.2% in the local style audit.
+
+The comparison includes the bibliography in the rendered-PDF count. The
+LaTeX count includes `main.tex` and all section files. See
+`ZENODO_REVISION_V1_1.md` for the publication package and version notes.
+
 ## Reproduce tables and build
 
 From the repository root:

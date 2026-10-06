@@ -1,22 +1,12 @@
 \section{Conclusion}
-DiagPriv asks whether operational evidence can be transformed to hide
-unnecessary sensitive literals without discarding the relations required
-for LLM root-cause analysis. The present development study does not answer
-that question universally. It shows, in three controlled synthetic families,
-why the relevant relation changes with the task: cross-source equality and
-linkage for a retry/idempotency failure, a structural reference signature for
-an input-handling failure, and temporal order/overlap for a compensation
-failure. Matched temporal
-twins provide the strongest isolation in the current benchmark. The observed
-3/4 to 2/4 to 0/4 paired pattern is asymmetric: target concurrency diagnoses
-remain 4/4 while the twin state-transition diagnoses collapse to concurrency.
-That is a small descriptive result consistent with the designed temporal
-dependency, not a general causal estimate of temporal reasoning.
+DiagPriv tests whether a release can hide selected literals and retain the
+relations needed for RCA. The three synthetic families require linkage,
+shape, or time. The paired temporal result fell from 3/4 discriminated pairs
+with raw data to 2/4 with relative time and 0/4 with ablation. This small
+result is consistent with a useful temporal dependency, not a general causal
+estimate.
 
-The exposure vector makes the privacy side explicit: removing literal values
-can still leave linkage, format, cardinality, exact relative timing, or
-unannotated context visible. RCA labels, evidence support, and exposure are
-therefore reported separately. The next step is not to declare a winning
-baseline, but to validate these dependencies across more incidents, humans,
-models, and a frozen held-out protocol, then test an actual task-aware
-selection policy with a separately specified privacy threat model.
+Literal removal can still expose linkage, shape, cardinality, time, and
+context. The paper therefore reports RCA, evidence support, and exposure
+separately. Future work needs more incidents, models, human baselines, and a
+frozen held-out test before it can evaluate a task-aware selection policy.

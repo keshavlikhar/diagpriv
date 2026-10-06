@@ -16,5 +16,6 @@ venv/
 *.key
 dist/
 build/
+/output/
 results/*
 !results/.gitkeep

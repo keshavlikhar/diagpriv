@@ -1,48 +1,51 @@
 \section{DiagPriv Transformation Framework}
 \label{sec:framework}
-The implementation keeps benchmark construction, transformations, prompt
-rendering, provider invocation, and oracle scoring separate. A generator
-produces an \texttt{Incident} with model-visible records and oracle-only
-labels, privacy annotations, expected evidence, and invariant definitions.
-Transformations begin from \texttt{Incident.model\_view()} and return a new
-\texttt{ModelView}; neither an oracle answer nor the HMAC key is serialized
-into the model request. A versioned condition and hash identify each
-representation. The fixed baselines below isolate different preservation
-choices rather than claiming to be interchangeable security mechanisms.
+The implementation separates generation, transformation, prompt rendering,
+provider calls, and scoring. A transformation receives a ModelView and returns
+a new ModelView. Oracle labels and HMAC keys do not enter the model request.
+Each condition has a version and a configuration hash.
 
-\paragraph{Redaction and deterministic pseudonyms.}
-\texttt{redaction-v1} replaces annotated values with field-class
-placeholders. It hides raw literal identity but can collapse distinct
-entities and destroy meaningful joins. \texttt{hmac-v1} uses keyed,
-namespace-separated HMAC-SHA-256 identifiers; it preserves deterministic
-equality within declared namespaces, including selected cross-source joins,
-while retaining frequency and linkability. Its operational key is external
-to prompts and artifacts. The privacy-exposure analysis uses a separate
-public synthetic test-only key and makes no operational key-compromise claim.
-\texttt{tokenization-v1} assigns short, deterministic, ephemeral tokens from
-a mapping over the complete view. Its mapping is reproducible for the same
-input population but is neither a persistent production vault nor
-guaranteed globally stable across independently transformed candidate sets.
-Both methods can expose candidate-set or frequency information even when raw
-values disappear.
+Redaction uses generic placeholders. It can collapse distinct values. HMAC
+uses keyed, namespace-separated hashes. Tokenization uses short tokens from
+an incident-local deterministic map. Both retain selected equality and
+frequency. Format-preserving pseudonymization also retains length,
+separators, and character classes. It is not cryptographic format-preserving
+encryption. Relative time replaces timestamps with local millisecond offsets.
+It keeps order, gaps, durations, and overlap. Temporal ablation replaces time
+with non-temporal markers and removes chronological log order.
 
-\subsubsection*{Shape and time}
-\texttt{format-preserving-v1} is deterministic format/constraint-preserving
-pseudonymization: it retains measured length, separator positions, and
-character classes while changing literal values. It is \emph{not}
-cryptographic format-preserving encryption. \texttt{relative-time-v1}
-converts annotated timestamps to incident-local millisecond offsets,
-removing the original absolute representation but keeping equality,
-ordering, gaps, durations, and overlap. Exact offsets could reconstruct
-absolute times given an external anchor. \texttt{temporal-ablation-v1}
-replaces annotated timestamps with non-temporal markers and removes log-order
-leakage; it is a destructive causal control, not an optimal privacy method.
-In Incident 001 and 002 the scalar methods leave \emph{unannotated}
-timestamps unchanged, a limit measured explicitly below.
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[
+  cell/.style={draw,minimum width=1.55cm,minimum height=0.52cm,
+               font=\scriptsize,align=center},
+  row/.style={font=\scriptsize\ttfamily,anchor=east},
+  head/.style={font=\scriptsize\bfseries,align=center}
+]
+\node[head] at (2.05,0.55) {Literal};
+\node[head] at (3.65,0.55) {Linkage};
+\node[head] at (5.25,0.55) {Shape};
+\node[head] at (6.85,0.55) {Relative\\time};
+\foreach \name/\y in {Raw/0,Redaction/-0.62,HMAC/-1.24,Token/-1.86,Format-pres./-2.48,Relative-time/-3.10,Time ablation/-3.72}{
+  \node[row] at (1.18,\y) {\name};
+}
+\foreach \x/\y/\text/\shade in {
+2.05/0/kept/35,3.65/0/kept/35,5.25/0/kept/35,6.85/0/kept/35,
+2.05/-0.62/hidden/8,3.65/-0.62/lost/8,5.25/-0.62/lost/8,6.85/-0.62/n.a./0,
+2.05/-1.24/hidden/8,3.65/-1.24/kept/35,5.25/-1.24/lost/8,6.85/-1.24/n.a./0,
+2.05/-1.86/hidden/8,3.65/-1.86/kept/35,5.25/-1.86/lost/8,6.85/-1.86/n.a./0,
+2.05/-2.48/hidden/8,3.65/-2.48/kept/35,5.25/-2.48/kept/35,6.85/-2.48/n.a./0,
+2.05/-3.10/hidden/8,3.65/-3.10/n.a./0,5.25/-3.10/changed/18,6.85/-3.10/kept/35,
+2.05/-3.72/hidden/8,3.65/-3.72/n.a./0,5.25/-3.72/lost/8,6.85/-3.72/lost/8}{
+  \node[cell,fill=blue!\shade] at (\x,\y) {\text};
+}
+\end{tikzpicture}
+\caption{Qualitative information profile of the fixed conditions. ``n.a.'' means
+that the feature is outside that condition's measured field type. The
+quantitative exposure tables in Section~\ref{sec:privacy} control all claims.}
+\label{fig:transform-profile}
+\end{figure}
 
-These conditions are versioned; no transformation was retuned after observing
-the results reported here. The broader DiagPriv ambition is to choose a
-least-exposing condition that preserves the declared essential relations for
-the task. This draft evaluates the premise with fixed baselines. It does not
-present an implemented task-aware planner or an automatic guarantee of
-minimal disclosure.
+No condition was changed after its reported run. The study tests fixed
+baselines. It does not implement a task-aware selector or guarantee minimum
+disclosure.

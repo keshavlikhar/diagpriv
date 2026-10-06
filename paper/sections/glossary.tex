@@ -1,0 +1,19 @@
+\section*{Glossary}
+\begin{description}
+\small
+\item[Diagnostic invariant.] A relation in visible evidence that an RCA task
+needs, such as two records that contain the same request ID.
+\item[Exposure.] Information that remains visible in the exact data sent to
+the model. Exposure is not the same as re-identification risk.
+\item[HMAC.] A keyed hash function. DiagPriv uses it to make stable opaque
+identifiers. The key stays inside the trusted system.
+\item[ModelView.] The question and evidence that the external model receives.
+It excludes oracle answers and transformation secrets.
+\item[Oracle.] The frozen reference answer used for scoring.
+\item[Pseudonymization.] Replacement of a value with another value. A stable
+pseudonym can preserve equality and frequency.
+\item[RCA.] Root-cause analysis: the process that identifies why an incident
+occurred.
+\item[Temporal ablation.] A destructive control that removes usable time
+relations from the ModelView.
+\end{description}

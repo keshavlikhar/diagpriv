@@ -1,71 +1,33 @@
 \section{Experimental Results}
 \label{sec:results}
-All numerical comparisons here are descriptive observations on selected
-synthetic development instances. They do not establish statistical
-significance, population-level effect sizes, or a universal transformation
-ranking. Table~\ref{tab:utility} reports the first two incident families
-with their distinct model and repetition protocols. Absolute accuracy levels
-across families are not directly comparable as a single benchmark ranking:
-the families use different designed dependencies, models, and repetition
-structures.
-\input{generated/table2a_scalar_exposure}
+All results are descriptive development observations. They do not show
+statistical significance or a universal ranking. The families also use
+different models and trial counts.
 \input{generated/table3_utility}
 
-\paragraph{Linkage-dependent Incident 001.}
-The frozen GPT-5.6 Luna raw development run obtained 5/5 exact five-label
-RCA. Redaction obtained 4/5, HMAC 5/5, tokenization 5/5, and
-format-preserving pseudonymization 4/5 on the same five development seeds.
-The separate raw-only validation observation was 10/10 exact RCA, but 9/10
-\texttt{overall\_correct}: one response cited a nonexistent evidence ID.
-There is no matched transformed validation comparison. The
-format-preserving development miss localized the defect to request ingress
-instead of the oracle operation executor; it did not change the other four
-causal dimensions and did not trigger an oracle revision. These small
-observations are consistent with the practical value of retaining equality,
-not proof that any one deterministic method is generally optimal.
+Incident 001 produced 5/5 exact RCA for raw, HMAC, and tokenization. Redaction
+and format-preserving pseudonymization each produced 4/5. A separate raw-only
+validation run produced 10/10 exact RCA and 9/10 overall correctness. There is
+no matched transformed validation run.
 
-\paragraph{Shape-sensitive Incident 002.}
-The primary three-trial, six-seed Sol comparison planned 18 logical slots
-per condition. It produced 18 valid raw, 9 redaction, 18 HMAC,
-17 tokenization, and 18 format-preserving responses. Nine redaction
-transport failures and one tokenization timeout remain missing model
-responses in that primary analysis, not incorrect RCAs. A separately
-authorized one-attempt recovery of exactly those ten cells yielded ten
-valid responses and forms the 18-valid-per-condition \emph{sensitivity}
-view in Table~\ref{tab:utility}; it does not replace the primary failure
-records. In that sensitivity view, raw had 15/18 correct trigger and
-mechanism labels and 9/18 exact RCA; format-preserving had 10/18 on each
-causal dimension and 4/18 exact; redaction, HMAC, and tokenization had
-2/18, 1/18, and 2/18 respectively for trigger/mechanism, with 0/18,
-1/18, and 0/18 exact. Component accuracy (12/18 raw, 10/18 redaction,
-13/18 HMAC, 13/18 tokenization, 10/18 format-preserving) does not follow
-the same ordering. The pattern is directionally consistent with the family's intended
-shape-sensitive diagnostic dependency, yet the transformation comparison is
-not a shape-only causal intervention: length, character classes, separators,
-and other surface properties co-vary across the opaque and format-preserving
-representations. Format-preserving also missed the seed-1005 cause in all
-three logical trials despite its offline invariant preservation, so preserving
-the declared structural signature is not shown to be sufficient.
+Incident 002 had 18 planned slots per condition. The primary run had 18 valid
+raw, 9 redaction, 18 HMAC, 17 tokenization, and 18 format-preserving
+responses. One authorized recovery attempt filled the ten transport failures.
+Table~\ref{tab:utility} reports this sensitivity view for RCA counts. Raw
+produced 15/18 correct trigger and mechanism labels. Format-preserving
+pseudonyms produced 10/18. Redaction, HMAC, and tokenization produced 2/18,
+1/18, and 2/18. This pattern supports the intended shape dependency, but it is
+not a shape-only intervention. Format preservation was also not sufficient:
+seed 1005 failed in all three trials.
 
-\paragraph{Paired temporal Incident 003 v3.}
-Table~\ref{tab:temporal-utility} separates overall RCA from correct
-mechanism attribution to both roles in the same construction.
+For Incident 003, Table~\ref{tab:temporal-utility} and
+Figure~\ref{fig:paired} show the paired results.
 \input{generated/table4_temporal_utility}
 \input{generated/figure3_paired}
-All eight responses in each stage were valid. Raw evidence yielded 7/8 exact
-RCA, with 4/4 target and 3/4 twin mechanism labels correct. Relative-time
-yielded 6/8 exact, 4/4 target and 2/4 twin mechanisms. Temporal ablation
-yielded 4/8 exact: every target remained correct, every twin was assigned
-the target's concurrency mechanism, and no pair was discriminated correctly.
-The paired-mechanism sequence 3/4, 2/4, 0/4
-(Figure~\ref{fig:paired}) comes entirely from the twin side: target mechanisms
-remain 4/4 in raw, relative-time, and ablation, whereas twin mechanisms fall
-from 3/4 to 2/4 to 0/4. Under ablation all four twins receive the target's
-concurrency mechanism. This is directionally consistent with the
-preregistered development expectation that preserved temporal relations help
-distinguish the twin from a concurrency interpretation, but it also exposes a
-possible model/category prior toward concurrency when the distinguishing
-temporal proof is unavailable. The observation does not establish equivalence
-of raw and relative time, a provider-level causal effect of removing time, or
-performance on other incidents. Four pairs and one call per case leave
-substantial model-response variability unmeasured.
+All responses were valid. Exact RCA was 7/8 for raw, 6/8 for relative time,
+and 4/8 for ablation. Target mechanisms remained 4/4 in all conditions.
+Twin mechanisms fell from 3/4 to 2/4 to 0/4. Under ablation, all twins received
+the target's concurrency label. The result is consistent with a useful
+temporal distinction. It can also reflect a category prior when time evidence
+is unavailable. Four pairs and one call per case do not measure response
+variability.
