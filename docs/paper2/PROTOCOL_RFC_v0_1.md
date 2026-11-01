@@ -125,3 +125,18 @@ Verify plan equivalence where only oracle facts changed. Check provider-visible 
 - What security review and provider/held-out governance process is required before study execution?
 
 **Research integrity principle:** A passed local relation test is a necessary software result, not evidence of empirical RCA utility or privacy/anonymity.
+
+
+## 10. Alignment with approved product mission — destination policies are upstream constraints
+
+**Direction confirmed 2026-11-01:** Long-term DiagPriv combines AI data-movement/residency controls with task-aware minimization. See ../product/ADR_002_DESTINATION_POLICY_AND_MINIMIZATION.md. The scientific Paper 2 scope remains intentionally narrower: *policy-constrained task-aware diagnostic representation selection*, not claims of actual provider region enforcement.
+
+Make the security policy include independently authored and versioned data classifications, approved purpose/actor, recipient/deployment/processing-region profile and content-release ceilings. A **trusted destination gate** takes priority over diagnostic accuracy. The planner sees approved policy descriptors only and may not turn a forbidden or unknown route into an allowed route, infer region from URLs, downgrade data sensitivity automatically, or authorize its own transfer.
+
+For offline prospective research, use simulated destination profiles and independently specified policies to test authorization/refusal logic. That validates **policy-decision correctness under declared inputs**, not real provider routing, residency, storage location or legal compliance. Physical region assurance and controlled egress belong to separately assessed product integration.
+
+Add proposed factorial challenge cases to the frozen protocol before coding: (a) same evidence/task, allowed vs denied destination; (b) allowed destination but forbidden diagnostic linkage; (c) unknown or expired route metadata; (d) identical security policy but different task contracts; (e) approved transformed disclosure vs disallowed original data only if an explicit policy specifies this classification; and (f) hidden oracle modifications that must not affect the plan. Compare fixed compliant baselines under the **same** destination and disclosure policy. Report refusal, feasible coverage and multi-axis exposure separately from RCA. Never count a blocked transfer as diagnostic failure without a separately defined metric.
+
+**Novelty boundary:** Neither regional routing policy nor data minimization is new by itself. The candidate Paper 2 contribution remains verifiable typed diagnostic relation selection under hard, externally governed release constraints, accompanied by transparent abstention and empirical RCA/exposure analysis. We may reject that novelty claim if strong prior work or comparative results contradict it.
+
+**Scientific governance:** This section changes the RFC proposal only. It does not unlock provider experiments, held-out data, Paper 1 artifacts or any production egress.
