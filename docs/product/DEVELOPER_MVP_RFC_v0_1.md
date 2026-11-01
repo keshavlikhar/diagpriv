@@ -50,3 +50,21 @@ Do not access employer systems, customer data, credentials or real logs without 
 5. Agree product/research repository separation and the gate for starting offline coding.
 
 Definition of done for MVP v0: a locally usable CLI and Python SDK which either yields policy-verified transformed evidence for declared supported diagnostic relations, or refuses safely, with synthetic adversarial tests and transparent limitations. Not certified production security.
+
+
+## Mission alignment: enterprise information-flow policy + task-aware minimization
+
+The **long-term** product target is a controlled gateway/agent integration that lets administrators restrict which providers, deployments and processing geographies receive enterprise information, while selectively retaining properties useful for approved AI work. Data movement permission and information minimization are separate decisions; an explicit deny, missing provider assurance or disallowed region always beats diagnostic utility. Detailed target architecture and limits: ADR_002_DESTINATION_POLICY_AND_MINIMIZATION.md.
+
+**Do not widen MVP v0 to a universal AI gateway.** Its only policy feature beyond existing scope is a deterministic, **offline** destination-eligibility precheck using trusted *synthetic/configured* provider/region/purpose descriptors:
+- A reviewed policy can say local-only, allowed external destination, or unknown/unapproved; unknown/unapproved => deny **external export intent** even if a supported transformation exists.
+- Only when a destination/purpose is eligible under reviewed policy do we run the registered task contract, scoped transformations, structural and whole-payload verification.
+- An approved exception allowing a particular transformed release must be explicit; transforming an identifier does **not** automatically declassify an enterprise record.
+- Produce a **local** synthetic sanitized artifact and safe receipt with the policy decision. No provider traffic, region verification, end-to-end egress enforcement, credentialed service connectors or external model calls in MVP v0.
+- A local output file can be copied outside DiagPriv; the CLI cannot stop it. Therefore v0 claims only local preparation and simulated eligibility checks, **not** actual external-transfer enforcement or proven residency. A controlled adapter / network gate is a future milestone with a separate security assessment.
+
+A staged path: MVP v0 (offline preview and policy tests) -> one route-bound, read-only MCP integration with explicit supported-channel coverage -> organization policy management, identity, destination/deployment assurance and network egress control -> broader developer-agent/tool ecosystem. MCP's 2026-07-28 stateless core means process/connection identity cannot itself define durable authorization or investigation scope.
+
+**New acceptance cases:** policy denies destination even for fully pseudonymized input; unknown provider/region causes refusal; declared local-only mode has no external fallback; a changed destination after approval invalidates the would-be release; task required joins forbidden by disclosure policy produce infeasible; administrative approved data-release rules cannot be replaced by log/question instructions; errors, metadata and stdout never carry blocked payload.
+
+**Customer validation:** Ask not just whether engineers redact logs, but whether their AI workflows are blocked because of provider, residency, retention, or security policy, and whether their organization would approve transformed evidence under a controlled route. These answers determine whether the eventual product should emphasize local/private-model integration, explicit regional gateways, or selective external release.
